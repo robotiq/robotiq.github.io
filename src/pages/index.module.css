@@ -1,0 +1,87 @@
+/* Hero banner — full-bleed photo with dark overlay for readability */
+.heroBanner {
+  background-image:
+    linear-gradient(rgba(20, 20, 20, 0.58), rgba(20, 20, 20, 0.48)),
+    url('/img/FreeHumainHands.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 5rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  color: #ffffff;
+}
+
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 3rem 1.5rem;
+  }
+}
+
+/* Black triangle decoration in the upper-right corner (Robotiq graphic element) */
+.heroBanner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 120px 120px 0;
+  border-color: transparent #231f20 transparent transparent;
+  pointer-events: none;
+}
+
+@media screen and (max-width: 996px) {
+  .heroBanner::after {
+    border-width: 0 70px 70px 0;
+  }
+}
+
+
+/* Hero title */
+.heroTitle {
+  color: #ffffff;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.5rem;
+}
+
+/* Hero subtitle */
+.heroSubtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.15rem;
+  font-weight: 500;
+  margin-bottom: 2.5rem;
+  letter-spacing: 0.03em;
+}
+
+/* CTA button — black on hero, inverts on hover */
+.heroButton {
+  background-color: #231f20 !important;
+  color: #ffffff !important;
+  border: 2px solid #231f20 !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.9rem;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.heroButton:hover {
+  background-color: #ffffff !important;
+  color: #231f20 !important;
+  border-color: #ffffff !important;
+  text-decoration: none;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}

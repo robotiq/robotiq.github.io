@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,700;0,900;1,900&display=swap');
+
+/* ── Robotiq brand color palette ── */
+:root {
+  /* Primary: Robotiq Blue (matched to actual logo #1ea6e6) */
+  --ifm-color-primary: #1ea6e6;
+  --ifm-color-primary-dark: #1595cf;
+  --ifm-color-primary-darker: #128cc3;
+  --ifm-color-primary-darkest: #0e739f;
+  --ifm-color-primary-light: #31afe9;
+  --ifm-color-primary-lighter: #3eb5eb;
+  --ifm-color-primary-lightest: #68c6ef;
+
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(30, 166, 230, 0.12);
+
+  --ifm-font-family-base: 'Montserrat', sans-serif;
+  --ifm-heading-font-family: 'Montserrat', sans-serif;
+
+  /* Brand tokens */
+  --robotiq-blue: #1ea6e6;
+  --robotiq-black: #231f20;
+  --robotiq-orange: #EC671A;
+  --robotiq-secondary-blue: #0B66A3;
+  --robotiq-dark-grey: #505050;
+  --robotiq-steel-grey: #979C9E;
+  --robotiq-grey-30: #BCBEC0;
+  --robotiq-grey-20: #D1D3D4;
+  --robotiq-grey-10: #E6E7E8;
+}
+
+/* Dark mode — keep blue but slightly brighter */
+[data-theme='dark'] {
+  --ifm-color-primary: #3bb8f0;
+  --ifm-color-primary-dark: #1eaae6;
+  --ifm-color-primary-darker: #1aa0d9;
+  --ifm-color-primary-darkest: #1485b3;
+  --ifm-color-primary-light: #56c3f3;
+  --ifm-color-primary-lighter: #65c9f4;
+  --ifm-color-primary-lightest: #8fd5f7;
+  --docusaurus-highlighted-code-line-bg: rgba(30, 166, 230, 0.2);
+}
+
+/* ── Navbar: always dark (black + blue accent) ── */
+.navbar {
+  background-color: var(--robotiq-black);
+  border-bottom: 3px solid var(--robotiq-blue);
+  box-shadow: none;
+}
+
+/* Navbar logo — cropped SVG is ~4:1 landscape, 2.5rem gives ~160px width */
+.navbar__logo {
+  height: 2.5rem;
+}
+
+.navbar__title {
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.navbar__link {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.navbar__link:hover,
+.navbar__link--active {
+  color: var(--robotiq-blue);
+}
+
+/* Mobile hamburger */
+.navbar__toggle {
+  color: #ffffff;
+}
+
+/* ── Footer ── */
+.footer {
+  background-color: var(--robotiq-black);
+  border-top: 3px solid var(--robotiq-blue);
+}
+
+.footer__title {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--robotiq-blue);
+}
+
+.footer__link-item {
+  font-weight: 500;
+}
+
+/* ── Typography ── */
+h1, h2 {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+h3, h4 {
+  font-weight: 700;
+}
+
+/* ── Tables (Robotiq style: grey separator rows, minimal borders) ── */
+table {
+  border-collapse: collapse;
+}
+
+table tr {
+  border-bottom: 1px solid var(--robotiq-grey-20);
+}
+
+[data-theme='dark'] table tr {
+  border-bottom: 1px solid #444;
+}
+
+table thead tr {
+  border-bottom: 2px solid var(--robotiq-blue);
+  background-color: var(--robotiq-grey-10);
+}
+
+[data-theme='dark'] table thead tr {
+  background-color: #1a1a1a;
+}
+
+/* ── Code blocks: left-rule accent ── */
+.prism-code {
+  border-left: 3px solid var(--robotiq-blue);
+}
+
+/* ── Admonitions ── */
+.alert--info {
+  --ifm-alert-background-color: rgba(30, 166, 230, 0.08);
+  --ifm-alert-border-color: var(--robotiq-blue);
+}

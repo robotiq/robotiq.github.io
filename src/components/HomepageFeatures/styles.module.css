@@ -1,0 +1,108 @@
+.features {
+  display: flex;
+  align-items: stretch;
+  padding: 3rem 0 4rem;
+  width: 100%;
+}
+
+/* Card */
+.featureCard {
+  display: flex;
+  flex-direction: column;
+  border-top: 3px solid #1ea6e6;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  transition: box-shadow 0.22s ease, transform 0.22s ease;
+  margin-bottom: 1.5rem;
+  height: 100%;
+}
+
+.featureCard:hover {
+  box-shadow: 0 8px 36px rgba(30, 166, 230, 0.22);
+  transform: translateY(-4px);
+}
+
+/* Image showcase area */
+.imageArea {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  gap: 1rem;
+  padding: 2rem 1.25rem 1.75rem;
+  background-color: #f5f6f7;
+  min-height: 180px;
+}
+
+[data-theme='dark'] .imageArea {
+  background-color: #e2e4e6;
+}
+
+[data-theme='dark'] .featureCard {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 2px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .featureCard:hover {
+  box-shadow: 0 0 0 1px rgba(30, 166, 230, 0.5), 0 8px 36px rgba(30, 166, 230, 0.18);
+}
+
+/* Product images (grippers, sensors) */
+.productImg {
+  width: 100%;
+  max-height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.10));
+  transition: transform 0.22s ease;
+}
+
+.featureCard:hover .productImg {
+  transform: scale(1.06);
+}
+
+/* Tech logos (C++, Python, ROS2) */
+.logoImg {
+  width: 100%;
+  max-height: 54px;
+  object-fit: contain;
+  transition: transform 0.22s ease;
+}
+
+.featureCard:hover .logoImg {
+  transform: scale(1.07);
+}
+
+/* Card text body */
+.cardBody {
+  flex: 1;
+  padding: 1.5rem 1.5rem 2rem;
+}
+
+.cardTitle {
+  font-size: 1.25rem !important;
+  font-weight: 900 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #1ea6e6 !important;
+  margin-bottom: 0.2rem !important;
+}
+
+.cardSubtitle {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #979C9E;
+  margin-bottom: 0.85rem;
+}
+
+.cardDesc {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  margin-bottom: 0;
+}
+
+@media screen and (max-width: 996px) {
+  .featureCard {
+    margin-bottom: 2rem;
+  }
+}
