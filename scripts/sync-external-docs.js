@@ -75,6 +75,11 @@ function rewriteLinks(content, { srcFile, destFile, copiedRoot, destCopiedRoot, 
   const srcDir = path.dirname(srcFile);
   const destDir = path.dirname(destFile);
 
+  // Strip content wrapped in <!-- docs-site:exclude --> ... <!-- /docs-site:exclude -->.
+  // Lets a submodule README carry a "full docs at <url>" blurb that renders on GitHub
+  // but never makes it into the synced docs page.
+  content = content.replace(/<!--\s*docs-site:exclude\s*-->[\s\S]*?<!--\s*\/docs-site:exclude\s*-->\n?/g, '');
+
   // Strip leading H1 — the wrapper .mdx supplies the page title via sidebar_label frontmatter.
   content = content.replace(/^# [^\n]*\n+/, '');
 

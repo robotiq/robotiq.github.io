@@ -127,6 +127,26 @@ robotiq.github.io/
 Files prefixed with `_` are Docusaurus **partials** — imported by a
 wrapper `.mdx` but not standalone pages themselves.
 
+### Excluding content from a synced README
+
+A tool repo's README often carries things that only make sense on
+GitHub — e.g. a "full documentation at robotiq.github.io/..." blurb,
+which would be redundant (or circular) once that same README is
+copied onto this site. Wrap that content in a pair of HTML comment
+markers:
+
+```markdown
+<!-- docs-site:exclude -->
+📖 Full documentation: https://robotiq.github.io/...
+<!-- /docs-site:exclude -->
+```
+
+GitHub renders the text between the markers normally on the tool
+repo's own README (HTML comments are invisible), but
+`sync-external-docs.js` strips everything between
+`<!-- docs-site:exclude -->` and `<!-- /docs-site:exclude -->`
+before copying content into `docs/`, so it never reaches this site.
+
 ---
 
 ## Step-by-step: adding a new software tool
@@ -465,6 +485,7 @@ sidebar.
 |---|---|
 | Submodules (pinned repo imports) | `external/<submodule>/` |
 | Sync + generation config | `scripts/sync-external-docs.js` → `JOBS` |
+| Exclude README content from the synced page | `<!-- docs-site:exclude -->` ... `<!-- /docs-site:exclude -->` in the tool repo's README |
 | Synced partials | `docs/drivers/<Product>/<Language>/_readme.md` |
 | Wrapper pages | `docs/drivers/<Product>/<Language>/index.mdx` |
 | Support badge (drives the overview table) | `![Supported by <Label>](.../Supported_by-<Label>-<color>)` at the top of each wrapper page |
