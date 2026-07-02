@@ -27,6 +27,7 @@ const sidebars = {
         'drivers/2F hande/ROS/index',
         'drivers/2F hande/Isaac Sim/index',
         'drivers/2F hande/PyBullet/index',
+        'drivers/2F hande/GraspGen/index'
       ],
     },
     {
