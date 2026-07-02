@@ -45,15 +45,6 @@ const JOBS = [
     from: 'sensor_quickstart/README.md',
     to: 'drivers/TSF-85/Python/_readme.md',
   },
-  // TSF 85 ROS driver README
-  {
-    submodule: 'ros',
-    repoUrl: 'https://github.com/robotiq/ros',
-    branch: 'main',
-    from: 'README.md',
-    to: 'drivers/TSF-85/ROS/_readme.md',
-  },
-  
   // Folder example — uncomment when a repo has a docs/ folder:
   // {
   //   submodule: 'tactile_sensors',
