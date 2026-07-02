@@ -8,6 +8,7 @@
     "start": "docusaurus start",
     "prebuild": "node scripts/sync-external-docs.js && node scripts/generate-tools-table.js",
     "build": "docusaurus build",
+    "test": "node scripts/check-build.js",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
