@@ -106,7 +106,7 @@ theme: {
             items: [
               {
                 label: 'Drivers',
-                to: '/docs/drivers',
+                to: '/docs/intro',
               },
               {
                 label: 'Contribute',
