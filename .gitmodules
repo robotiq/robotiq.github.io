@@ -1,0 +1,9 @@
+[submodule "external/tactile_sensors"]
+	path = external/tactile_sensors
+	url = https://github.com/Robotiq/tactile_sensors
+[submodule "external/ros"]
+	path = external/ros
+	url = https://github.com/robotiq/ros
+[submodule "external/org-profile"]
+	path = external/org-profile
+	url = https://github.com/robotiq/.github

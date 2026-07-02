@@ -1,0 +1,467 @@
+---
+displayed_sidebar: null
+---
+
+# Contributing Software Tool Documentation
+
+This guide covers two things: setting up the repo locally and opening
+a pull request, and embedding a software tool repository as a Git
+submodule with optional auto-generated API docs.
+
+---
+
+## Local development workflow
+
+### Prerequisites
+
+- **Node.js** 18 or later — [nodejs.org](https://nodejs.org)
+- **Git** with submodule support
+
+### 1. Clone and initialise
+
+```bash
+git clone https://github.com/robotiq/robotiq.github.io
+cd robotiq.github.io
+git submodule update --init
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Sync external docs
+
+The sync script pulls content from submodules into `docs/`. It runs
+automatically on `npm start` and `npm run build`, but you can trigger
+it manually at any time to verify a new sync job:
+
+```bash
+node scripts/sync-external-docs.js
+```
+
+### 4. Start the dev server
+
+```bash
+npm start
+```
+
+Opens `http://localhost:3000` in your browser. The page hot-reloads
+when you edit files under `docs/`, `src/`, or `sidebars.js`.
+
+### 5. Open a pull request
+
+1. Create a branch:
+   ```bash
+   git checkout -b my-feature
+   ```
+2. Commit your changes:
+   ```bash
+   git add .
+   git commit -m "Add FT300 Python tool page"
+   ```
+3. Push and open a pull request from your branch to `main`:
+   ```bash
+   git push -u origin my-feature
+   ```
+
+The CI pipeline builds the site and reports broken links or MDX
+errors before the PR is merged.
+
+---
+
+## How it works
+
+Each software tool (SDK, driver, ROS package, …) lives in its own
+GitHub repository. Embedding it here works in two steps:
+
+1. **Submodule** — a Git submodule under `external/` acts as a
+   pinned import of the tool's repository. It does not copy files;
+   it records the exact commit of the source repo that this site
+   should use. Running `git submodule update --init` checks out
+   those commits locally so their files become available.
+
+2. **Sync script** — [`scripts/sync-external-docs.js`](https://github.com/robotiq/robotiq.github.io/blob/main/scripts/sync-external-docs.js)
+   reads the checked-out submodule files and copies the ones you
+   declare into `docs/`, rewriting relative links so they resolve
+   correctly on this site.
+
+### Repository layout
+
+```
+robotiq.github.io/
+├── external/                          ← pinned imports of source repos
+│   ├── tactile_sensors/               ← TSF-85 SDK repo
+│   └── ros/                           ← ROS packages repo
+├── docs/
+│   ├── intro.mdx                       ← overview page, includes the
+│   │                                     auto-generated software tools table
+│   └── drivers/
+│       ├── TSF-85/
+│       │   ├── index.mdx              ← product landing page (in git)
+│       │   ├── C++/
+│       │   │   ├── index.mdx          ← wrapper page (in git)
+│       │   │   └── _readme.md         ← synced from submodule
+│       │   ├── Python/
+│       │   │   ├── index.mdx
+│       │   │   └── _readme.md
+│       │   └── ROS/
+│       │       └── index.mdx
+│       ├── FT300/
+│       │   ├── index.mdx
+│       │   ├── C/ …
+│       │   ├── Python/ …
+│       │   └── ROS/ …
+│       └── 2F hande/
+│           ├── index.mdx
+│           ├── C++/ …
+│           ├── Python/ …
+│           └── ROS/ …
+├── scripts/
+│   ├── sync-external-docs.js
+│   └── generate-tools-table.js
+└── sidebars.js
+```
+
+Files prefixed with `_` are Docusaurus **partials** — imported by a
+wrapper `.mdx` but not standalone pages themselves.
+
+---
+
+## Step-by-step: adding a new software tool
+
+The steps below add a Python tool for the **2F hande** gripper family hosted
+at `https://github.com/robotiq/2f85-python-driver`.
+
+### 1. Add the submodule
+
+This registers the tool's repository as a pinned import under
+`external/`. Every contributor who clones this site will get the
+same version of the source repo.
+
+```bash
+git submodule add \
+  https://github.com/robotiq/2f85-python-driver \
+  external/2f85_python
+git submodule update --init
+```
+
+### 2. Declare the sync job
+
+Open [`scripts/sync-external-docs.js`](https://github.com/robotiq/robotiq.github.io/blob/main/scripts/sync-external-docs.js)
+and add an entry to the `JOBS` array. Each job copies one file or
+folder from the submodule into `docs/`:
+
+```js
+{
+  submodule: '2f85_python',
+  repoUrl:   'https://github.com/robotiq/2f85-python-driver',
+  branch:    'main',
+  from:      'README.md',
+  to:        'drivers/2F hande/Python/_readme.md',
+},
+```
+
+For a repo that contains multiple tools, add one job per tool:
+
+```js
+// C++ tool
+{
+  submodule: '2f85_drivers',
+  repoUrl: '...',
+  branch: 'main',
+  from: 'sdk_cpp/README.md',
+  to: 'drivers/2F hande/C++/_readme.md',
+},
+
+// Python tool
+{
+  submodule: '2f85_drivers',
+  repoUrl: '...',
+  branch: 'main',
+  from: 'python/README.md',
+  to: 'drivers/2F hande/Python/_readme.md',
+},
+```
+
+Test locally:
+
+```bash
+node scripts/sync-external-docs.js
+```
+
+### 3. Create the wrapper page
+
+Create `docs/drivers/2F hande/Python/index.mdx`. This file
+is tracked in git and controls the page title, sidebar label, and
+any introductory text above the synced README:
+
+```mdx
+---
+title: Python
+sidebar_label: Python
+sidebar_position: 2
+---
+
+![Supported by Robotiq](https://img.shields.io/badge/Supported_by-Robotiq-blue)
+
+Brief description and link to the source repository.
+
+## Intro
+
+import Readme from './_readme.md';
+
+<Readme />
+```
+
+The `## Intro` heading and the import are optional — omit them if
+there is no synced README or if the content should start directly.
+
+The badge is required, not decorative — it drives the "Software
+tools overview" table on `docs/intro.mdx` (see
+[Auto-generated software tools table](#auto-generated-software-tools-table)
+below). Use `Supported_by-Robotiq-blue` for tools developed and
+maintained by Robotiq, or `Supported_by-Third_party-lightgrey` for
+community-maintained tools.
+
+**No README or no software tool yet?** Skip steps 1 and 2 entirely
+and write the `index.mdx` manually. This is the right approach when
+a tool is planned but not yet available, or when the source repo has
+no suitable README to pull in. Write the page content directly with
+no import:
+
+```mdx
+---
+title: Python
+sidebar_label: Python
+sidebar_position: 2
+---
+
+![Supported by Robotiq](https://img.shields.io/badge/Supported_by-Third_party-lightgrey)
+
+Coming soon. In the meantime, see
+[org/repo](https://github.com/robotiq/...) on GitHub.
+```
+
+The page still appears in the sidebar and can be updated to import
+a synced README later, once the tool or its documentation exists.
+
+### 4. Create the product landing page
+
+If the product folder has no `index.mdx` yet, create
+`docs/drivers/2F hande/index.mdx`:
+
+```mdx
+---
+title: 2F / Hand-E
+sidebar_label: 2F / Hand-E
+sidebar_position: 0
+---
+
+Short description of the product family.
+
+## Available tools
+
+| Language | Description | Repository |
+|---|---|---|
+| [C++](C++/index) | ... | [org/repo](https://github.com/...) |
+| [Python](Python/index) | ... | [org/repo](https://github.com/...) |
+| [ROS](ROS/index) | ... | [org/repo](https://github.com/...) |
+```
+
+The `title` here is what shows up as the row label in the
+auto-generated "Software tools overview" table — see below.
+
+### 5. Register in `sidebars.js`
+
+Add a category entry with a `link` pointing at the product landing
+page:
+
+```js
+{
+  type: 'category',
+  label: '2F / Hand-E',
+  link: { type: 'doc', id: 'drivers/2F hande/index' },
+  items: [
+    'drivers/2F hande/C++/index',
+    'drivers/2F hande/Python/index',
+    'drivers/2F hande/ROS/index',
+  ],
+},
+```
+
+---
+
+## Auto-generated software tools table
+
+`docs/intro.mdx` has a "Software tools overview" table listing every
+product against every tool (C, C++, Python, ROS, …), with each cell
+showing that tool's support badge linked to its page. You never edit
+this table by hand — it's regenerated by
+[`scripts/generate-tools-table.js`](https://github.com/robotiq/robotiq.github.io/blob/main/scripts/generate-tools-table.js),
+which runs automatically on `npm start` / `npm run build` (same as
+`sync-external-docs.js`).
+
+The script scans `docs/drivers/<Product>/<Tool>/index.mdx` for two
+things:
+
+- **Row** — the product's own `title` frontmatter (from
+  `docs/drivers/<Product>/index.mdx`).
+- **Column + cell** — the tool's `title` frontmatter and its
+  `Supported_by-<Label>-<color>` badge (see step 3 above). The badge
+  shown in the table is a compact version (no "Supported by" prefix)
+  — only the source page keeps the full badge.
+
+This means adding a new product or tool page, with a title and a
+badge, is enough to make it appear in the table on the next build —
+no manual edit needed.
+
+Two things are still hand-maintained in the script itself, by design
+— they're presentation choices, not derivable from the file tree:
+
+- `COLUMN_ORDER` — preferred left-to-right column order. A tool title
+  not listed here still gets its own column, just sorted
+  alphabetically after the known ones.
+- `COLUMN_DESCRIPTIONS` — the one-line legend shown under the table.
+  A tool without an entry here still gets a column, just no legend
+  line, until one is added.
+
+To test a change locally:
+
+```bash
+node scripts/generate-tools-table.js
+```
+
+It rewrites the content between the
+`{/* AUTO-GENERATED-TOOLS-TABLE:START */}` /
+`{/* AUTO-GENERATED-TOOLS-TABLE:END */}` markers in `docs/intro.mdx`
+and leaves the rest of the page untouched.
+
+---
+
+## Auto-generated API reference from docstrings
+
+Software tool repos can expose a machine-generated API reference
+page — no manual writing required. The sync script runs the
+generation tool against the submodule during build.
+
+### Python — pydoc-markdown
+
+**In the tool repository**, add docstrings following Google or NumPy
+style, and commit a `pydoc-markdown.yml` config at the repo root:
+
+```yaml
+# pydoc-markdown.yml (in the tool repo)
+loaders:
+  - type: python
+    search_path: [.]
+    packages: [your_package_name]
+renderer:
+  type: markdown
+  filename: docs/api.md
+  render_toc: true
+```
+
+**In this site**, install the tool once:
+
+```bash
+npm install --save-dev pydoc-markdown
+```
+
+Then add a generation step to `scripts/sync-external-docs.js`
+**before** the `JOBS` loop:
+
+```js
+const { execSync } = require('child_process');
+
+execSync('pydoc-markdown', {
+  cwd: path.join(ROOT, 'external', '2f85_python'),
+  stdio: 'inherit',
+});
+```
+
+This writes `external/2f85_python/docs/api.md`. Copy it with a
+normal job:
+
+```js
+{
+  submodule: '2f85_python',
+  repoUrl:   'https://github.com/robotiq/2f85-python-driver',
+  branch:    'main',
+  from:      'docs/api.md',
+  to:        'drivers/2F hande/Python/api.md',
+},
+```
+
+Add `'drivers/2F hande/Python/api'` to the sidebar items.
+
+### C++ — Doxygen + Doxybook2
+
+**In the tool repository**, add Doxygen-style comments to headers
+and commit a `Doxyfile` configured to output XML:
+
+```
+# Doxyfile (relevant lines)
+GENERATE_XML  = YES
+XML_OUTPUT    = doxygen-xml
+GENERATE_HTML = NO
+INPUT         = .
+RECURSIVE     = YES
+```
+
+**In this site**, install the tools once:
+
+```bash
+# Doxygen: https://www.doxygen.nl/download.html  (add to PATH)
+npm install --save-dev @mikaelkristiansson87/doxybook2
+```
+
+Add generation steps to `scripts/sync-external-docs.js`:
+
+```js
+const submoduleDir = path.join(ROOT, 'external', '2f85_cpp');
+const xmlOut = path.join(submoduleDir, 'doxygen-xml');
+const mdOut  = path.join(submoduleDir, 'docs/api');
+
+execSync('doxygen', { cwd: submoduleDir, stdio: 'inherit' });
+
+execSync(
+  `doxybook2 --input ${xmlOut} --output ${mdOut}` +
+  ` --config .doxybook/config.json`,
+  { cwd: submoduleDir, stdio: 'inherit' }
+);
+```
+
+Then copy the output with a folder job:
+
+```js
+{
+  submodule: '2f85_cpp',
+  repoUrl:   'https://github.com/robotiq/2f85-cpp-driver',
+  branch:    'main',
+  from:      'docs/api',
+  to:        'drivers/2F hande/C++/api',
+},
+```
+
+Add `'drivers/2F hande/C++/api'` (or its sub-pages) to the
+sidebar.
+
+---
+
+## Quick reference
+
+| What | Where |
+|---|---|
+| Submodules (pinned repo imports) | `external/<submodule>/` |
+| Sync + generation config | `scripts/sync-external-docs.js` → `JOBS` |
+| Synced partials | `docs/drivers/<Product>/<Language>/_readme.md` |
+| Wrapper pages | `docs/drivers/<Product>/<Language>/index.mdx` |
+| Support badge (drives the overview table) | `![Supported by <Label>](.../Supported_by-<Label>-<color>)` at the top of each wrapper page |
+| Product landing pages | `docs/drivers/<Product>/index.mdx` |
+| Generated API pages | `docs/drivers/<Product>/<Language>/api.md` |
+| Auto-generated tools table script | `scripts/generate-tools-table.js` |
+| Auto-generated tools table output | `docs/intro.mdx`, between the `AUTO-GENERATED-TOOLS-TABLE` markers |
+| Sidebar config | `sidebars.js` |
+| Doc ID format | `drivers/TSF-85/C++/index` |

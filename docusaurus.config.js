@@ -82,14 +82,15 @@ theme: {
             type: 'docSidebar',
             sidebarId: 'driverSidebar',
             position: 'left',
-            label: 'Drivers',
+            label: 'Docs',
           },
-          {
-            type: 'docSidebar',
-            sidebarId: 'examplesSidebar',
-            position: 'left',
-            label: 'Examples',
-          },
+          // Examples navbar item — uncomment when content is ready
+          // {
+          //   type: 'docSidebar',
+          //   sidebarId: 'examplesSidebar',
+          //   position: 'left',
+          //   label: 'Examples',
+          // },
 {
             href: 'https://github.com/robotiq',
             label: 'GitHub',
@@ -108,8 +109,8 @@ theme: {
                 to: '/docs/drivers',
               },
               {
-                label: 'Examples',
-                to: '/docs/examples',
+                label: 'Contribute',
+                to: '/docs/contribute',
               },
             ],
           },

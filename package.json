@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
+    "prestart": "node scripts/sync-external-docs.js && node scripts/generate-tools-table.js",
     "start": "docusaurus start",
+    "prebuild": "node scripts/sync-external-docs.js && node scripts/generate-tools-table.js",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",

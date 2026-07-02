@@ -7,6 +7,9 @@
 # Generated files
 .docusaurus
 .cache-loader
+docs/drivers/_tsf-85-readme.md
+docs/drivers/_ros-readme.md
+docs/_org-profile-readme.md
 
 # Misc
 .DS_Store

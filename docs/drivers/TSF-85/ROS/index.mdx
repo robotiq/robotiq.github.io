@@ -1,0 +1,77 @@
+---
+title: ROS
+sidebar_label: ROS
+sidebar_position: 3
+---
+
+<div style={{display: 'flex', gap: '1rem', justifyContent: 'left', flexWrap: 'wrap'}}>
+  <span className="logo-chip">
+    <img src="/img/Ros_logo.svg.png" alt="ROS logo" style={{height: '10vh', width: 'auto', maxWidth: '100%'}} />
+  </span>
+</div>
+
+![Supported by Robotiq](https://img.shields.io/badge/Supported_by-Robotiq-blue)
+
+The `robotiq_tsf` ROS 2 Jazzy package publishes the TSF-85 tactile sensor's
+static, dynamic, IMU, and fused-orientation data as ROS topics. It is
+available in the following repository:
+
+https://github.com/robotiq/ros/tree/main/robotiq_tsf
+
+## Build
+
+Clone the repository into your ROS 2 workspace's `src/` folder and build with
+`colcon`:
+
+```bash
+cd ~/ros2_ws/src
+git clone https://github.com/robotiq/ros.git
+cd ~/ros2_ws
+colcon build --packages-select robotiq_tsf
+source install/setup.bash
+```
+
+## Run
+
+Launch the sensor node:
+
+```bash
+ros2 run robotiq_tsf poll_data_node
+```
+
+The node publishes on the following topics:
+
+| Topic | Message Type | Description |
+|---|---|---|
+| `TactileSensor/StaticData` | `robotiq_tsf/StaticData` | Taxel pressure data — two fingers, each with 28 `uint16` values |
+| `TactileSensor/Dynamic` | `robotiq_tsf/Dynamic` | Dynamic force data — two fingers, each with one `int16` value |
+| `TactileSensor/Accelerometer` | `robotiq_tsf/Accelerometer` | Raw accelerometer — two readings of `[x, y, z]` `int16` |
+| `TactileSensor/Gyroscope` | `robotiq_tsf/Gyroscope` | Raw gyroscope — two readings of `[x, y, z]` `int16` |
+| `TactileSensor/EulerAngle` | `robotiq_tsf/EulerAngle` | Fused orientation — two readings of `[roll, pitch, yaw]` `float32` |
+| `TactileSensor/Quaternion` | `robotiq_tsf/Quaternion` | Fused orientation — two readings of `[w, x, y, z]` `float64` |
+| `TactileSensor/Timestamp` | `robotiq_tsf/Timestamp` | Per-finger firmware timestamp — two `uint16` values |
+
+> `EulerAngle` and `Quaternion` are only published once the IMU bias
+> calibration period completes at startup — keep the sensor still during
+> this time.
+
+## Docker
+
+The repository's `docker/` folder provides scripts to build and run the
+driver in a container, with sensor devices mapped in automatically. Clone
+with submodules to pull in the required utilities:
+
+```bash
+git clone --recurse-submodules https://github.com/robotiq/ros.git
+```
+
+If you already cloned without `--recurse-submodules`:
+
+```bash
+git submodule update --init
+```
+
+| Script | Description |
+|---|---|
+| `build_launch_docker_ros2.sh` | Builds the Docker image and launches a container with sensor devices mapped in |
+| `sensor_install.sh` | Sets up udev rules and permissions for bare-metal (non-Docker) use |
