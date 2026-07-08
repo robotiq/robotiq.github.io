@@ -4,13 +4,13 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
-    "prestart": "node scripts/sync-external-docs.js && node scripts/generate-tools-table.js",
+    "generate": "node scripts/sync-external-docs.js && node scripts/generate-tools-table.js",
+    "prestart": "npm run generate",
     "start": "docusaurus start",
-    "prebuild": "node scripts/sync-external-docs.js && node scripts/generate-tools-table.js",
+    "prebuild": "npm run generate",
     "build": "docusaurus build",
     "test": "node scripts/check-build.js",
     "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
@@ -28,7 +28,8 @@
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.10.1",
-    "@docusaurus/types": "3.10.1"
+    "@docusaurus/types": "3.10.1",
+    "gray-matter": "^4.0.3"
   },
   "browserslist": {
     "production": [

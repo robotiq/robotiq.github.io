@@ -14,7 +14,7 @@ submodule with optional auto-generated API docs.
 
 ### Prerequisites
 
-- **Node.js** 18 or later — [nodejs.org](https://nodejs.org)
+- **Node.js** 20 or later — [nodejs.org](https://nodejs.org)
 - **Git** with submodule support
 
 ### 1. Clone and initialise
@@ -92,32 +92,39 @@ GitHub repository. Embedding it here works in two steps:
 ```
 robotiq.github.io/
 ├── external/                          ← pinned imports of source repos
-│   ├── tactile_sensors/               ← TSF-85 SDK repo
-│   └── ros/                           ← ROS packages repo
+│   └── tactile_sensors/               ← TSF-85 SDK repo
 ├── docs/
 │   ├── intro.mdx                       ← overview page, includes the
-│   │                                     auto-generated software tools table
+│   │                                     auto-generated software tools tables
 │   └── drivers/
 │       ├── TSF-85/
 │       │   ├── index.mdx              ← product landing page (in git)
-│       │   ├── C++/
-│       │   │   ├── index.mdx          ← wrapper page (in git)
-│       │   │   └── _readme.md         ← synced from submodule
-│       │   ├── Python/
-│       │   │   ├── index.mdx
-│       │   │   └── _readme.md
-│       │   └── ROS/
-│       │       └── index.mdx
+│       │   ├── SDK/
+│       │   │   ├── C++/
+│       │   │   │   ├── index.mdx      ← wrapper page (in git)
+│       │   │   │   └── _readme.md     ← synced from submodule
+│       │   │   └── Python/
+│       │   │       ├── index.mdx
+│       │   │       └── _readme.md
+│       │   ├── ROS/
+│       │   │   └── ROS2/index.mdx
+│       │   └── Physics Engine/
+│       │       └── Isaac Sim/index.mdx
 │       ├── FT300/
 │       │   ├── index.mdx
-│       │   ├── C/ …
-│       │   ├── Python/ …
-│       │   └── ROS/ …
+│       │   ├── SDK/C/ …
+│       │   ├── SDK/Python/ …
+│       │   └── ROS/ROS2/ …
 │       └── 2F hande/
 │           ├── index.mdx
-│           ├── C++/ …
-│           ├── Python/ …
-│           └── ROS/ …
+│           ├── SDK/C++/ …
+│           ├── SDK/Python/ …
+│           ├── ROS/ROS2/ …
+│           ├── Physics Engine/Isaac Sim/ …
+│           ├── Physics Engine/PyBullet/ …
+│           └── GraspGen/ …            ← "Other" category, no wrapper folder needed
+├── draft/                              ← content with no nav link yet (never
+│                                          built into a page — outside docs/)
 ├── scripts/
 │   ├── sync-external-docs.js
 │   └── generate-tools-table.js
@@ -126,6 +133,13 @@ robotiq.github.io/
 
 Files prefixed with `_` are Docusaurus **partials** — imported by a
 wrapper `.mdx` but not standalone pages themselves.
+
+The `SDK/`, `ROS/`, and `Physics Engine/` folders are just organizational
+containers — `generate-tools-table.js` doesn't care about folder names, only
+about which `index.mdx` files carry a `Category` badge (see
+[step 3](#3-create-the-wrapper-page) below). `GraspGen/` proves the point: it
+sits directly under the product folder with no wrapper category folder, and
+still lands in the "Other" table because of its badge, not its path.
 
 ### Excluding content from a synced README
 
@@ -179,7 +193,7 @@ folder from the submodule into `docs/`:
   repoUrl:   'https://github.com/robotiq/2f85-python-driver',
   branch:    'main',
   from:      'README.md',
-  to:        'drivers/2F hande/Python/_readme.md',
+  to:        'drivers/2F hande/SDK/Python/_readme.md',
 },
 ```
 
@@ -192,7 +206,7 @@ For a repo that contains multiple tools, add one job per tool:
   repoUrl: '...',
   branch: 'main',
   from: 'sdk_cpp/README.md',
-  to: 'drivers/2F hande/C++/_readme.md',
+  to: 'drivers/2F hande/SDK/C++/_readme.md',
 },
 
 // Python tool
@@ -201,7 +215,7 @@ For a repo that contains multiple tools, add one job per tool:
   repoUrl: '...',
   branch: 'main',
   from: 'python/README.md',
-  to: 'drivers/2F hande/Python/_readme.md',
+  to: 'drivers/2F hande/SDK/Python/_readme.md',
 },
 ```
 
@@ -213,7 +227,7 @@ node scripts/sync-external-docs.js
 
 ### 3. Create the wrapper page
 
-Create `docs/drivers/2F hande/Python/index.mdx`. This file
+Create `docs/drivers/2F hande/SDK/Python/index.mdx`. This file
 is tracked in git and controls the page title, sidebar label, and
 any introductory text above the synced README:
 
@@ -223,6 +237,8 @@ title: Python
 sidebar_label: Python
 sidebar_position: 2
 ---
+
+![SDK](https://img.shields.io/badge/Category-SDK-lightgrey)
 
 ![Supported by Robotiq](https://img.shields.io/badge/Supported_by-Robotiq-blue)
 
@@ -238,12 +254,37 @@ import Readme from './_readme.md';
 The `## Intro` heading and the import are optional — omit them if
 there is no synced README or if the content should start directly.
 
-The badge is required, not decorative — it drives the "Software
-tools overview" table on `docs/intro.mdx` (see
-[Auto-generated software tools table](#auto-generated-software-tools-table)
-below). Use `Supported_by-Robotiq-blue` for tools developed and
-maintained by Robotiq, or `Supported_by-Third_party-lightgrey` for
-community-maintained tools.
+**Both badges are required, not decorative** — `generate-tools-table.js`
+walks the folder tree looking for the `Category` badge to decide which
+table a page belongs to, and reads the `Supported_by` badge for the cell
+shown in that table (see
+[Auto-generated software tools tables](#auto-generated-software-tools-tables)
+below). Valid `Category` values: `SDK`, `Physics_Engine`, `Other`, `ROS1`,
+`ROS2` (ROS pages use a different badge block — see below). Use
+`Supported_by-Robotiq-blue` for tools developed and maintained by Robotiq,
+or `Supported_by-Third_party-lightgrey` for community-maintained tools.
+
+**ROS pages are different.** Instead of one `Supported_by` badge, a ROS
+tool page carries one `Distro` badge per supported ROS distribution, each
+immediately followed by its own `Supported_by` badge — that's what drives
+the ROS1/ROS2 distro-compatibility tables:
+
+```mdx
+---
+title: ROS
+sidebar_label: ROS
+sidebar_position: 3
+---
+
+![Category](https://img.shields.io/badge/Category-ROS2-lightgrey)<br />
+![Distro](https://img.shields.io/badge/Distro-Jazzy-lightgrey)
+![Supported by Robotiq](https://img.shields.io/badge/Supported_by-Robotiq-blue)
+```
+
+For a tool supporting several distros, repeat the `Distro`/`Supported_by`
+pair for each one (see `docs/drivers/2F hande/ROS/ROS2/index.mdx` for a
+three-distro example). Use `Category-ROS1` instead of `Category-ROS2` for
+a ROS 1 package.
 
 **No README or no software tool yet?** Skip steps 1 and 2 entirely
 and write the `index.mdx` manually. This is the right approach when
@@ -257,6 +298,8 @@ title: Python
 sidebar_label: Python
 sidebar_position: 2
 ---
+
+![SDK](https://img.shields.io/badge/Category-SDK-lightgrey)
 
 ![Supported by Robotiq](https://img.shields.io/badge/Supported_by-Third_party-lightgrey)
 
@@ -283,20 +326,48 @@ Short description of the product family.
 
 ## Available drivers
 
-{/* AUTO-GENERATED-PRODUCT-TOOLS-TABLE:START */}
-{/* AUTO-GENERATED-PRODUCT-TOOLS-TABLE:END */}
+### SDK
+
+{/* AUTO-GENERATED-PRODUCT-SDK-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-SDK-TABLE:END */}
+
+### ROS
+
+#### ROS2
+
+{/* AUTO-GENERATED-PRODUCT-ROS2-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-ROS2-TABLE:END */}
+
+#### ROS1
+
+{/* AUTO-GENERATED-PRODUCT-ROS1-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-ROS1-TABLE:END */}
+
+### Physics Engine
+
+{/* AUTO-GENERATED-PRODUCT-PHYSICS_ENGINE-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-PHYSICS_ENGINE-TABLE:END */}
+
+### Other
+
+{/* AUTO-GENERATED-PRODUCT-OTHER-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-OTHER-TABLE:END */}
 ```
 
-Don't write the tools table by hand — leave the two marker comments
-next to each other and `scripts/generate-tools-table.js` fills in a
-single-row version of the "Software tools overview" table (see
-below) on the next build. The `title` here is what shows up as the
-row label there.
+Don't write any of the five tables by hand — leave each marker pair next
+to each other and `scripts/generate-tools-table.js` fills in a
+single-row version of the matching category table (see
+[below](#auto-generated-software-tools-tables)) on the next build. The
+`title` here is what shows up as the row label there. A category with no
+tool yet renders a short "not documented yet" placeholder instead of an
+empty table, so it's safe to keep all five headings even before every
+category has content.
 
 ### 5. Register in `sidebars.js`
 
 Add a category entry with a `link` pointing at the product landing
-page:
+page, nesting the tool pages under an SDK / ROS / Physics Engine / Other
+sub-category matching where they live on disk:
 
 ```js
 {
@@ -304,50 +375,89 @@ page:
   label: '2F / Hand-E',
   link: { type: 'doc', id: 'drivers/2F hande/index' },
   items: [
-    'drivers/2F hande/C++/index',
-    'drivers/2F hande/Python/index',
-    'drivers/2F hande/ROS/index',
+    {
+      type: 'category',
+      label: 'SDK',
+      items: [
+        'drivers/2F hande/SDK/C++/index',
+        'drivers/2F hande/SDK/Python/index',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'ROS',
+      items: [
+        'drivers/2F hande/ROS/ROS2/index',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Physics Engine',
+      items: [
+        'drivers/2F hande/Physics Engine/Isaac Sim/index',
+        'drivers/2F hande/Physics Engine/PyBullet/index',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Other',
+      items: [
+        'drivers/2F hande/GraspGen/index',
+      ],
+    },
   ],
 },
 ```
 
+Only include the sub-categories that actually have pages — e.g. FT300-S
+has no Physics Engine or Other tools yet, so its sidebar entry skips
+those two groups entirely.
+
 ---
 
-## Auto-generated software tools table
+## Auto-generated software tools tables
 
-`docs/intro.mdx` has a "Software tools overview" table listing every
-product against every tool (C, C++, Python, ROS, …), with each cell
-showing that tool's support badge linked to its page. Each product's
-own landing page (`docs/drivers/<Product>/index.mdx`) also gets a
-single-row version of that same table, scoped to just that product.
-You never edit either table by hand — both are regenerated by
+`docs/intro.mdx` has five "Software tools" tables, one per category —
+**SDK**, **ROS2**, **ROS1**, **Physics Engine**, **Other** — each listing
+every product that has a tool in that category, with each cell showing
+that tool's support badge linked to its page. Each product's own landing
+page (`docs/drivers/<Product>/index.mdx`) gets the same five tables,
+single-row versions scoped to just that product. You never edit any of
+them by hand — all ten (five global + five per-product) are regenerated by
 [`scripts/generate-tools-table.js`](https://github.com/robotiq/robotiq.github.io/blob/main/scripts/generate-tools-table.js),
 which runs automatically on `npm start` / `npm run build` (same as
 `sync-external-docs.js`).
 
-The script scans `docs/drivers/<Product>/<Tool>/index.mdx` for two
-things:
+The script walks each `docs/drivers/<Product>/` folder tree looking for
+tool leaf pages — an `index.mdx` carrying a `Category` badge — regardless
+of how deeply it's nested (`SDK/`, `ROS/`, `Physics Engine/`, or no
+container folder at all, as with `GraspGen/`). For each leaf page found:
 
 - **Row** — the product's own `title` frontmatter (from
   `docs/drivers/<Product>/index.mdx`).
-- **Column + cell** — the tool's `title` frontmatter and its
-  `Supported_by-<Label>-<color>` badge (see step 3 above). The badge
-  shown in the table is a compact version (no "Supported by" prefix)
-  — only the source page keeps the full badge.
+- **SDK / Physics Engine / Other pages** — column = the tool's `title`
+  frontmatter; cell = its `Supported_by-<Label>-<color>` badge (see
+  [step 3](#3-create-the-wrapper-page) above), shown compactly (no
+  "Supported by" prefix — only the source page keeps the full badge).
+- **ROS1 / ROS2 pages** — columns = the distros named in that page's
+  `Distro-<Name>` badges; cell = the `Supported_by` badge immediately
+  following each one.
 
-This means adding a new product or tool page, with a title and a
-badge, is enough to make it appear in both tables on the next build —
-no manual edit needed.
+This means adding a new product or tool page, with a title and the right
+badges, is enough to make it appear in the matching tables on the next
+build — no manual edit needed. A category with no products yet renders a
+short placeholder line instead of an empty table.
 
-Two things are still hand-maintained in the script itself, by design
-— they're presentation choices, not derivable from the file tree:
+A few things are still hand-maintained in the script itself, by design —
+they're presentation choices, not derivable from the file tree:
 
-- `COLUMN_ORDER` — preferred left-to-right column order. A tool title
-  not listed here still gets its own column, just sorted
-  alphabetically after the known ones.
-- `COLUMN_DESCRIPTIONS` — the one-line legend shown under the table.
-  A tool without an entry here still gets a column, just no legend
-  line, until one is added.
+- `COLUMN_ORDER` / `DISTRO_ORDER` — preferred left-to-right order for
+  each category's columns / each ROS table's distro columns. Anything
+  not listed still gets its own column, just sorted alphabetically
+  after the known ones.
+- `COLUMN_DESCRIPTIONS` / `DISTRO_DESCRIPTIONS` — the one-line legend
+  shown under each table. A column or distro without an entry here
+  still appears, just with no legend line, until one is added.
 
 To test a change locally:
 
@@ -355,11 +465,13 @@ To test a change locally:
 node scripts/generate-tools-table.js
 ```
 
-It rewrites the content between the `AUTO-GENERATED-TOOLS-TABLE`
-markers in `docs/intro.mdx` and, for each product, between the
-`AUTO-GENERATED-PRODUCT-TOOLS-TABLE` markers in that product's own
-`index.mdx` — leaving the rest of each page untouched. The two marker
-pairs use different link styles on purpose: `docs/intro.mdx` needs
+It rewrites the content between each `AUTO-GENERATED-<CATEGORY>-TABLE`
+marker pair (`AUTO-GENERATED-SDK-TABLE`, `AUTO-GENERATED-ROS2-TABLE`,
+`AUTO-GENERATED-ROS1-TABLE`, `AUTO-GENERATED-PHYSICS_ENGINE-TABLE`,
+`AUTO-GENERATED-OTHER-TABLE`) in `docs/intro.mdx`, and the matching
+`AUTO-GENERATED-PRODUCT-<CATEGORY>-TABLE` marker pairs in each product's
+own `index.mdx` — leaving the rest of each page untouched. The two sets
+of markers use different link styles on purpose: `docs/intro.mdx` needs
 root-relative links (`drivers/<Product>/<Tool>`), while a product page
 needs page-relative links (`<Tool>`), since it already lives inside
 `docs/drivers/<Product>/`. Reusing the root-relative form on a product
@@ -419,11 +531,11 @@ normal job:
   repoUrl:   'https://github.com/robotiq/2f85-python-driver',
   branch:    'main',
   from:      'docs/api.md',
-  to:        'drivers/2F hande/Python/api.md',
+  to:        'drivers/2F hande/SDK/Python/api.md',
 },
 ```
 
-Add `'drivers/2F hande/Python/api'` to the sidebar items.
+Add `'drivers/2F hande/SDK/Python/api'` to the sidebar items.
 
 ### C++ — Doxygen + Doxybook2
 
@@ -470,11 +582,11 @@ Then copy the output with a folder job:
   repoUrl:   'https://github.com/robotiq/2f85-cpp-driver',
   branch:    'main',
   from:      'docs/api',
-  to:        'drivers/2F hande/C++/api',
+  to:        'drivers/2F hande/SDK/C++/api',
 },
 ```
 
-Add `'drivers/2F hande/C++/api'` (or its sub-pages) to the
+Add `'drivers/2F hande/SDK/C++/api'` (or its sub-pages) to the
 sidebar.
 
 ---
@@ -486,13 +598,16 @@ sidebar.
 | Submodules (pinned repo imports) | `external/<submodule>/` |
 | Sync + generation config | `scripts/sync-external-docs.js` → `JOBS` |
 | Exclude README content from the synced page | `<!-- docs-site:exclude -->` ... `<!-- /docs-site:exclude -->` in the tool repo's README |
-| Synced partials | `docs/drivers/<Product>/<Language>/_readme.md` |
-| Wrapper pages | `docs/drivers/<Product>/<Language>/index.mdx` |
-| Support badge (drives the overview table) | `![Supported by <Label>](.../Supported_by-<Label>-<color>)` at the top of each wrapper page |
+| Synced partials | `docs/drivers/<Product>/<Category>/<Tool>/_readme.md` |
+| Wrapper pages | `docs/drivers/<Product>/<Category>/<Tool>/index.mdx` |
+| Category badge (SDK / ROS1 / ROS2 / Physics_Engine / Other) | `![...](.../Category-<Name>-lightgrey)` at the top of each wrapper page |
+| Support badge (non-ROS tables) | `![Supported by <Label>](.../Supported_by-<Label>-<color>)`, right after the Category badge |
+| Distro + support badges (ROS tables) | one `Distro-<Name>` badge per supported distro, each immediately followed by its own `Supported_by-<Label>-<color>` badge |
 | Product landing pages | `docs/drivers/<Product>/index.mdx` |
-| Generated API pages | `docs/drivers/<Product>/<Language>/api.md` |
-| Auto-generated tools table script | `scripts/generate-tools-table.js` |
-| Auto-generated overview table output | `docs/intro.mdx`, between the `AUTO-GENERATED-TOOLS-TABLE` markers |
-| Auto-generated per-product table output | `docs/drivers/<Product>/index.mdx`, between the `AUTO-GENERATED-PRODUCT-TOOLS-TABLE` markers |
+| Generated API pages | `docs/drivers/<Product>/<Category>/<Tool>/api.md` |
+| Draft / not-yet-linked content (never built into a page) | `draft/` at the repo root, outside `docs/` |
+| Auto-generated tools tables script | `scripts/generate-tools-table.js` |
+| Auto-generated overview tables output | `docs/intro.mdx`, between each `AUTO-GENERATED-<CATEGORY>-TABLE` marker pair |
+| Auto-generated per-product tables output | `docs/drivers/<Product>/index.mdx`, between each `AUTO-GENERATED-PRODUCT-<CATEGORY>-TABLE` marker pair |
 | Sidebar config | `sidebars.js` |
-| Doc ID format | `drivers/TSF-85/C++/index` |
+| Doc ID format | `drivers/TSF-85/SDK/C++/index` |

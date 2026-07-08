@@ -19,10 +19,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # Submodules aren't checked out here — scripts/sync-external-docs.js
+      # runs `git submodule update --init --force` itself as part of the
+      # build, so doing it again via actions/checkout would just be a
+      # redundant second fetch.
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: true
 
       - uses: actions/setup-node@v4
         with:

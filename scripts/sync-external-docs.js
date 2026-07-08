@@ -21,21 +21,13 @@ try {
 
 // ── Add new repos here ─────────────────────────────────────────────────────
 const JOBS = [
-  //Organisation profile README
-  {
-    submodule: 'org-profile',
-    repoUrl: 'https://github.com/robotiq/.github',
-    branch: 'main',
-    from: 'profile/README.md',
-    to: '_org-profile-readme.md',
-  },
   // TSF 85 CPP driver README
   {
     submodule: 'tactile_sensors',
     repoUrl: 'https://github.com/robotiq/tactile_sensors',
     branch: 'main',
     from: 'sdk_cpp/README.md',
-    to: 'drivers/TSF-85/C++/_readme.md',
+    to: 'drivers/TSF-85/SDK/C++/_readme.md',
   },
   // TSF 85 Python driver README
   {
@@ -43,7 +35,7 @@ const JOBS = [
     repoUrl: 'https://github.com/robotiq/tactile_sensors',
     branch: 'main',
     from: 'sensor_quickstart/README.md',
-    to: 'drivers/TSF-85/Python/_readme.md',
+    to: 'drivers/TSF-85/SDK/Python/_readme.md',
   },
   // Folder example — uncomment when a repo has a docs/ folder:
   // {
@@ -80,13 +72,16 @@ function rewriteLinks(content, { srcFile, destFile, copiedRoot, destCopiedRoot, 
   // but never makes it into the synced docs page.
   content = content.replace(/<!--\s*docs-site:exclude\s*-->[\s\S]*?<!--\s*\/docs-site:exclude\s*-->\n?/g, '');
 
-  // Strip leading H1 — the wrapper .mdx supplies the page title via sidebar_label frontmatter.
-  content = content.replace(/^# [^\n]*\n+/, '');
+  // Strip the leading H1 — the wrapper .mdx supplies the page title via
+  // sidebar_label frontmatter. Uses 'm' (without 'g') so it finds the first
+  // "# " line anywhere near the top and removes only that one match, even
+  // when the README opens with a badge or blank line before its title.
+  content = content.replace(/^# .*\n+/m, '');
 
   // Convert <url> autolinks to [url](url) — MDX treats angle-bracket URLs as JSX and fails.
   content = content.replace(/<(https?:\/\/[^>\s]+)>/g, '[$1]($1)');
 
-  return content.replace(/\[([^\]]*)\]\(([^)\n]+)\)/g, (match, text, href) => {
+  return content.replace(/(!?)\[([^\]]*)\]\(([^)\n]+)\)/g, (match, bang, text, href) => {
     const hashIdx = href.indexOf('#');
     const hrefPath = hashIdx >= 0 ? href.slice(0, hashIdx) : href;
     const anchor = hashIdx >= 0 ? href.slice(hashIdx) : '';
@@ -101,12 +96,20 @@ function rewriteLinks(content, { srcFile, destFile, copiedRoot, destCopiedRoot, 
         // Target is inside the copied folder — rewrite as a relative path from dest
         const absDestTarget = path.join(destCopiedRoot, relToRoot);
         const newRel = path.relative(destDir, absDestTarget).replace(/\\/g, '/');
-        return `[${text}](${newRel}${anchor})`;
+        return `${bang}[${text}](${newRel}${anchor})`;
       }
     }
 
-    // Target escapes the copied content — make it an absolute GitHub URL
+    // Target escapes the copied content — make it an absolute GitHub URL.
+    // Image embeds (`![...]`) need the raw file bytes to render as an <img>;
+    // a "blob" URL serves GitHub's HTML file-viewer page instead, which
+    // renders as a broken image. Plain links keep using blob/tree so
+    // clicking them opens GitHub's viewer.
     const relToSubmodule = path.relative(submoduleRoot, absTarget).replace(/\\/g, '/');
+    if (bang) {
+      const rawBase = repoUrl.replace('https://github.com/', 'https://raw.githubusercontent.com/');
+      return `${bang}[${text}](${rawBase}/${branch}/${relToSubmodule}${anchor})`;
+    }
     const hasExt = path.extname(relToSubmodule) !== '';
     const ghBase = hasExt ? `${repoUrl}/blob/${branch}` : `${repoUrl}/tree/${branch}`;
     return `[${text}](${ghBase}/${relToSubmodule}${anchor})`;

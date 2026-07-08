@@ -22,12 +22,37 @@ const sidebars = {
       label: '2F / Hand-E',
       link: { type: 'doc', id: 'drivers/2F hande/index' },
       items: [
-        'drivers/2F hande/C++/index',
-        'drivers/2F hande/Python/index',
-        'drivers/2F hande/ROS/index',
-        'drivers/2F hande/Isaac Sim/index',
-        'drivers/2F hande/PyBullet/index',
-        'drivers/2F hande/GraspGen/index'
+        {
+          type: 'category',
+          label: 'SDK',
+          items: [
+            'drivers/2F hande/SDK/C++/index',
+            'drivers/2F hande/SDK/Python/index',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'ROS',
+          items: [
+            'drivers/2F hande/ROS/ROS2/index',
+            'drivers/2F hande/ROS/ROS1/index',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Physics Engine',
+          items: [
+            'drivers/2F hande/Physics Engine/Isaac Sim/index',
+            'drivers/2F hande/Physics Engine/PyBullet/index',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Other',
+          items: [
+            'drivers/2F hande/GraspGen/index',
+          ],
+        },
       ],
     },
     {
@@ -35,10 +60,28 @@ const sidebars = {
       label: 'TSF-85',
       link: { type: 'doc', id: 'drivers/TSF-85/index' },
       items: [
-        'drivers/TSF-85/C++/index',
-        'drivers/TSF-85/Python/index',
-        'drivers/TSF-85/ROS/index',
-        'drivers/TSF-85/Isaac Sim/index',        
+        {
+          type: 'category',
+          label: 'SDK',
+          items: [
+            'drivers/TSF-85/SDK/C++/index',
+            'drivers/TSF-85/SDK/Python/index',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'ROS',
+          items: [
+            'drivers/TSF-85/ROS/ROS2/index',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Physics Engine',
+          items: [
+            'drivers/TSF-85/Physics Engine/Isaac Sim/index',
+          ],
+        },
       ],
     },
     {
@@ -46,9 +89,21 @@ const sidebars = {
       label: 'FT300-S',
       link: { type: 'doc', id: 'drivers/FT300/index' },
       items: [
-        'drivers/FT300/C/index',
-        'drivers/FT300/Python/index',
-        'drivers/FT300/ROS/index',
+        {
+          type: 'category',
+          label: 'SDK',
+          items: [
+            'drivers/FT300/SDK/C/index',
+            'drivers/FT300/SDK/Python/index',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'ROS',
+          items: [
+            'drivers/FT300/ROS/ROS2/index',
+          ],
+        },
       ],
     },
   ]
