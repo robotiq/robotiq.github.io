@@ -1,0 +1,47 @@
+name: CI
+
+# Verifies the documentation site builds and passes basic smoke tests.
+# Intended to be a required status check for merging into main.
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      # Submodules aren't checked out here — scripts/sync-external-docs.js
+      # runs `git submodule update --init --force` itself as part of the
+      # build (needed for local `npm start`/`npm run build` too), so doing
+      # it again via actions/checkout would just be a redundant second fetch.
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Fails on broken internal links / anchors (onBrokenLinks: 'throw')
+      # and runs the sync + tools-table generators via the prebuild hook.
+      - name: Build
+        run: npm run build
+
+      # Smoke-tests the generated output (key pages + tools table present).
+      - name: Test
+        run: npm test

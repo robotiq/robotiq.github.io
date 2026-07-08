@@ -1,0 +1,83 @@
+---
+title: Overview
+sidebar_label: Overview
+sidebar_position: 0
+---
+
+## Hardware documentation
+
+Robotiq hardware communication protocols are described in detail in the product
+manuals, which serve as the reference for developing custom drivers.
+
+Hardware manuals are available on Robotiq support website:
+https://robotiq.com/support
+
+## Software tools
+
+Badge colors indicate who maintains the integration: ![Robotiq](https://img.shields.io/badge/Robotiq-blue) an official Robotiq-maintained driver, ![Third party](https://img.shields.io/badge/Third_party-lightgrey) a community-maintained project.
+
+### SDKs/languages
+
+{/* AUTO-GENERATED-SDK-TABLE:START */}
+| Product | C | C++ | Python |
+|---|---|---|---|
+| [2F / Hand-E](drivers/2F%20hande) | - | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/2F%20hande/SDK/C++) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/2F%20hande/SDK/Python) |
+| [FT300-S](drivers/FT300) | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/FT300/SDK/C) | - | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/FT300/SDK/Python) |
+| [TSF-85](drivers/TSF-85) | - | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/TSF-85/SDK/C++) | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/TSF-85/SDK/Python) |
+
+- **C** — Low-level C driver talking directly to the hardware's communication protocol (e.g. Modbus RTU, serial).
+- **C++** — Low-level C++ driver/SDK for direct hardware integration.
+- **Python** — Python driver/SDK for scripting and rapid prototyping.
+{/* AUTO-GENERATED-SDK-TABLE:END */}
+
+### ROS
+
+#### ROS2
+
+{/* AUTO-GENERATED-ROS2-TABLE:START */}
+| ROS2 | Humble | Iron | Jazzy | Rolling |
+|---|---|---|---|---|
+| [2F / Hand-E](drivers/2F%20hande) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/2F%20hande/ROS/ROS2) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/2F%20hande/ROS/ROS2) | - | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/2F%20hande/ROS/ROS2) |
+| [FT300-S](drivers/FT300) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/FT300/ROS/ROS2) | - | - | - |
+| [TSF-85](drivers/TSF-85) | - | - | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/TSF-85/ROS/ROS2) | - |
+
+- **Humble** — ROS 2 LTS release (2022), supported until 2027.
+- **Iron** — ROS 2 release (2023), end of life.
+- **Jazzy** — ROS 2 LTS release (2024), supported until 2029.
+- **Rolling** — ROS 2 rolling development distro, always tracking the latest sources.
+{/* AUTO-GENERATED-ROS2-TABLE:END */}
+
+#### ROS1
+
+{/* AUTO-GENERATED-ROS1-TABLE:START */}
+| ROS1 | Indigo | Jade | Kinetic | Melodic |
+|---|---|---|---|---|
+| [2F / Hand-E](drivers/2F%20hande) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/2F%20hande/ROS/ROS1) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/2F%20hande/ROS/ROS1) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/2F%20hande/ROS/ROS1) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/2F%20hande/ROS/ROS1) |
+
+- **Indigo** — ROS 1 release (2014), end of life.
+- **Jade** — ROS 1 release (2015), end of life.
+- **Kinetic** — ROS 1 release (2016), end of life.
+- **Melodic** — ROS 1 release (2018), end of life.
+{/* AUTO-GENERATED-ROS1-TABLE:END */}
+
+### Physics engine
+
+{/* AUTO-GENERATED-PHYSICS_ENGINE-TABLE:START */}
+| Product | Isaac Sim | PyBullet |
+|---|---|---|
+| [2F / Hand-E](drivers/2F%20hande) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/2F%20hande/Physics%20Engine/Isaac%20Sim) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/2F%20hande/Physics%20Engine/PyBullet) |
+| [TSF-85](drivers/TSF-85) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/TSF-85/Physics%20Engine/Isaac%20Sim) | - |
+
+- **Isaac Sim** — NVIDIA Isaac Sim integration for simulating the hardware.
+- **PyBullet** — PyBullet integration for physics-based simulation.
+{/* AUTO-GENERATED-PHYSICS_ENGINE-TABLE:END */}
+
+### Other community projects
+
+{/* AUTO-GENERATED-OTHER-TABLE:START */}
+| Product | GraspGen |
+|---|---|
+| [2F / Hand-E](drivers/2F%20hande) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/2F%20hande/GraspGen) |
+
+- **GraspGen** — NVIDIA GraspGen asset/model package with Robotiq gripper definitions for grasp synthesis research.
+{/* AUTO-GENERATED-OTHER-TABLE:END */}
