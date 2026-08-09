@@ -56,7 +56,7 @@ const sidebars = {
           type: 'category',
           label: 'Other',
           items: [
-            'drivers/2F hande/GraspGen/index',
+            'drivers/2F hande/Other/GraspGen/index',
           ],
         },
       ],

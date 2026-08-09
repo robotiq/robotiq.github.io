@@ -21,6 +21,17 @@ try {
 
 // ── Add new repos here ─────────────────────────────────────────────────────
 const JOBS = [
+  // 2F 85 CPP driver README
+  {
+    submodule: '2f85_cpp',
+    repoUrl: 'https://github.com/robotiq/grippers',
+    branch: 'main',
+    from: 'README.md',
+    to: 'drivers/2F hande/SDK/C++/_readme.md'
+  },
+
+
+
   // TSF 85 CPP driver README
   {
     submodule: 'tactile_sensors',

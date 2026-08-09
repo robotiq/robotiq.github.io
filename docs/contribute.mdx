@@ -134,7 +134,7 @@ robotiq.github.io/
 │           │   └── ROS1-Indigo/ …
 │           ├── Physics Engine/Isaac Sim/ …
 │           ├── Physics Engine/PyBullet/ …
-│           └── GraspGen/ …            ← "Other" category, no wrapper folder needed
+│           └── Other/GraspGen/ …      ← "Other" category
 ├── draft/                              ← content with no nav link yet (never
 │                                          built into a page — outside docs/)
 ├── scripts/
@@ -146,12 +146,14 @@ robotiq.github.io/
 Files prefixed with `_` are Docusaurus **partials** — imported by a
 wrapper `.mdx` but not standalone pages themselves.
 
-The `SDK/`, `ROS/`, and `Physics Engine/` folders are just organizational
-containers — `generate-tools-table.js` doesn't care about folder names, only
-about which `index.mdx` files carry a `Category` badge (see
-[step 3](#3-create-the-wrapper-page) below). `GraspGen/` proves the point: it
-sits directly under the product folder with no wrapper category folder, and
-still lands in the "Other" table because of its badge, not its path.
+The `SDK/`, `ROS/`, `Physics Engine/`, and `Other/` folders are just
+organizational containers — `generate-tools-table.js` doesn't care about
+folder names, only about which `index.mdx` files carry a `Category` badge
+(see [step 3](#3-create-the-wrapper-page) below). A tool page could just as
+well sit directly under the product folder with no wrapper folder at all —
+it would still land in the right table, because classification comes from
+the badge, not the path. The wrapper folders exist purely to keep the
+repo tidy for humans browsing it.
 
 `ROS/` is a container with one exception: its own `index.mdx` is a real page
 (no `Category` badge, so the script still treats it as a container and
@@ -461,7 +463,7 @@ sub-category matching where they live on disk:
       type: 'category',
       label: 'Other',
       items: [
-        'drivers/2F hande/GraspGen/index',
+        'drivers/2F hande/Other/GraspGen/index',
       ],
     },
   ],
@@ -499,8 +501,8 @@ which runs automatically on `npm start` / `npm run build` (same as
 
 The script walks each `docs/drivers/<Product>/` folder tree looking for
 tool leaf pages — an `index.mdx` carrying a `Category` badge — regardless
-of how deeply it's nested (`SDK/`, `ROS/`, `Physics Engine/`, or no
-container folder at all, as with `GraspGen/`). For each leaf page found:
+of how deeply it's nested (`SDK/`, `ROS/`, `Physics Engine/`, `Other/`, or
+no container folder at all). For each leaf page found:
 
 - **Row** — the product's own `title` frontmatter (from
   `docs/drivers/<Product>/index.mdx`).
