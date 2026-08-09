@@ -7,6 +7,11 @@
 # Generated files
 .docusaurus
 .cache-loader
+docs/drivers/TSF-85/SDK/C++/_readme.md
+docs/drivers/TSF-85/SDK/Python/_readme.md
+
+# Editor / machine-specific
+.vscode/
 
 # Misc
 .DS_Store

@@ -1,0 +1,3 @@
+[submodule "external/tactile_sensors"]
+	path = external/tactile_sensors
+	url = https://github.com/Robotiq/tactile_sensors

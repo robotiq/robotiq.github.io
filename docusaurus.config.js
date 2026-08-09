@@ -31,6 +31,7 @@ const config = {
   projectName: 'robotiq.github.io', // Usually your repo name.
 
   onBrokenLinks: 'throw',
+  onBrokenAnchors: 'throw',
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -82,14 +83,15 @@ theme: {
             type: 'docSidebar',
             sidebarId: 'driverSidebar',
             position: 'left',
-            label: 'Drivers',
+            label: 'Docs',
           },
-          {
-            type: 'docSidebar',
-            sidebarId: 'examplesSidebar',
-            position: 'left',
-            label: 'Examples',
-          },
+          // Examples navbar item — uncomment when content is ready
+          // {
+          //   type: 'docSidebar',
+          //   sidebarId: 'examplesSidebar',
+          //   position: 'left',
+          //   label: 'Examples',
+          // },
 {
             href: 'https://github.com/robotiq',
             label: 'GitHub',
@@ -105,11 +107,11 @@ theme: {
             items: [
               {
                 label: 'Drivers',
-                to: '/docs/drivers',
+                to: '/docs/intro',
               },
               {
-                label: 'Examples',
-                to: '/docs/examples',
+                label: 'Contribute',
+                to: '/docs/contribute',
               },
             ],
           },

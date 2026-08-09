@@ -136,3 +136,13 @@ table thead tr {
   --ifm-alert-background-color: rgba(30, 166, 230, 0.08);
   --ifm-alert-border-color: var(--robotiq-blue);
 }
+
+/* ── Logo chips: third-party logos are often dark-on-transparent and
+   disappear against the dark theme background, so give them a light
+   backing in dark mode only. ── */
+[data-theme='dark'] .logo-chip {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 0.25rem 0.5rem;
+  display: inline-flex;
+}
