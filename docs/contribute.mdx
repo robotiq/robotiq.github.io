@@ -107,19 +107,31 @@ robotiq.github.io/
 │       │   │       ├── index.mdx
 │       │   │       └── _readme.md
 │       │   ├── ROS/
-│       │   │   └── ROS2/index.mdx
+│       │   │   ├── index.mdx          ← ROS landing page (in git), holds
+│       │   │   │                         the per-distro compatibility table
+│       │   │   └── ROS2-Jazzy/index.mdx
 │       │   └── Physics Engine/
 │       │       └── Isaac Sim/index.mdx
 │       ├── FT300/
 │       │   ├── index.mdx
 │       │   ├── SDK/C/ …
 │       │   ├── SDK/Python/ …
-│       │   └── ROS/ROS2/ …
+│       │   └── ROS/
+│       │       ├── index.mdx
+│       │       └── ROS2-Humble/ …
 │       └── 2F hande/
 │           ├── index.mdx
 │           ├── SDK/C++/ …
 │           ├── SDK/Python/ …
-│           ├── ROS/ROS2/ …
+│           ├── ROS/                    ← newest to oldest, per generation
+│           │   ├── index.mdx
+│           │   ├── ROS2-Rolling/ …
+│           │   ├── ROS2-Iron/ …
+│           │   ├── ROS2-Humble/ …
+│           │   ├── ROS1-Melodic/ …
+│           │   ├── ROS1-Kinetic/ …
+│           │   ├── ROS1-Jade/ …
+│           │   └── ROS1-Indigo/ …
 │           ├── Physics Engine/Isaac Sim/ …
 │           ├── Physics Engine/PyBullet/ …
 │           └── GraspGen/ …            ← "Other" category, no wrapper folder needed
@@ -140,6 +152,15 @@ about which `index.mdx` files carry a `Category` badge (see
 [step 3](#3-create-the-wrapper-page) below). `GraspGen/` proves the point: it
 sits directly under the product folder with no wrapper category folder, and
 still lands in the "Other" table because of its badge, not its path.
+
+`ROS/` is a container with one exception: its own `index.mdx` is a real page
+(no `Category` badge, so the script still treats it as a container and
+recurses into it), used as the ROS landing page — it carries the
+auto-generated per-distro compatibility table for that product. Each ROS
+distro is its own leaf folder named `<Generation>-<Distro>` (e.g.
+`ROS2-Humble/`, `ROS1-Indigo/`), rather than one page listing every distro a
+generation supports — so every distro gets its own page, and its own link in
+the compatibility table, to a distro-specific reference.
 
 ### Excluding content from a synced README
 
@@ -260,31 +281,45 @@ table a page belongs to, and reads the `Supported_by` badge for the cell
 shown in that table (see
 [Auto-generated software tools tables](#auto-generated-software-tools-tables)
 below). Valid `Category` values: `SDK`, `Physics_Engine`, `Other`, `ROS1`,
-`ROS2` (ROS pages use a different badge block — see below). Use
-`Supported_by-Robotiq-blue` for tools developed and maintained by Robotiq,
-or `Supported_by-Third_party-lightgrey` for community-maintained tools.
+`ROS2`. Use `Supported_by-Robotiq-blue` for tools developed and maintained
+by Robotiq, or `Supported_by-Third_party-lightgrey` for community-maintained
+tools.
 
-**ROS pages are different.** Instead of one `Supported_by` badge, a ROS
-tool page carries one `Distro` badge per supported ROS distribution, each
-immediately followed by its own `Supported_by` badge — that's what drives
-the ROS1/ROS2 distro-compatibility tables:
+**ROS pages are one distro each.** A ROS tool page is a leaf just like any
+other — one `Category-ROS1` or `Category-ROS2` badge, one `Supported_by`
+badge — but its `title` is the bare distro name, not "ROS". `sidebar_label`
+is different: it's prefixed with the generation (`ROS1 · `/`ROS2 · `) since
+the sidebar lists every distro from every generation as one flat group,
+where a bare distro name alone wouldn't say which ROS version it's for:
 
 ```mdx
 ---
-title: ROS
-sidebar_label: ROS
-sidebar_position: 3
+title: Jazzy
+sidebar_label: ROS2 · Jazzy
 ---
 
-![Category](https://img.shields.io/badge/Category-ROS2-lightgrey)<br />
-![Distro](https://img.shields.io/badge/Distro-Jazzy-lightgrey)
+![Category](https://img.shields.io/badge/Category-ROS2-lightgrey)
 ![Supported by Robotiq](https://img.shields.io/badge/Supported_by-Robotiq-blue)
+
+Short description, and a **Reference:** link to the driver repository or
+manual that this distro's page documents.
 ```
 
-For a tool supporting several distros, repeat the `Distro`/`Supported_by`
-pair for each one (see `docs/drivers/2F hande/ROS/ROS2/index.mdx` for a
-three-distro example). Use `Category-ROS1` instead of `Category-ROS2` for
-a ROS 1 package.
+`title` stays the bare distro name because `generate-tools-table.js` uses it
+as the table column header and legend key (see `COLUMN_DESCRIPTIONS` in that
+script) — prefixing it there would duplicate the table's own ROS2/ROS1
+section heading and break the legend lookup.
+
+Create this page under `ROS/<Generation><Distro>/index.mdx` — e.g.
+`docs/drivers/TSF-85/ROS/ROS2-Jazzy/index.mdx` (see that file for a full
+example with build/run instructions). A product supporting several distros
+gets one such folder per distro (see
+`docs/drivers/2F hande/ROS/` for a seven-distro example) — each with its own
+page, and its own link in the compatibility table, rather than one page
+listing every distro. List them in `sidebars.js` newest to oldest per
+generation (see [step 5](#5-register-in-sidebarsjs) below), and see
+[step 4](#4-create-the-product-landing-page) for the `ROS/index.mdx`
+landing page this requires.
 
 **No README or no software tool yet?** Skip steps 1 and 2 entirely
 and write the `index.mdx` manually. This is the right approach when
@@ -333,15 +368,7 @@ Short description of the product family.
 
 ### ROS
 
-#### ROS2
-
-{/* AUTO-GENERATED-PRODUCT-ROS2-TABLE:START */}
-{/* AUTO-GENERATED-PRODUCT-ROS2-TABLE:END */}
-
-#### ROS1
-
-{/* AUTO-GENERATED-PRODUCT-ROS1-TABLE:START */}
-{/* AUTO-GENERATED-PRODUCT-ROS1-TABLE:END */}
+See the [ROS](ROS) page for the per-distro compatibility table.
 
 ### Physics Engine
 
@@ -354,14 +381,41 @@ Short description of the product family.
 {/* AUTO-GENERATED-PRODUCT-OTHER-TABLE:END */}
 ```
 
-Don't write any of the five tables by hand — leave each marker pair next
+Don't write any of these tables by hand — leave each marker pair next
 to each other and `scripts/generate-tools-table.js` fills in a
 single-row version of the matching category table (see
 [below](#auto-generated-software-tools-tables)) on the next build. The
 `title` here is what shows up as the row label there. A category with no
 tool yet renders a short "not documented yet" placeholder instead of an
-empty table, so it's safe to keep all five headings even before every
+empty table, so it's safe to keep all four headings even before every
 category has content.
+
+**If the product has any ROS tool pages**, also create
+`docs/drivers/2F hande/ROS/index.mdx` — this is where the ROS2/ROS1 tables
+live instead, since a product's ROS distros usually outnumber its other
+tools:
+
+```mdx
+---
+title: ROS
+sidebar_label: ROS
+---
+
+Short description.
+
+### ROS2
+
+{/* AUTO-GENERATED-PRODUCT-ROS2-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-ROS2-TABLE:END */}
+
+### ROS1
+
+{/* AUTO-GENERATED-PRODUCT-ROS1-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-ROS1-TABLE:END */}
+```
+
+`generate-tools-table.js` throws a build error naming the missing file if a
+product has ROS tool pages but no `ROS/index.mdx` with these markers.
 
 ### 5. Register in `sidebars.js`
 
@@ -386,8 +440,13 @@ sub-category matching where they live on disk:
     {
       type: 'category',
       label: 'ROS',
+      link: { type: 'doc', id: 'drivers/2F hande/ROS/index' },
       items: [
-        'drivers/2F hande/ROS/ROS2/index',
+        // Newest to oldest, grouped by generation (ROS2 above ROS1).
+        'drivers/2F hande/ROS/ROS2-Rolling/index',
+        'drivers/2F hande/ROS/ROS2-Humble/index',
+        'drivers/2F hande/ROS/ROS1-Melodic/index',
+        'drivers/2F hande/ROS/ROS1-Indigo/index',
       ],
     },
     {
@@ -420,10 +479,20 @@ those two groups entirely.
 `docs/intro.mdx` has five "Software tools" tables, one per category —
 **SDK**, **ROS2**, **ROS1**, **Physics Engine**, **Other** — each listing
 every product that has a tool in that category, with each cell showing
-that tool's support badge linked to its page. Each product's own landing
-page (`docs/drivers/<Product>/index.mdx`) gets the same five tables,
-single-row versions scoped to just that product. You never edit any of
-them by hand — all ten (five global + five per-product) are regenerated by
+that tool's support badge linked to its page. Every category is built the
+same way: one column per distinct tool `title` found under that category's
+leaf pages. For ROS1/ROS2 those columns are distro names (e.g. "Humble"),
+because a ROS leaf page's `title` **is** its distro name (see
+[step 3](#3-create-the-wrapper-page) above) — there's no separate
+distro-vs-tool distinction in the script.
+
+**SDK / Physics Engine / Other** get the same tables again, single-row
+versions scoped to just that product, on that product's own
+`docs/drivers/<Product>/index.mdx`. **ROS2 / ROS1** get theirs on that
+product's `docs/drivers/<Product>/ROS/index.mdx` instead — since a
+product's ROS distros usually outnumber its other tools, splitting them
+onto their own landing page keeps the top-level product page short. You
+never edit any of these by hand — all of them are regenerated by
 [`scripts/generate-tools-table.js`](https://github.com/robotiq/robotiq.github.io/blob/main/scripts/generate-tools-table.js),
 which runs automatically on `npm start` / `npm run build` (same as
 `sync-external-docs.js`).
@@ -435,13 +504,10 @@ container folder at all, as with `GraspGen/`). For each leaf page found:
 
 - **Row** — the product's own `title` frontmatter (from
   `docs/drivers/<Product>/index.mdx`).
-- **SDK / Physics Engine / Other pages** — column = the tool's `title`
-  frontmatter; cell = its `Supported_by-<Label>-<color>` badge (see
-  [step 3](#3-create-the-wrapper-page) above), shown compactly (no
-  "Supported by" prefix — only the source page keeps the full badge).
-- **ROS1 / ROS2 pages** — columns = the distros named in that page's
-  `Distro-<Name>` badges; cell = the `Supported_by` badge immediately
-  following each one.
+- **Column** — the tool's own `title` frontmatter (e.g. `Python`, `Humble`).
+- **Cell** — the tool's `Supported_by-<Label>-<color>` badge, shown
+  compactly (no "Supported by" prefix — only the source page keeps the
+  full badge), linking to that tool's own page.
 
 This means adding a new product or tool page, with a title and the right
 badges, is enough to make it appear in the matching tables on the next
@@ -451,13 +517,13 @@ short placeholder line instead of an empty table.
 A few things are still hand-maintained in the script itself, by design —
 they're presentation choices, not derivable from the file tree:
 
-- `COLUMN_ORDER` / `DISTRO_ORDER` — preferred left-to-right order for
-  each category's columns / each ROS table's distro columns. Anything
+- `COLUMN_ORDER` — preferred left-to-right order for each category's
+  columns (e.g. ROS distros in chronological release order). Anything
   not listed still gets its own column, just sorted alphabetically
   after the known ones.
-- `COLUMN_DESCRIPTIONS` / `DISTRO_DESCRIPTIONS` — the one-line legend
-  shown under each table. A column or distro without an entry here
-  still appears, just with no legend line, until one is added.
+- `COLUMN_DESCRIPTIONS` — the one-line legend shown under each table. A
+  column missing here still appears, just with no legend line, until one
+  is added.
 
 To test a change locally:
 
@@ -468,16 +534,22 @@ node scripts/generate-tools-table.js
 It rewrites the content between each `AUTO-GENERATED-<CATEGORY>-TABLE`
 marker pair (`AUTO-GENERATED-SDK-TABLE`, `AUTO-GENERATED-ROS2-TABLE`,
 `AUTO-GENERATED-ROS1-TABLE`, `AUTO-GENERATED-PHYSICS_ENGINE-TABLE`,
-`AUTO-GENERATED-OTHER-TABLE`) in `docs/intro.mdx`, and the matching
-`AUTO-GENERATED-PRODUCT-<CATEGORY>-TABLE` marker pairs in each product's
-own `index.mdx` — leaving the rest of each page untouched. The two sets
-of markers use different link styles on purpose: `docs/intro.mdx` needs
-root-relative links (`drivers/<Product>/<Tool>`), while a product page
-needs page-relative links (`<Tool>`), since it already lives inside
-`docs/drivers/<Product>/`. Reusing the root-relative form on a product
-page silently doubles the path (e.g.
-`drivers/2F hande/drivers/2F hande/C++`) — the script keeps these as
-two separate href fields (`href` vs `localHref`) to avoid that.
+`AUTO-GENERATED-OTHER-TABLE`) in `docs/intro.mdx`, the matching
+`AUTO-GENERATED-PRODUCT-<CATEGORY>-TABLE` marker pairs for SDK / Physics
+Engine / Other in each product's own `index.mdx`, and the
+`AUTO-GENERATED-PRODUCT-ROS2-TABLE` / `AUTO-GENERATED-PRODUCT-ROS1-TABLE`
+pairs in each product's `ROS/index.mdx` — leaving the rest of each page
+untouched. If a product has ROS tool pages but no `ROS/index.mdx` with
+those markers, the script throws a build error naming the missing file
+rather than silently skipping it.
+
+The three destinations use different link styles on purpose:
+`docs/intro.mdx` needs root-relative links (`drivers/<Product>/<Tool>`); a
+product's own page needs page-relative links (`<Tool>`); a product's
+`ROS/index.mdx` needs links relative to *that* page (`<Distro>`, one level
+deeper than the product root). Reusing the wrong style would silently
+double or misalign the path — the script keeps these as three separate
+href fields (`href`, `localHref`, `rosLocalHref`) to avoid that.
 
 ---
 
@@ -601,13 +673,17 @@ sidebar.
 | Synced partials | `docs/drivers/<Product>/<Category>/<Tool>/_readme.md` |
 | Wrapper pages | `docs/drivers/<Product>/<Category>/<Tool>/index.mdx` |
 | Category badge (SDK / ROS1 / ROS2 / Physics_Engine / Other) | `![...](.../Category-<Name>-lightgrey)` at the top of each wrapper page |
-| Support badge (non-ROS tables) | `![Supported by <Label>](.../Supported_by-<Label>-<color>)`, right after the Category badge |
-| Distro + support badges (ROS tables) | one `Distro-<Name>` badge per supported distro, each immediately followed by its own `Supported_by-<Label>-<color>` badge |
+| Support badge | `![Supported by <Label>](.../Supported_by-<Label>-<color>)`, right after the Category badge |
+| ROS distro pages | one leaf folder per distro, `ROS/<Generation>-<Distro>/index.mdx` (e.g. `ROS/ROS2-Humble/`), `title` = the distro name |
+| ROS distro `sidebar_label` | generation-prefixed, e.g. `ROS2 · Humble` — `title` stays bare (`Humble`) for the table generator |
+| ROS distro sidebar/table order | newest to oldest, per generation — see `COLUMN_ORDER` in `generate-tools-table.js` and the `items` order in `sidebars.js` |
 | Product landing pages | `docs/drivers/<Product>/index.mdx` |
+| ROS landing pages (per-product ROS2/ROS1 tables) | `docs/drivers/<Product>/ROS/index.mdx` |
 | Generated API pages | `docs/drivers/<Product>/<Category>/<Tool>/api.md` |
 | Draft / not-yet-linked content (never built into a page) | `draft/` at the repo root, outside `docs/` |
 | Auto-generated tools tables script | `scripts/generate-tools-table.js` |
 | Auto-generated overview tables output | `docs/intro.mdx`, between each `AUTO-GENERATED-<CATEGORY>-TABLE` marker pair |
-| Auto-generated per-product tables output | `docs/drivers/<Product>/index.mdx`, between each `AUTO-GENERATED-PRODUCT-<CATEGORY>-TABLE` marker pair |
+| Auto-generated per-product SDK/Physics Engine/Other tables output | `docs/drivers/<Product>/index.mdx`, between each `AUTO-GENERATED-PRODUCT-<CATEGORY>-TABLE` marker pair |
+| Auto-generated per-product ROS2/ROS1 tables output | `docs/drivers/<Product>/ROS/index.mdx`, between the `AUTO-GENERATED-PRODUCT-ROS2-TABLE` / `AUTO-GENERATED-PRODUCT-ROS1-TABLE` marker pairs |
 | Sidebar config | `sidebars.js` |
 | Doc ID format | `drivers/TSF-85/SDK/C++/index` |

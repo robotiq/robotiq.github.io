@@ -33,9 +33,15 @@ const sidebars = {
         {
           type: 'category',
           label: 'ROS',
+          link: { type: 'doc', id: 'drivers/2F hande/ROS/index' },
           items: [
-            'drivers/2F hande/ROS/ROS2/index',
-            'drivers/2F hande/ROS/ROS1/index',
+            'drivers/2F hande/ROS/ROS2-Rolling/index',
+            'drivers/2F hande/ROS/ROS2-Iron/index',
+            'drivers/2F hande/ROS/ROS2-Humble/index',
+            'drivers/2F hande/ROS/ROS1-Melodic/index',
+            'drivers/2F hande/ROS/ROS1-Kinetic/index',
+            'drivers/2F hande/ROS/ROS1-Jade/index',
+            'drivers/2F hande/ROS/ROS1-Indigo/index',
           ],
         },
         {
@@ -71,8 +77,9 @@ const sidebars = {
         {
           type: 'category',
           label: 'ROS',
+          link: { type: 'doc', id: 'drivers/TSF-85/ROS/index' },
           items: [
-            'drivers/TSF-85/ROS/ROS2/index',
+            'drivers/TSF-85/ROS/ROS2-Jazzy/index',
           ],
         },
         {
@@ -100,8 +107,9 @@ const sidebars = {
         {
           type: 'category',
           label: 'ROS',
+          link: { type: 'doc', id: 'drivers/FT300/ROS/index' },
           items: [
-            'drivers/FT300/ROS/ROS2/index',
+            'drivers/FT300/ROS/ROS2-Humble/index',
           ],
         },
       ],
