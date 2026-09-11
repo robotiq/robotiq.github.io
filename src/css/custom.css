@@ -146,3 +146,986 @@ table thead tr {
   padding: 0.25rem 0.5rem;
   display: inline-flex;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   C++ SDK generated API reference (doxygen2docusaurus)
+
+   Adapted from @xpack/doxygen2docusaurus's own reference stylesheet
+   (node_modules/@xpack/doxygen2docusaurus/templates/css/custom.css) for
+   the `doxyPage`/`doxyMembersIndex`/`doxyMemberLabel`/`doxyProgramListing`/
+   `doxyHighlight`/etc. classes its generated Markdown uses under
+   docs/drivers/2F hande/SDK/C++/API/ — see scripts/sync-external-docs.js's
+   `runDoxygen2Docusaurus` and external-jobs.js's `doxygen2docusaurus` job.
+   Left mostly as shipped: it already themes itself through this site's own
+   Infima variables above (--ifm-color-primary drives member-label pills and
+   tree icons, --ifm-table-border-color/--ifm-code-background/
+   --ifm-background-color drive every card/table surface), so the Robotiq
+   blue and light/dark surfaces already carry through with no per-color
+   overrides needed. Only the syntax-highlight palette
+   (--doxy-highlight-*) and a couple of code-block hairline borders stay as
+   fixed colors — those are generic code-syntax accents, not brand chrome.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --ifm-global-shadow-doxy: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+div.doxyPage a {
+  text-decoration: var(--ifm-link-decoration);
+}
+
+div.doxyPage h2 {
+  --ifm-h2-font-size: 2rem;
+  margin-top: 30px;
+  margin-bottom: 20px;
+}
+
+div.doxyPage h3 {
+  --ifm-h3-font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+p.doxyQualifiedName {
+  margin-bottom: 20px;
+}
+
+p.doxyInclude {
+  margin-bottom: 20px;
+}
+
+p.doxyGeneratedBy {
+  font-size: smaller;
+  text-align: center;
+}
+
+div.doxyPage pre code {
+  border: 0.1rem solid var(--ifm-table-border-color);
+}
+
+table.doxyTable td, table.doxyTable th {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+blockquote.doxyBlockQuote {
+  background-color: var(--ifm-table-stripe-background);
+  border-radius: var(--ifm-global-radius);
+  border-left: calc(var(--ifm-blockquote-border-left-width) * 2) solid var(--ifm-blockquote-border-color);
+  padding-top: 8px;
+  padding-bottom: 8px;
+  margin-left: 16px;
+}
+
+table.doxyEnumTable {
+  border: none;
+  display: table-row-group
+}
+
+dt.doxyEnumTableTitle {
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+/* Undo the Docusaurus configuration. */
+table.doxyEnumTable tr:nth-child(2n) {
+  background-color: var(--ifm-background-color);
+}
+
+tr.doxyEnumItem {
+  border: none;
+}
+
+td.doxyEnumItemDescription {
+  border: none;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+td.doxyEnumItemName {
+  font-weight: bold;
+  border: none;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-left: 0px;
+}
+
+table.doxyMembers tr {
+  border: none;
+  overflow: hidden;
+}
+
+table.doxyMembers td {
+  border: none;
+  overflow: hidden;
+}
+
+table.doxyMembers td.doxyMemberItemLeft div {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-top: 1px solid var(--ifm-table-border-color);
+  border-left: 1px solid var(--ifm-table-border-color);
+  border-bottom: 1px solid var(--ifm-table-border-color);
+  border-top-left-radius: var(--ifm-global-radius);
+  border-bottom-left-radius: var(--ifm-global-radius);
+  background-color: var(--ifm-table-stripe-background);
+  overflow: hidden;
+}
+
+table.doxyMembers td.doxyMemberItemRight div {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-top: 1px solid var(--ifm-table-border-color);
+  border-right: 1px solid var(--ifm-table-border-color);
+  border-bottom: 1px solid var(--ifm-table-border-color);
+  border-top-right-radius: var(--ifm-global-radius);
+  border-bottom-right-radius: var(--ifm-global-radius);
+  background-color: var(--ifm-table-stripe-background);
+  overflow: hidden;
+}
+
+tr.doxyMemberSeparator {
+  height: 12px;
+  border: none;
+}
+
+td.doxyMemberItemLeft {
+  padding: 0px;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  white-space: nowrap;
+}
+
+td.doxyMemberItemRight {
+  padding: 0px;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  width: 100%;
+}
+
+td.doxyMemberDescriptionLeft {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border: none;
+  background-color: var(--ifm-background-color);
+}
+
+td.doxyMemberDescriptionRight {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border: none;
+  background-color: var(--ifm-background-color);
+}
+
+td.doxyMemberDescriptionRight p {
+  margin: 0px;
+}
+
+td.doxyMemSeparatorLeft {
+  padding: 0px;
+  border: none;
+}
+
+div.doxyMemberItem {
+  margin-bottom: 32px;
+  border: 0.1rem solid var(--ifm-table-border-color);
+  border-radius: var(--ifm-card-border-radius);
+  box-shadow: var(--ifm-global-shadow-doxy);
+}
+
+div.doxyMemberProto {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  background-color: var(--ifm-code-background);
+  padding: 16px;
+  border-collapse: collapse;
+  border-bottom: 0.1rem solid var(--ifm-table-border-color);
+  border-top-left-radius: var(--ifm-card-border-radius);
+  border-top-right-radius: var(--ifm-card-border-radius);
+  margin-bottom: 1em;
+}
+
+div.doxyMemberTemplate {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+}
+
+table.doxyMemberLabels {
+  border: none;
+  margin: 0px;
+  display: block;
+}
+
+table.doxyMemberLabels > tr:first-child {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+tr.doxyMemberLabels {
+  border: none;
+}
+
+span.doxyMemberLabel {
+  background: var(--ifm-color-primary);
+  color: var(--ifm-color-content-inverse);
+  border: none;
+  padding: 4px 9px;
+  border-radius: 12px;
+  font-family: var(--ifm-font-family-base);
+  font-weight: bold;
+  font-size: 80%;
+  white-space: nowrap;
+  vertical-align: middle;
+  margin-left: 10px;
+}
+
+span.doxyMemberLabel:last-of-type {
+  margin-right: 2px;
+}
+
+td.doxyMemberLabelsLeft {
+  padding: 0px;
+  border: 0;
+  width: 100%;
+}
+
+td.doxyMemberLabelsRight {
+  border: none;
+  padding: 0px;
+  white-space: nowrap;
+}
+
+table.doxyMemberName {
+  margin: 0px;
+}
+
+/* Blanket reset, !important: this table only ever had one row before
+   splitMemberSignatures started giving it one per parameter, so Infima's
+   defaults for a "real" markdown table — alternating row background,
+   per-cell borders, separated (gapped) cells — never showed and were never
+   disabled. Once multi-row, they appeared as a series of separate pill-like
+   boxes instead of one seamless signature block, and specificity-matching
+   Infima's rules one at a time kept missing whichever property it covers
+   next. Blanket-clearing every visual property Infima's table styling could
+   set, on every row/cell of this specific table, is the reliable way to
+   guarantee none of them resurface — this table is fully custom-styled by
+   the rules below regardless of what a future Infima update changes. */
+table.doxyMemberName,
+table.doxyMemberName tr,
+table.doxyMemberName td {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+table.doxyMemberName {
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+}
+
+td.doxyMemberName {
+  padding: 0px;
+}
+
+td.doxyMemberName p {
+  margin: 0px;
+}
+
+/* Four real columns per row — prefix / paren / type / name (see
+   splitMemberSignatures in sync-external-docs.js), left empty on every row
+   but where they actually have something to say. Mirrors classic Doxygen's
+   own .memname table: because it's one continuous table, the type/name
+   columns land in the same place on every row regardless of how long the
+   function's own name+namespace prefix was on the first row — no manual
+   indent guess needed, the table's own column widths do the alignment. */
+td.doxyMemberNamePrefix {
+  padding: 0px 4px 0px 0px;
+  border: none;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+td.doxyMemberNameParen {
+  padding: 0px 4px 0px 0px;
+  border: none;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+/* table-layout: fixed plus an explicit width was one way to stop the type
+   column being squeezed toward zero by its sibling's width: 100% (the
+   "one letter per line" bug), but it also forces every row to the SAME
+   share regardless of content — "uint8_t" ends up in as wide a column as
+   "std::shared_ptr< Platform >", wasting a lot of space on the short, far
+   more common case. Left at the default table-layout: auto instead: it
+   sizes each column from its own content's min/max width, so short types
+   stay narrow and only a genuinely long one grows — overflow-wrap:
+   break-word remains as the fallback for the rare type too long to fit at
+   all, without needing to reserve space for it up front on every row. */
+td.doxyMemberNameParamType {
+  padding: 0px 8px 0px 0px;
+  border: none;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  white-space: normal;
+  overflow-wrap: break-word;
+  vertical-align: top;
+}
+
+td.doxyMemberNameParamName {
+  padding: 0px;
+  border: none;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  white-space: normal;
+  overflow-wrap: break-word;
+  vertical-align: top;
+}
+
+div.doxyMemberDoc {
+  margin: 20px 16px 16px 16px;
+}
+
+div.doxyMemberDoc p:last-child {
+  margin-bottom: 4px;
+}
+
+/* Fallback if this table's content ever overflows anyway (see the
+   white-space fix on td.doxyMemberIndexItemType): a horizontal scrollbar on
+   just this table, instead of it silently spilling past the page's edge
+   with no way to reach the hidden part. */
+.doxyMembersIndexScroll {
+  overflow-x: auto;
+}
+
+table.doxyMembersIndex {
+  width: 100%;
+  height: 100%;
+  margin-bottom: 3px;
+  border-collapse: separate;
+  border-spacing: 0px;
+  border: none;
+  overflow: hidden;
+  /* table-layout: auto (the default), not fixed: fixed applies ONE column
+     width to every row sharing that column, project-wide — a "Topics" row
+     with no type text at all still reserved the same width as a "class"
+     label or a long C++ type elsewhere in the same table, leaving a large
+     empty gap before its name. Auto sizes each column from its own
+     content's width instead, capped below on the type column so a
+     genuinely long type still can't dominate the row. */
+  table-layout: auto;
+}
+
+table.doxyMembersIndex tr {
+  background-color: var(--ifm-background-color);
+  border: none;
+  overflow: hidden;
+}
+
+/* Undo the Docusaurus configuration. */
+table.doxyMembersIndex tr:nth-child(2n) {
+  background-color: var(--ifm-background-color);
+}
+
+table.doxyMembersIndex td {
+  height: 100%;
+  border: none;
+  overflow: hidden;
+  vertical-align: top;
+}
+
+/* One continuous bordered box around the whole table, matching Doxygen's own
+   .memItemLeft/.memItemRight: a left/right border running the full height of
+   the table plus a bottom rule under every row, rather than rounding every
+   row into its own separate pill. Corners round only where the table itself
+   starts/ends (see the tr:first-child/tr:last-child rules below). */
+table.doxyMembersIndex td.doxyMemberIndexTemplate,
+table.doxyMembersIndex td.doxyMemberIndexItemType,
+table.doxyMembersIndex td.doxyMemberIndexItemTypeTemplate,
+table.doxyMembersIndex td.doxyMemberIndexItemNoTypeTemplate {
+  height: 100%;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-left: 1px solid var(--ifm-table-border-color);
+  border-bottom: 1px solid var(--ifm-table-border-color);
+  background-color: var(--ifm-table-stripe-background);
+  overflow: hidden;
+  text-align: left;
+}
+
+/* table-layout: auto (see above) already sizes this column from its own
+   content, so a short type like "class" or "uint8_t" no longer forces the
+   same wide column onto every row the way a fixed percentage did (leaving a
+   large empty gap before an entry with no type text at all, e.g. a
+   sub-topic listing). max-width only steps in for the rare genuinely long
+   type — capping how much of the row it can claim, wrapping the rest via
+   overflow-wrap: break-word below, instead of dominating the row. */
+table.doxyMembersIndex td.doxyMemberIndexItemType,
+table.doxyMembersIndex td.doxyMemberIndexItemTypeTemplate {
+  max-width: 320px;
+}
+
+table.doxyMembersIndex td.doxyMemberIndexItemName,
+table.doxyMembersIndex td.doxyMemberIndexItemNameTemplate,
+table.doxyMembersIndex td.doxyMemberIndexItemNoTypeNameTemplate {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-right: 1px solid var(--ifm-table-border-color);
+  border-bottom: 1px solid var(--ifm-table-border-color);
+  background-color: var(--ifm-table-stripe-background);
+  overflow: hidden;
+}
+
+table.doxyMembersIndex tr:first-child td.doxyMemberIndexTemplate,
+table.doxyMembersIndex tr:first-child td.doxyMemberIndexItemType,
+table.doxyMembersIndex tr:first-child td.doxyMemberIndexItemTypeTemplate,
+table.doxyMembersIndex tr:first-child td.doxyMemberIndexItemNoTypeTemplate {
+  border-top: 1px solid var(--ifm-table-border-color);
+  border-top-left-radius: var(--ifm-global-radius);
+}
+
+table.doxyMembersIndex tr:first-child td.doxyMemberIndexItemName,
+table.doxyMembersIndex tr:first-child td.doxyMemberIndexItemNameTemplate,
+table.doxyMembersIndex tr:first-child td.doxyMemberIndexItemNoTypeNameTemplate {
+  border-top: 1px solid var(--ifm-table-border-color);
+  border-top-right-radius: var(--ifm-global-radius);
+}
+
+table.doxyMembersIndex tr:last-child td.doxyMemberIndexItemType,
+table.doxyMembersIndex tr:last-child td.doxyMemberIndexItemTypeTemplate,
+table.doxyMembersIndex tr:last-child td.doxyMemberIndexItemNoTypeTemplate,
+table.doxyMembersIndex tr:last-child td.doxyMemberIndexDescriptionLeft {
+  border-bottom-left-radius: var(--ifm-global-radius);
+}
+
+table.doxyMembersIndex tr:last-child td.doxyMemberIndexItemName,
+table.doxyMembersIndex tr:last-child td.doxyMemberIndexItemNameTemplate,
+table.doxyMembersIndex tr:last-child td.doxyMemberIndexItemNoTypeNameTemplate,
+table.doxyMembersIndex tr:last-child td.doxyMemberIndexDescriptionRight {
+  border-bottom-right-radius: var(--ifm-global-radius);
+}
+
+/* The heading row spans both columns as one <td colspan="2">, so it needs
+   its own corner-rounding when it lands on the table's first/last row. */
+table.doxyMembersIndex tr.doxyMemberIndexHeading:first-child td {
+  border-top: 1px solid var(--ifm-table-border-color);
+  border-top-left-radius: var(--ifm-global-radius);
+  border-top-right-radius: var(--ifm-global-radius);
+}
+
+table.doxyMembersIndex tr.doxyMemberIndexHeading:last-child td {
+  border-bottom-left-radius: var(--ifm-global-radius);
+  border-bottom-right-radius: var(--ifm-global-radius);
+}
+
+tr.doxyMemberIndexSeparator {
+  height: 12px;
+  border: none;
+}
+
+/* One heading row per member kind (Public Member Functions, Public
+   Attributes, ...) inside the single merged overview table — mirrors
+   Doxygen's own "groupheader" row for the same table. */
+tr.doxyMemberIndexHeading td {
+  font-weight: bold;
+  color: var(--ifm-color-primary);
+  background-color: var(--ifm-color-emphasis-100);
+  border-left: 1px solid var(--ifm-table-border-color);
+  border-right: 1px solid var(--ifm-table-border-color);
+  border-bottom: 1px solid var(--ifm-table-border-color);
+  padding-top: 10px;
+  padding-bottom: 6px;
+  padding-left: 12px;
+}
+
+tr.doxyMemberIndexHeading:first-child td {
+  padding-top: 6px;
+}
+
+td.doxyMemberIndexTemplate {
+  padding: 0px;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  white-space: nowrap;
+}
+
+td.doxyMemberIndexItemType {
+  padding: 0px;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  /* Not nowrap: a long generic type (e.g.
+     "std::array< uint8_t, register_map::kCommandBlockBytes -
+     register_map::kCommandDocumentedBytes >") would otherwise render on one
+     unbroken line, overflowing this table's fixed layout and shoving the
+     name column out of view instead of wrapping within its own column. */
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+td.doxyMemberIndexItemName {
+  padding: 0px;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  width: 100%;
+}
+
+td.doxyMemberIndexItemTypeTemplate {
+  padding: 0px;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  /* Same overflow risk as doxyMemberIndexItemType above — not nowrap. */
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+td.doxyMemberIndexItemNameTemplate {
+  padding: 0px;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  width: 100%;
+}
+
+td.doxyMemberIndexItemNoTypeNameTemplate {
+  padding: 0px;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  width: 100%;
+}
+
+td.doxyMemberIndexDescriptionLeft {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-left: 12px;
+  border: none;
+  background-color: var(--ifm-background-color);
+}
+
+td.doxyMemberIndexDescriptionRight {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-right: 12px;
+  border: none;
+  background-color: var(--ifm-background-color);
+  width: 100%;
+}
+
+/* table.doxyMembersIndex td { border: none } (above) outranks the plain
+   selectors above on specificity, so the box-continuity borders need the
+   same table.doxyMembersIndex prefix to actually win. */
+table.doxyMembersIndex td.doxyMemberIndexDescriptionLeft {
+  border-left: 1px solid var(--ifm-table-border-color);
+  border-bottom: 1px solid var(--ifm-table-border-color);
+}
+
+table.doxyMembersIndex td.doxyMemberIndexDescriptionRight {
+  border-right: 1px solid var(--ifm-table-border-color);
+  border-bottom: 1px solid var(--ifm-table-border-color);
+}
+
+td.doxyMemberIndexDescriptionRight p {
+  margin: 0px;
+}
+
+td.doxyMemberIndexSeparator {
+  padding: 6px;
+  border: none;
+  width: 100%;
+}
+
+table.doxyParamsTable {
+  border: none;
+}
+
+dt.doxyParamsTableTitle {
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+/* Undo the Docusaurus configuration. */
+table.doxyParamsTable tr:nth-child(2n) {
+  background-color: var(--ifm-background-color);
+}
+
+/* Classic Doxygen's own .params table has no zero-padding override here —
+   it relies on ordinary cell padding to keep the bold name and its
+   description visually apart. This site's adapted stylesheet had zeroed
+   that padding out, which collapsed every parameter into one run-on line
+   with no gap between the name and its description, or between one
+   parameter and the next. Restore real spacing, plus a bottom rule per row
+   so each parameter reads as its own line the way Doxygen's page does. */
+tr.doxyParamItem {
+  border-bottom: 1px solid var(--ifm-table-border-color);
+}
+
+tr.doxyParamItem:last-child {
+  border-bottom: none;
+}
+
+td.doxyParamItemDescription {
+  border: none;
+  padding: 6px 0px;
+}
+
+td.doxyParamItemDescription p {
+  margin: 0px;
+}
+
+td.doxyParamItemName {
+  font-weight: bold;
+  border: none;
+  padding: 6px 16px 6px 0px;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+div.doxySectionDef h3 {
+  font-family: var(--ifm-font-family-monospace);
+  margin-top: 16px;
+  margin-left: 6px;
+}
+
+div.doxySectionDef h3::before {
+  content: "◆";
+  color: var(--ifm-link-color);
+  margin-right: 0.3em;
+}
+
+table.doxyTreeTable {
+  display: table;
+  table-layout: fixed;
+  width: 100%;
+}
+
+td.doxyTreeItemLeft {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+td.doxyTreeItemRight {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  width: 100%;
+}
+
+td.doxyTreeItemRight p {
+  margin: 0px;
+}
+
+span.doxyTreeIconBox {
+  margin-right: 6px;
+}
+
+span.doxyTreeIcon {
+  background: var(--ifm-color-primary);
+  color: var(--ifm-color-content-inverse);
+  border-radius: 4px;
+  font-weight: bold;
+  padding: 1px 4px 1px 4px;
+  text-align: center;
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
+.doxyIconFile::before {
+  content: '';
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  vertical-align: middle;
+  padding-right: 0.4em;
+  background: url("/img/doxygen2docusaurus/document-svgrepo-com.svg") no-repeat;
+}
+
+.doxyIconFolder::before {
+  content: '';
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  vertical-align: middle;
+  padding-right: 0.4em;
+  background: url("/img/doxygen2docusaurus/folder-svgrepo-com.svg") no-repeat;
+}
+
+tr.doxyTreeItem:hover {
+  background-color: var(--ifm-menu-color-background-hover);
+}
+
+div.doxyIncludesList {
+  background-color: var(--ifm-code-background);
+  border: .1rem solid #0000001a;
+  border-radius: var(--ifm-code-border-radius);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  padding: 6px 12px;
+  vertical-align: initial;
+  white-space: pre;
+}
+
+:root {
+  --ifm-doxy-listing-background: rgb(250, 251, 252);
+  --ifm-doxy-listing-line-background: rgb(246, 247, 248);
+}
+
+[data-theme='dark'] {
+  --ifm-doxy-listing-background: rgb(36, 35, 34);
+  --ifm-doxy-listing-line-background: rgba(255, 255, 255, 0.05);
+}
+
+div.doxyProgramListing {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  background: var(--ifm-doxy-listing-background);
+  border: 1px solid var(--ifm-table-border-color);
+  border-radius: var(--ifm-global-radius);
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+span.doxyLineNumber {
+  width: 5em;
+  text-align: right;
+  padding-right: 1em;
+  display: inline-block;
+  border-right: 1px solid var(--ifm-table-border-color);
+  background-color: var(--ifm-doxy-listing-line-background);
+}
+
+div.doxyCodeLine:first-child span.doxyLineNumber {
+  padding-top: 8px;
+}
+
+div.doxyCodeLine:nth-child(2) span.doxyLineNumber {
+  padding-top: 0px;
+}
+
+div.doxyCodeLine:last-child span.doxyLineNumber {
+  padding-bottom: 8px;
+}
+
+span.doxyNoLineNumber {
+  width: 1em;
+  text-align: right;
+  padding-right: 1em;
+  display: inline-block;
+}
+
+div.doxyCodeLine:first-child span.doxyNoLineNumber {
+  padding-top: 8px;
+}
+
+div.doxyCodeLine:last-child span.doxyNoLineNumber {
+  padding-bottom: 8px;
+}
+
+span.doxyLineContent {
+  padding-left: 4px;
+}
+
+div.doxyCodeLine {
+  overflow-wrap: normal;
+  padding-left: 2px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Generic code-syntax accents — deliberately not tied to the brand palette. */
+:root {
+  --doxy-highlight-keyword: #bb6bb2;
+  --doxy-highlight-keywordtype: #8258b3;
+  --doxy-highlight-keywordflow: #d67c3b;
+  --doxy-highlight-token: #438a59;
+  --doxy-highlight-comment: #969696;
+  --doxy-highlight-link: #5383d6;
+  --doxy-highlight-preprocessor: #46aaa5;
+  --doxy-highlight-vhdlchar: #000000;
+  --doxy-highlight-vhdlkeyword: #E08000;
+  --doxy-highlight-vhdllogic: #FF0000;
+}
+
+span.doxyHighlight,
+span.doxyHighlightComment,
+span.doxyHighlightPreprocessor,
+span.doxyHighlightKeyword,
+span.doxyHighlightKeywordType,
+span.doxyHighlightKeywordFlow,
+span.doxyHighlightToken,
+span.doxyHighlightStringLiteral,
+span.doxyHighlightVhdlChar,
+span.doxyHighlightVhdlKeyword,
+span.doxyHighlightVhdlLogic {
+  white-space: pre;
+}
+
+span.doxyHighlightCharLiteral {
+  color: #002080;
+  white-space: pre;
+}
+
+span.doxyHighlightComment {
+  color: var(--doxy-highlight-comment);
+}
+
+span.doxyHighlightPreprocessor {
+  color: var(--doxy-highlight-preprocessor);
+}
+
+span.doxyHighlightKeyword {
+  color: var(--doxy-highlight-keyword);
+}
+
+span.doxyHighlightKeywordType {
+  color: var(--doxy-highlight-keywordtype);
+}
+
+span.doxyHighlightKeywordFlow {
+  color: var(--doxy-highlight-keywordflow);
+}
+
+span.doxyHighlightToken {
+  color: var(--doxy-highlight-token);
+}
+
+span.doxyHighlightStringLiteral {
+  color: var(--doxy-highlight-token);
+}
+
+span.doxyHighlightVhdlChar {
+  color: var(--doxy-highlight-vhdlchar);
+}
+
+span.doxyHighlightVhdlKeyword {
+  color: var(--doxy-highlight-vhdlkeyword);
+}
+
+span.doxyHighlightVhdlLogic {
+  color: var(--doxy-highlight-vhdllogic);
+}
+
+span.doxyHighlight a {
+  color: var(--doxy-highlight-link);
+}
+
+span.doxyComputerOutput {
+  background-color: var(--ifm-code-background);
+  border: .1rem solid #0000001a;
+  border-radius: var(--ifm-code-border-radius);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  padding: var(--ifm-code-padding-vertical) calc(var(--ifm-code-padding-horizontal) * 2);
+  vertical-align: initial;
+}
+
+div.doxyPage h1 code {
+  padding: var(--ifm-code-padding-vertical) calc(var(--ifm-code-padding-horizontal) * 2);
+}
+
+div.doxyPage div.theme-code-block {
+  margin: 12px 0px;
+}
+
+div.doxyPage div.theme-code-block pre code {
+  background-color: var(--ifm-code-background);
+  border: .1rem solid #0000001a;
+  border-radius: var(--ifm-code-border-radius);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  padding: 10px 16px;
+  vertical-align: initial;
+}
+
+div.doxyDeclaration, div.doxyDefinition {
+  background-color: var(--ifm-code-background);
+  border: .1rem solid #0000001a;
+  border-radius: var(--ifm-code-border-radius);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  padding: 6px 12px;
+  vertical-align: initial
+}
+
+div.doxyVerbatim, div.doxyPreformatted {
+  background-color: var(--ifm-code-background);
+  border: .1rem solid #0000001a;
+  border-radius: var(--ifm-code-border-radius);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  padding: 6px 12px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  vertical-align: initial;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+div.doxyVerbatim p:last-child, div.doxyPreformatted p:last-child {
+  margin-bottom: 0px;
+}
+
+div.doxyPage table.doxyTable caption, div.doxyPage figcaption {
+  font-weight: bold;
+  font-size: 95%;
+  text-align: center;
+}
+
+div.doxyPage img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+dl.doxySectionUser dt {
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+ul.doxyTocList {
+  column-gap: 1em;
+  column-count: 2;
+  list-style-type: none;
+}
+
+dl.doxyVariableList dt {
+  font-weight: bold;
+}
+
+dl.doxyVariableList dd {
+  padding-bottom: 8px;
+}
+
+/* Keep long sidebar entries (e.g. a full class/group name) on one ellipsized
+   line instead of wrapping — applied by doxygen2docusaurus itself via a
+   `className: "doxyEllipsis"` sidebar-item property (see
+   scripts/generated/doxygen-sidebar-*.json). */
+.doxyEllipsis .menu__list-item {
+  overflow: hidden;
+}
+
+.doxyEllipsis .menu__link {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+  margin-right: 0px;
+}
+
+.doxyEllipsis .menu__caret {
+  flex-shrink: 0;
+  margin-left: 4px;
+}

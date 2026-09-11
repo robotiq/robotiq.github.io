@@ -17,6 +17,21 @@ const config = {
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
+    faster: {
+      // v4's fasterByDefault turns this on along with the rest of the
+      // rspack/SWC "Faster" toolchain. On this machine it panics on nearly
+      // every `npm start` — "ModuleGraphModule with identifier ... not
+      // found" inside rspack's persistent module-graph cache
+      // (crates\rspack_core\src\module_graph\mod.rs), on a different module
+      // each time (cssExtractHmr.js, react/jsx-runtime.js, ...) — a
+      // rspack persistent-cache bug, not a project misconfiguration:
+      // https://github.com/web-infra-dev/rspack/issues. Clearing
+      // node_modules/.cache/rspack and .docusaurus only delays the next
+      // occurrence. Disabling just this one flag keeps every other v4/
+      // Faster benefit (SWC, rspack bundling itself, lightningcss, ...)
+      // and only drops the on-disk cache between runs.
+      rspackPersistentCache: false,
+    },
   },
 
   // Set the production url of your site here
@@ -31,7 +46,24 @@ const config = {
   projectName: 'robotiq.github.io', // Usually your repo name.
 
   onBrokenLinks: 'throw',
-  onBrokenAnchors: 'throw',
+  // 'warn' (not 'throw'): generated API reference content can still produce
+  // an anchor mismatch this repo doesn't fully control (e.g. a heading ID
+  // Docusaurus's own slugger derives differently than the generator
+  // expected) — a problem in generated content, not a real authoring
+  // mistake. Hand-authored anchors still get flagged, just not fatally.
+  onBrokenAnchors: 'warn',
+
+  // Generated content (the doxygen2docusaurus API reference, synced
+  // READMEs) is plain CommonMark, not MDX — it uses raw HTML like bare
+  // `<br>`/`<table>` that MDX's JSX parser rejects. 'detect' compiles `.md`
+  // files as plain Markdown and `.mdx` files (all hand-authored wrapper
+  // pages) as MDX, by extension.
+  markdown: {
+    format: 'detect',
+    mermaid: true,
+  },
+
+  themes: ['@docusaurus/theme-mermaid'],
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -110,7 +142,7 @@ theme: {
                 to: '/docs/intro',
               },
               {
-                label: 'Contribute',
+                label: 'Contribute (Robotiq internal)',
                 to: '/docs/contribute',
               },
             ],

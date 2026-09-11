@@ -1,0 +1,59 @@
+---
+title: Python API Reference — pydoc-markdown
+sidebar_label: Python (pydoc-markdown)
+displayed_sidebar: contributeSidebar
+---
+
+# Python — pydoc-markdown
+
+Software tool repos can expose a machine-generated API reference
+page — no manual writing required. The sync script runs the
+generation tool against the submodule during build.
+
+**In the tool repository**, add docstrings following Google or NumPy
+style, and commit a `pydoc-markdown.yml` config at the repo root:
+
+```yaml
+# pydoc-markdown.yml (in the tool repo)
+loaders:
+  - type: python
+    search_path: [.]
+    packages: [your_package_name]
+renderer:
+  type: markdown
+  filename: docs/api.md
+  render_toc: true
+```
+
+**In this site**, install the tool once:
+
+```bash
+npm install --save-dev pydoc-markdown
+```
+
+Then add a generation step to `scripts/sync-external-docs.js`
+**before** the `JOBS` loop:
+
+```js
+const { execSync } = require('child_process');
+
+execSync('pydoc-markdown', {
+  cwd: path.join(ROOT, 'external', '2f85_python'),
+  stdio: 'inherit',
+});
+```
+
+This writes `external/2f85_python/docs/api.md`. Copy it with a
+normal job, inside `2f85_python`'s `submoduleJobs(...)` call:
+
+```js
+{ from: 'docs/api.md', to: 'drivers/2F hande/SDK/Python/api.md' },
+```
+
+Add `'drivers/2F hande/SDK/Python/api'` to the sidebar items.
+
+See [C++ — Doxygen + doxygen2docusaurus](./api-reference-cpp) for the C++
+equivalent — it's a different toolchain with no `\snippet`-style
+compile-checked-example mechanism; a Python equivalent would need
+something else entirely (e.g. doctest-style testing) and isn't covered
+here.
