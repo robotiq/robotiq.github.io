@@ -1,3 +1,6 @@
 [submodule "external/tactile_sensors"]
 	path = external/tactile_sensors
 	url = https://github.com/Robotiq/tactile_sensors
+[submodule "external/2f85_cpp"]
+	path = external/2f85_cpp
+	url = https://github.com/robotiq/grippers

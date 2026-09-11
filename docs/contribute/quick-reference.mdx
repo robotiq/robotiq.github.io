@@ -1,0 +1,35 @@
+---
+title: Quick Reference
+sidebar_label: Quick reference
+displayed_sidebar: contributeSidebar
+---
+
+# Quick reference
+
+| What | Where |
+|---|---|
+| Submodules (pinned repo imports) | `external/<submodule>/` |
+| Sync + generation config | `scripts/external-jobs.js` → `JOBS`, authored via `submoduleJobs(submodule, { repoUrl, branch }, [...])` per submodule |
+| C++ API sidebar (auto-built from Doxygen groups) | `scripts/doxygen-groups-sidebar.mjs`, called from `sidebars.js` — mirrors the `\defgroup`/`\ingroup` hierarchy with no manual sidebar entries; see [The sidebar mirrors the Doxygen group hierarchy automatically](./api-reference-cpp#the-sidebar-mirrors-the-doxygen-group-hierarchy-automatically) |
+| One-command preview of pushed WIP submodule commits | `npm run preview` in a **second terminal**, run **before** starting terminal 1 with `SKIP_SUBMODULE_RESET=1 npm start` (plain `npm start` resets the submodule via its own `prestart` and undoes the preview) — **not** `npm start preview`, which mis-parses as a `docusaurus start` site-directory argument — see [Previewing local edits to a submodule](./#previewing-local-edits-to-a-submodule) |
+| Exclude README content from the synced page | `<!-- docs-site:exclude -->` ... `<!-- /docs-site:exclude -->` in the tool repo's README |
+| Synced partials | `docs/drivers/<Product>/<Category>/<Tool>/_readme.md` |
+| Wrapper pages | `docs/drivers/<Product>/<Category>/<Tool>/index.mdx` |
+| Generated API reference folder | `docs/drivers/<Product>/<Category>/<Tool>/API/` |
+| Compile-checked C++ examples | `\snippet <file> <tag>` in a doc comment, tagged in a real file under `sdk_cpp/examples/` — not a hand-written `\code` block. C++ only; Python has no equivalent. See [Compile-checked examples with `\snippet`](./api-reference-cpp#compile-checked-examples-with-snippet) |
+| Verified code examples in guide pages (outside Doxygen's reach) | `<!-- snippet: file tag -->` above a fenced code block; checked by `check_doc_snippets.py` in both the tool repo's own CI and here via `scripts/check-doc-snippets.js` + `docSnippetsCheck` in `external-jobs.js`. Template at `templates/check_doc_snippets.py`. See [Verifying markdown code examples against real source](./api-reference-cpp#verifying-markdown-code-examples-against-real-source) |
+| Synced guide docs folder (verbatim copy of the repo's own `docs/`) | `docs/drivers/<Product>/<Category>/<Tool>/docs/` |
+| Category badge (SDK / ROS1 / ROS2 / Physics_Engine / Other) | `![...](.../Category-<Name>-lightgrey)` at the top of each wrapper page |
+| Support badge | `![Supported by <Label>](.../Supported_by-<Label>-<color>)`, right after the Category badge |
+| ROS distro pages | one leaf folder per distro, `ROS/<Generation>-<Distro>/index.mdx` (e.g. `ROS/ROS2-Humble/`), `title` = the distro name |
+| ROS distro `sidebar_label` | generation-prefixed, e.g. `ROS2 · Humble` — `title` stays bare (`Humble`) for the table generator |
+| ROS distro sidebar/table order | newest to oldest, per generation — see `COLUMN_ORDER` in `generate-tools-table.js` and the `items` order in `sidebars.js` |
+| Product landing pages | `docs/drivers/<Product>/index.mdx` |
+| ROS landing pages (per-product ROS2/ROS1 tables) | `docs/drivers/<Product>/ROS/index.mdx` |
+| Draft / not-yet-linked content (never built into a page) | `draft/` at the repo root, outside `docs/` |
+| Auto-generated tools tables script | `scripts/generate-tools-table.js` |
+| Auto-generated overview tables output | `docs/intro.mdx`, between each `AUTO-GENERATED-<CATEGORY>-TABLE` marker pair |
+| Auto-generated per-product SDK/Physics Engine/Other tables output | `docs/drivers/<Product>/index.mdx`, between each `AUTO-GENERATED-PRODUCT-<CATEGORY>-TABLE` marker pair |
+| Auto-generated per-product ROS2/ROS1 tables output | `docs/drivers/<Product>/ROS/index.mdx`, between the `AUTO-GENERATED-PRODUCT-ROS2-TABLE` / `AUTO-GENERATED-PRODUCT-ROS1-TABLE` marker pairs |
+| Sidebar config | `sidebars.js` |
+| Doc ID format | `drivers/TSF-85/SDK/C++/index` |

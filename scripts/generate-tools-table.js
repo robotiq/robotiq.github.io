@@ -1,26 +1,30 @@
 // Regenerates the software-tools tables by scanning docs/drivers/:
-//  - one table per category (SDK, Physics Engine, Other) in docs/intro.mdx
-//    and on each product's own index.mdx, all products x tools in that category
-//  - one distro-compatibility table per ROS generation (ROS2, ROS1) in
-//    docs/intro.mdx and on each product's own index.mdx, all products x distros
+//  - one table per category (SDK, ROS2, ROS1, Physics Engine, Other) in
+//    docs/intro.mdx, all products x tools in that category
+//  - the same SDK / Physics Engine / Other tables, single-row versions
+//    scoped to just that product, on each product's own index.mdx
+//  - the same ROS2 / ROS1 tables, single-row versions scoped to just that
+//    product, on each product's ROS/index.mdx
 //
 // Each product (hardware) is a folder under docs/drivers/ with its own
 // index.mdx (frontmatter title = row label). Underneath, tool pages are
 // found by walking the folder tree until an index.mdx with a
 // `Category-<Name>` shields.io badge is found — that page is a leaf ("tool")
 // classified into that category, regardless of how deep it's nested (e.g.
-// docs/drivers/<product>/SDK/Python/index.mdx or docs/drivers/<product>/ROS/ROS2/index.mdx).
-// Plain folders in between (SDK/, ROS/, Physics Engine/) are just containers.
+// docs/drivers/<product>/SDK/Python/index.mdx or
+// docs/drivers/<product>/ROS/ROS2-Humble/index.mdx). Plain folders in
+// between (SDK/, ROS/, Physics Engine/) are just containers — except ROS/
+// itself, which also carries its own index.mdx (no Category badge, so it's
+// still treated as a container), the landing page that receives the ROS2 /
+// ROS1 tables.
 //
-// Non-ROS tool pages carry a single `Supported_by-<Label>-<Color>` badge,
-// shown compactly as the table cell.
+// A ROS tool page is a single distro (title = distro name, e.g. "Humble"),
+// carrying a `Category-ROS1` or `Category-ROS2` badge — otherwise identical
+// to a non-ROS tool page (one `Supported_by-<Label>-<Color>` badge). A
+// product supporting several distros gets one leaf folder per distro (e.g.
+// `ROS/ROS2-Humble/`, `ROS/ROS2-Iron/`) instead of one page listing many.
 //
-// ROS tool pages (Category-ROS1 / Category-ROS2) instead carry one or more
-// `Distro-<Name>` badges, each immediately followed by its own
-// `Supported_by-<Label>-<Color>` badge — one pair per ROS distro that page
-// supports. Those pairs become the columns of the ROS compatibility table.
-//
-// Add a new hardware folder, tool page, or distro badge under docs/drivers/
+// Add a new hardware folder, tool page, or distro page under docs/drivers/
 // and every table picks it up automatically on the next `npm start` / `npm run build`.
 
 const fs = require('fs');
@@ -31,42 +35,40 @@ const ROOT = path.resolve(__dirname, '..');
 const DRIVERS_DIR = path.join(ROOT, 'docs', 'drivers');
 const INTRO_FILE = path.join(ROOT, 'docs', 'intro.mdx');
 
-// Non-ROS categories: rendered as a plain "product x tool" table.
-const CATEGORIES = ['SDK', 'Physics_Engine', 'Other'];
-const CATEGORY_DISPLAY = {
-  SDK: 'SDK',
-  Physics_Engine: 'Physics Engine',
-  Other: 'Other',
-};
+// Categories, in the order their tables appear on docs/intro.mdx. Every
+// category — ROS1/ROS2 included — is rendered the same way: a plain
+// "product x tool" table, one column per distinct tool `title` found under
+// that category's leaf pages.
+const CATEGORIES = ['SDK', 'ROS2', 'ROS1', 'Physics_Engine', 'Other'];
 const NO_PRODUCTS_MESSAGE = {
   SDK: '_No SDK drivers documented yet._',
+  ROS2: '_No products currently support ROS 2._',
+  ROS1: '_No products currently support ROS 1._',
   Physics_Engine: '_No physics engine integrations documented yet._',
   Other: '_No other community integrations documented yet._',
 };
 
-// ROS categories: rendered as a "product x distro" compatibility table.
-const ROS_CATEGORIES = ['ROS2', 'ROS1'];
-const NO_ROS_MESSAGE = {
-  ROS2: '_No products currently support ROS 2._',
-  ROS1: '_No products currently support ROS 1._',
-};
+// Categories whose tables live on the product's own index.mdx, vs. on its
+// ROS/index.mdx landing page (see "each product's ROS/index.mdx" below).
+const PRODUCT_PAGE_CATEGORIES = ['SDK', 'Physics_Engine', 'Other'];
+const PRODUCT_ROS_CATEGORIES = ['ROS2', 'ROS1'];
 
-// Preferred left-to-right column/distro order. Anything not listed here
-// still appears automatically — it's just sorted alphabetically after these.
+// Preferred left-to-right column order. Anything not listed here still
+// appears automatically — it's just sorted alphabetically after these.
 const COLUMN_ORDER = {
   SDK: ['C', 'C++', 'Python'],
+  ROS2: ['Rolling', 'Jazzy', 'Iron', 'Humble', 'Galactic', 'Foxy'],
+  ROS1: ['Noetic', 'Melodic', 'Kinetic', 'Jade', 'Indigo'],
   Physics_Engine: ['Isaac Sim', 'PyBullet'],
   Other: [],
 };
-const DISTRO_ORDER = {
-  ROS2: ['Foxy', 'Galactic', 'Humble', 'Iron', 'Jazzy', 'Rolling'],
-  ROS1: ['Indigo', 'Jade', 'Kinetic', 'Melodic', 'Noetic'],
-};
 
-// One-line description shown in the legend below each ROS compatibility
-// table. A distro missing here still gets its own column — it just has no
-// legend entry until one is added.
-const DISTRO_DESCRIPTIONS = {
+// One-line description shown in the legend below each category table. A
+// column missing here still appears — it just has no legend entry.
+const COLUMN_DESCRIPTIONS = {
+  'C': 'Low-level C driver talking directly to the hardware\'s communication protocol (e.g. Modbus RTU, serial).',
+  'C++': 'Low-level C++ driver/SDK for direct hardware integration.',
+  'Python': 'Python driver/SDK for scripting and rapid prototyping.',
   'Foxy': 'ROS 2 LTS release (2020), end of life.',
   'Galactic': 'ROS 2 release (2021), end of life.',
   'Humble': 'ROS 2 LTS release (2022), supported until 2027.',
@@ -78,14 +80,6 @@ const DISTRO_DESCRIPTIONS = {
   'Kinetic': 'ROS 1 release (2016), end of life.',
   'Melodic': 'ROS 1 release (2018), end of life.',
   'Noetic': 'Final ROS 1 release (2020), end of life May 2025.',
-};
-
-// One-line description shown in the legend below each category table. A
-// column missing here still appears — it just has no legend entry.
-const COLUMN_DESCRIPTIONS = {
-  'C': 'Low-level C driver talking directly to the hardware\'s communication protocol (e.g. Modbus RTU, serial).',
-  'C++': 'Low-level C++ driver/SDK for direct hardware integration.',
-  'Python': 'Python driver/SDK for scripting and rapid prototyping.',
   'Isaac Sim': 'NVIDIA Isaac Sim integration for simulating the hardware.',
   'PyBullet': 'PyBullet integration for physics-based simulation.',
   'GraspGen': 'NVIDIA GraspGen asset/model package with Robotiq gripper definitions for grasp synthesis research.',
@@ -117,23 +111,6 @@ function readCompactBadge(raw) {
   const [, label, color] = badge;
   const displayLabel = label.replace(/_/g, ' ');
   return `![${displayLabel}](https://img.shields.io/badge/${label}-${color})`;
-}
-
-// Reads each Distro badge paired with the Supported_by badge immediately
-// following it — one pair per ROS distro the page supports.
-function readDistroSupportPairs(raw) {
-  const pairs = [];
-  const re = /badge\/Distro-([A-Za-z0-9_]+)-[A-Za-z0-9]+\)[\s\S]*?badge\/Supported_by-([A-Za-z0-9_]+)-([A-Za-z0-9]+)\)/g;
-  let m;
-  while ((m = re.exec(raw))) {
-    const [, distro, label, color] = m;
-    const displayLabel = label.replace(/_/g, ' ');
-    pairs.push({
-      distro: distro.replace(/_/g, ' '),
-      badge: `![${displayLabel}](https://img.shields.io/badge/${label}-${color})`,
-    });
-  }
-  return pairs;
 }
 
 function docHref(...segments) {
@@ -176,11 +153,11 @@ function collectToolPages(dir, hardwareDir) {
   return found;
 }
 
-// product: { title, href, indexPath, tools: { SDK: { toolTitle -> {href, localHref, badge} }, ... },
-//            ros: { ROS2: {href, localHref, pairs: [{distro, badge}]}, ... } }
+// product: { title, href, indexPath, rosIndexPath,
+//            tools: { SDK: { toolTitle -> {href, localHref, rosLocalHref, badge} }, ... } }
 const products = [];
-const categoryColumns = { SDK: new Set(), Physics_Engine: new Set(), Other: new Set() };
-const rosDistros = { ROS2: new Set(), ROS1: new Set() };
+const categoryColumns = {};
+for (const catKey of CATEGORIES) categoryColumns[catKey] = new Set();
 
 for (const hardwareName of fs.readdirSync(DRIVERS_DIR).sort()) {
   const hardwareDir = path.join(DRIVERS_DIR, hardwareName);
@@ -193,26 +170,22 @@ for (const hardwareName of fs.readdirSync(DRIVERS_DIR).sort()) {
     title: readFrontmatterTitle(fs.readFileSync(hardwareIndex, 'utf8')) || hardwareName,
     href: docHref('drivers', hardwareName),
     indexPath: hardwareIndex,
-    tools: { SDK: {}, Physics_Engine: {}, Other: {} },
-    ros: {},
+    rosIndexPath: path.join(hardwareDir, 'ROS', 'index.mdx'),
+    tools: {},
   };
+  for (const catKey of CATEGORIES) product.tools[catKey] = {};
 
   for (const tool of collectToolPages(hardwareDir, hardwareDir)) {
-    const href = docHref('drivers', hardwareName, ...tool.relSegments);
-    const localHref = docHref(...tool.relSegments);
-
-    if (tool.category === 'ROS1' || tool.category === 'ROS2') {
-      const pairs = readDistroSupportPairs(tool.raw);
-      product.ros[tool.category] = { href, localHref, pairs };
-      pairs.forEach((p) => rosDistros[tool.category].add(p.distro));
-      continue;
-    }
-
     if (!CATEGORIES.includes(tool.category)) continue; // unknown category badge — ignore
+
     categoryColumns[tool.category].add(tool.title);
     product.tools[tool.category][tool.title] = {
-      href,
-      localHref,
+      href: docHref('drivers', hardwareName, ...tool.relSegments),
+      localHref: docHref(...tool.relSegments),
+      // Relative to the product's ROS/index.mdx rather than its top-level
+      // index.mdx — only meaningful (and only used) for ROS1/ROS2 tools,
+      // which always live one level deeper, under ROS/.
+      rosLocalHref: docHref(...tool.relSegments.slice(1)),
       badge: readCompactBadge(tool.raw),
     };
   }
@@ -231,7 +204,11 @@ function byOrder(order) {
   };
 }
 
-function buildCategoryTable(catKey, productList, { local } = {}) {
+// hrefField picks which of a tool's precomputed hrefs to link to:
+//  - 'href'         — root-relative, for docs/intro.mdx
+//  - 'localHref'    — relative to the product's own index.mdx
+//  - 'rosLocalHref' — relative to the product's ROS/index.mdx
+function buildCategoryTable(catKey, productList, { hrefField = 'href' } = {}) {
   const columns = [...categoryColumns[catKey]].sort(byOrder(COLUMN_ORDER[catKey] || []));
   const relevant = productList.filter((p) => Object.keys(p.tools[catKey]).length > 0);
   if (!columns.length || !relevant.length) return null;
@@ -242,31 +219,10 @@ function buildCategoryTable(catKey, productList, { local } = {}) {
     const cells = columns.map((col) => {
       const tool = p.tools[catKey][col];
       if (!tool) return '-';
-      const href = local ? tool.localHref : tool.href;
+      const href = tool[hrefField];
       return tool.badge ? `[${tool.badge}](${href})` : `[${col}](${href})`;
     });
-    const productCell = local ? p.title : `[${p.title}](${p.href})`;
-    return `| ${productCell} | ${cells.join(' | ')} |`;
-  });
-
-  return [header, separator, ...rows].join('\n');
-}
-
-function buildRosTable(rosKey, productList, { local } = {}) {
-  const distros = [...rosDistros[rosKey]].sort(byOrder(DISTRO_ORDER[rosKey] || []));
-  const relevant = productList.filter((p) => p.ros[rosKey]);
-  if (!distros.length || !relevant.length) return null;
-
-  const header = `| ${rosKey} | ${distros.join(' | ')} |`;
-  const separator = `|${'---|'.repeat(distros.length + 1)}`;
-  const rows = relevant.map((p) => {
-    const entry = p.ros[rosKey];
-    const href = local ? entry.localHref : entry.href;
-    const cells = distros.map((distro) => {
-      const pair = entry.pairs.find((pp) => pp.distro === distro);
-      return pair ? `[${pair.badge}](${href})` : '-';
-    });
-    const productCell = local ? p.title : `[${p.title}](${p.href})`;
+    const productCell = hrefField === 'href' ? `[${p.title}](${p.href})` : p.title;
     return `| ${productCell} | ${cells.join(' | ')} |`;
   });
 
@@ -278,14 +234,6 @@ function legendFor(catKey) {
     .sort(byOrder(COLUMN_ORDER[catKey] || []))
     .filter((col) => COLUMN_DESCRIPTIONS[col])
     .map((col) => `- **${col}** — ${COLUMN_DESCRIPTIONS[col]}`)
-    .join('\n');
-}
-
-function legendForRos(rosKey) {
-  return [...rosDistros[rosKey]]
-    .sort(byOrder(DISTRO_ORDER[rosKey] || []))
-    .filter((distro) => DISTRO_DESCRIPTIONS[distro])
-    .map((distro) => `- **${distro}** — ${DISTRO_DESCRIPTIONS[distro]}`)
     .join('\n');
 }
 
@@ -312,35 +260,44 @@ function writeBetweenMarkers(filePath, key, content) {
 // --- docs/intro.mdx: one table per category, across all products ---
 
 for (const catKey of CATEGORIES) {
-  const table = buildCategoryTable(catKey, products, { local: false });
+  const table = buildCategoryTable(catKey, products, { hrefField: 'href' });
   const legend = table ? legendFor(catKey) : '';
   const content = table ? [table, legend].filter(Boolean).join('\n\n') : NO_PRODUCTS_MESSAGE[catKey];
   writeBetweenMarkers(INTRO_FILE, catKey.toUpperCase(), content);
 }
 
-for (const rosKey of ROS_CATEGORIES) {
-  const table = buildRosTable(rosKey, products, { local: false });
-  const legend = table ? legendForRos(rosKey) : '';
-  const content = table ? [table, legend].filter(Boolean).join('\n\n') : NO_ROS_MESSAGE[rosKey];
-  writeBetweenMarkers(INTRO_FILE, rosKey, content);
-}
+console.log(`[generate-tools-table] Wrote ${CATEGORIES.length} category tables to docs/intro.mdx`);
 
-console.log(`[generate-tools-table] Wrote ${CATEGORIES.length + ROS_CATEGORIES.length} category tables to docs/intro.mdx`);
-
-// --- each product's own index.mdx: same tables, scoped to that one product ---
+// --- each product's own index.mdx: SDK / Physics Engine / Other tables,
+//     single-row versions scoped to just that product ---
 
 for (const product of products) {
-  for (const catKey of CATEGORIES) {
-    const table = buildCategoryTable(catKey, [product], { local: true });
+  for (const catKey of PRODUCT_PAGE_CATEGORIES) {
+    const table = buildCategoryTable(catKey, [product], { hrefField: 'localHref' });
     const legend = table ? legendFor(catKey) : '';
     const content = table ? [table, legend].filter(Boolean).join('\n\n') : NO_PRODUCTS_MESSAGE[catKey];
     writeBetweenMarkers(product.indexPath, `PRODUCT-${catKey.toUpperCase()}`, content);
   }
-  for (const rosKey of ROS_CATEGORIES) {
-    const table = buildRosTable(rosKey, [product], { local: true });
-    const legend = table ? legendForRos(rosKey) : '';
-    const content = table ? [table, legend].filter(Boolean).join('\n\n') : NO_ROS_MESSAGE[rosKey];
-    writeBetweenMarkers(product.indexPath, `PRODUCT-${rosKey}`, content);
-  }
   console.log(`[generate-tools-table] Wrote category tables to ${path.relative(ROOT, product.indexPath)}`);
+
+  // --- each product's ROS/index.mdx: ROS2 / ROS1 tables, single-row
+  //     versions scoped to just that product ---
+
+  const hasRosTools = PRODUCT_ROS_CATEGORIES.some((k) => Object.keys(product.tools[k]).length > 0);
+  if (!hasRosTools) continue;
+
+  if (!fs.existsSync(product.rosIndexPath)) {
+    throw new Error(
+      `[generate-tools-table] ${path.relative(ROOT, product.indexPath)} has ROS tool pages but ` +
+      `${path.relative(ROOT, product.rosIndexPath)} does not exist. Create it with ` +
+      `AUTO-GENERATED-PRODUCT-ROS2-TABLE and AUTO-GENERATED-PRODUCT-ROS1-TABLE marker pairs.`
+    );
+  }
+  for (const catKey of PRODUCT_ROS_CATEGORIES) {
+    const table = buildCategoryTable(catKey, [product], { hrefField: 'rosLocalHref' });
+    const legend = table ? legendFor(catKey) : '';
+    const content = table ? [table, legend].filter(Boolean).join('\n\n') : NO_PRODUCTS_MESSAGE[catKey];
+    writeBetweenMarkers(product.rosIndexPath, `PRODUCT-${catKey}`, content);
+  }
+  console.log(`[generate-tools-table] Wrote ROS tables to ${path.relative(ROOT, product.rosIndexPath)}`);
 }

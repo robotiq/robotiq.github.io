@@ -33,6 +33,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # scripts/sync-external-docs.js shells out to the `doxygen` binary to
+      # build the C++ SDK's API reference, and needs graphviz (`dot`) too —
+      # see the matching step in ci.yml for why both are required.
+      - name: Install Doxygen and Graphviz
+        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+
       - name: Build
         run: npm run build
 
