@@ -1,0 +1,629 @@
+---
+title: C++ API Reference — Doxygen + doxygen2docusaurus
+sidebar_label: C++ (Doxygen)
+displayed_sidebar: contributeSidebar
+---
+
+# C++ — Doxygen + doxygen2docusaurus
+
+**In the tool repository**, add Doxygen-style comments to headers
+and commit a `Doxyfile` configured to output both XML (for
+doxygen2docusaurus, below) and Doxygen's own HTML (for the standalone
+preview):
+
+```
+# Doxyfile (relevant lines)
+GENERATE_XML         = YES
+XML_OUTPUT           = doxygen-xml
+GENERATE_HTML        = YES
+HTML_OUTPUT          = doxygen-html
+INPUT                = .
+RECURSIVE            = YES
+# Without these, every generated page's "#include <...>" line collapses to
+# the bare filename (Doxygen's default: the shortest name that's still
+# unique across the whole scanned tree) instead of the real, usable path —
+# e.g. "#include <command.hpp>" instead of
+# "#include <Robotiq/gripper/command.hpp>".
+FULL_PATH_NAMES      = YES
+STRIP_FROM_INC_PATH  = include
+```
+
+## Controlling what's included
+
+Two independent knobs decide what ends up in the generated reference —
+both live in the **tool repository**, not in this site's
+`scripts/sync-external-docs.js`:
+
+- **`Doxyfile` — what gets documented at all**, symbol by symbol. Standard
+  Doxygen options: `EXCLUDE` / `EXCLUDE_PATTERNS` skip whole files or
+  directories from being scanned (e.g. `third_party/`, `tests/`). With the
+  default `EXTRACT_ALL = NO`, anything left undocumented simply never gets
+  a page — and `WARN_IF_UNDOCUMENTED = YES` plus `WARN_AS_ERROR =
+  FAIL_ON_WARNINGS` (both on the `2f85_cpp` submodule's own `Doxyfile`) turns
+  a forgotten doc comment into a CI failure instead of a silent gap.
+  - **To keep one specific, already-documented symbol out of the generated
+    docs entirely, wrap it — not the whole file — in
+    `//! \cond DOXYGEN_EXCLUDE` / `//! \endcond`.** This is the only
+    mechanism that removes a symbol from Doxygen's XML output completely, so
+    there's nothing left for either `WARN_IF_UNDOCUMENTED` or this site's own
+    build to trip over. **`EXCLUDE_SYMBOLS` does *not* do this** — it only
+    drops a symbol out of *group* listings; the symbol still shows up as a
+    fully documented, ungrouped namespace member, which is exactly the
+    "ungrouped, no page" problem the next bullet describes. `\internal ...
+    \endinternal` has the same gap as `EXCLUDE_SYMBOLS` for this purpose.
+- **A symbol's own `\ingroup` vs `\addtogroup` — which group it belongs to,
+  and *how*.** `\ingroup <name>` on a single entity (a class, a function, a
+  namespace) records only that one entity as a group member — it does
+  **not** cascade to whatever's declared inside it. A free function/enum/
+  variable tagged `\ingroup` still shows up in its own namespace's XML too,
+  but only as a lightweight cross-reference — the full definition (and the
+  only page that documents it) lives on its **group's** page. This is why
+  this site's Global Index (see below) has to resolve those cross-references
+  itself rather than trust Doxygen's or doxygen2docusaurus's own indices,
+  which are both organized by lexical scope (class/namespace), not by
+  group. To make a batch of free functions or constants themselves *direct*
+  members of a group — so they render right on the group's own page — wrap
+  them in `\addtogroup <group-id>` / `@{ ... @}`:
+  ```cpp
+  //! \addtogroup <group-id>
+  //! @{
+
+  inline constexpr int kSomeConstant = 1; //!< ...
+  // every declaration up to the matching @} becomes a direct group member
+
+  //! @}
+  ```
+  (Illustrative — nothing in the `2f85_cpp` submodule currently uses
+  `\addtogroup`; the last symbol that did, `register_map.hpp`'s constants,
+  is now excluded entirely. Don't point this example at a real symbol name —
+  that's exactly the kind of reference that goes stale the next time
+  something upstream gets renamed, regrouped, or excluded.)
+  This is also what makes a group's content show up in this site's sidebar
+  automatically with no extra sync job — see
+  [The sidebar mirrors the Doxygen group hierarchy automatically](#the-sidebar-mirrors-the-doxygen-group-hierarchy-automatically)
+  below.
+  - **A documented-but-ungrouped symbol is easy to miss by hand** — Doxygen
+    stays completely silent about it; it just quietly never shows up under
+    any Topic in the generated navigation, even though it's technically
+    "documented." `sdk_cpp/tools/check_doc_groups.py` (vendored in the
+    `2f85_cpp` submodule; see
+    [templates/check_doc_groups.py](https://github.com/robotiq/robotiq.github.io/blob/main/templates/check_doc_groups.py)
+    here for the copy-pasteable starting point for a new tool repo) closes
+    that gap: it cross-references Doxygen's own XML (run `doxygen Doxyfile`
+    first) for every namespace-scope symbol with no `\ingroup`, and exits
+    non-zero listing each one — wired into that repo's own CI as part of the
+    `api-docs` job, right after `doxygen Doxyfile`. This site's own Global
+    Index (below) still lists an ungrouped symbol regardless — unlinked,
+    since there's no group page to point at — so a gap that slips past CI
+    is still visible here, just not where a reader would expect it.
+- **`scripts/external-jobs.js`'s own `exclude` option** (on the
+  `doxygen2docusaurus` job) trims specific generated files/folders this
+  site doesn't want — `files`, `folders`, `namespaces` and their matching
+  `indices/*` alphabetical listings are dropped entirely (superseded by the
+  Global Index — see below), and a handful of the "Classes" category's own
+  A-Z listings are dropped too (its tree overview at `indices/classes/index`
+  already covers browsing by class; the flat by-kind lists next to it were
+  pure duplication). See the comments on that job's `exclude` array for the
+  current list and why each entry is there.
+
+## Compile-checked examples with `\snippet`
+
+**Don't write example code directly inside a `\code{.cpp}` ... `\endcode`
+block in a doc comment.** Nothing compiles it — it can drift out of sync
+with the API it's demonstrating (a renamed member, a changed signature)
+and nobody finds out until a reader copy-pastes it and it fails to build.
+This applies to the **C++ SDK only** — Python's API reference is generated
+by [pydoc-markdown](./api-reference-python) from docstrings directly, which
+has no equivalent mechanism; a compile/run-checked Python example story
+would need something else entirely (e.g. doctest-style testing) and isn't
+covered here.
+
+Instead, put the example in a real file under `sdk_cpp/examples/` — already
+built by the tool repo's own CMake (`GRIPPERS_BUILD_EXAMPLES`), so a change
+that breaks the example is a compile error in that build, not a silently
+stale doc page — and pull the relevant part into the doc comment with
+Doxygen's `\snippet`, tagging the region in the example file:
+
+```cpp
+// sdk_cpp/examples/move_gripper.cpp
+//! [activation-recovery]
+ActivationResult activation = Robotiq::activate(*gripper);
+if(activation == ActivationResult::FaultLatched)
+{
+    activation = Robotiq::recoverFromFault(*gripper);
+}
+//! [activation-recovery]
+```
+
+```cpp
+// sdk_cpp/include/Robotiq/gripper.hpp
+//! \par Example
+//! \snippet move_gripper.cpp activation-recovery
+[[nodiscard]] ActivationResult activate(Gripper& gripper, ...);
+```
+
+Doxygen resolves `\snippet` into the actual tagged source before it ever
+writes the XML doxygen2docusaurus reads — so this needs nothing new from
+`sync-external-docs.js` or any other script in this repo; it flows through
+the existing Doxygen → doxygen2docusaurus → sync pipeline exactly like a
+hand-written `\code` block would, just backed by real, compiled source
+instead.
+
+**Setting up a new submodule for this** — everything below lives in the
+**tool repo**, not here; once it's in place, `\snippet` just works through
+the existing pipeline with no change needed in this site:
+
+1. Add `EXAMPLE_PATH = examples` to that submodule's `Doxyfile` (relative to
+   the Doxyfile itself, same as `INPUT = include`) — the folder containing
+   the example files you'll tag.
+2. Set `WARN_AS_ERROR = YES` (or `WARN_AS_ERROR = FAIL_ON_WARNINGS` on newer
+   Doxygen) so a `\snippet` referencing a typo'd or renamed tag fails the
+   docs build instead of silently degrading to a warning.
+3. Make sure that submodule's example files are actually built somewhere in
+   CI (e.g. a CMake option like `GRIPPERS_BUILD_EXAMPLES`, on by default) —
+   `\snippet` only guarantees the *doc comment* matches the *tagged region*;
+   a real build is what guarantees the tagged region itself still compiles.
+4. Tag the region you want to reuse with a `//! [tag]` ... `//! [tag]` pair
+   in a real, compiled file under `EXAMPLE_PATH`.
+5. Replace the doc comment's `\code{.cpp}` ... `\endcode` block with
+   `\par Example` followed by `\snippet <file> <tag>`.
+
+The `2f85_cpp` submodule this site already builds against follows this
+exact pattern across three files under `sdk_cpp/examples/`: `quick_start.cpp`
+(the walkthrough guide cites this one, tag by tag), `move_gripper.cpp` (a
+full runtime example — `activation-recovery` above comes from here), and a
+catch-all `snippets.cpp` for concepts that don't fit either narrative (a
+custom `Logger`/`Serial` subclass, `NamedBitArray`, `Throttle`, raw
+register-map byte decoding, ...) — each snippet its own never-called
+function or class, tagged and referenced the same way.
+
+Not every `\code` block needs converting: a few (e.g. the byte-layout
+tables in `command.hpp` / `register_map.hpp`) are ASCII diagrams, not
+compilable statements, and should stay as plain `\code` blocks.
+
+## Verifying markdown code examples against real source
+
+`\snippet` only reaches Doxygen doc-comments — it can't help a hand-authored
+guide page (e.g. `docs/02-quick-start.md`, walking through `quick_start.cpp`
+step by step). Those pages still risk the exact same drift a `\code` block
+does: a hand-typed code fence that quietly stops matching the real file it
+claims to demonstrate.
+
+A tool repo opts a fence into the same guarantee with an HTML-comment marker
+directly above it:
+
+`````md
+<!-- snippet: quick_start.cpp qs-config -->
+```cpp
+Robotiq::ConnectionConfig config;
+config.serial.port = "COM4"; //or "/dev/ttyUSB0" for linux. Adjust the port name according to your system.
+```
+`````
+
+— pointing at the same kind of `//! [qs-config]`-bracketed region in
+`sdk_cpp/examples/quick_start.cpp` that `\snippet` itself would use. Two
+independent things check this claim, both in the **tool repo**:
+
+- `sdk_cpp/tools/check_doc_snippets.py` (grippers vendors this; see
+  [templates/check_doc_snippets.py](https://github.com/robotiq/robotiq.github.io/blob/main/templates/check_doc_snippets.py)
+  in *this* repo for the copy-pasteable starting point for a new tool repo),
+  wired into that repo's own CI — fails a PR the moment the doc and the
+  source disagree.
+- `scripts/check-doc-snippets.js` **here**, driven by a `docSnippetsCheck`
+  entry on that submodule's job in `external-jobs.js`. It runs the exact
+  script vendored *in the submodule at its pinned commit* (never the
+  `templates/` copy above — that one is never executed, only copied from) as
+  part of `npm run generate`/`npm run preview`, so this site's own build
+  fails too, not just the tool repo's CI. This is deliberately redundant:
+  it's the only one of the two that runs while you're previewing
+  **uncommitted** edits to a submodule you're actively working on (see
+  [Previewing local edits to a submodule](./#previewing-local-edits-to-a-submodule)
+  above) — that tool repo's own CI hasn't seen those edits yet at all. This
+  check is entirely independent of the Doxygen/doxygen2docusaurus pipeline
+  below — it only concerns the submodule's own hand-authored `docs/` guides.
+
+Unlike `\snippet`, nothing here regenerates or rewrites the markdown — both
+checks only fail loudly on a mismatch, the same way a broken `\snippet` tag
+fails the Doxygen build. Fixing a reported mismatch always means editing the
+**tool repo** (either side: the guide's fence or the tagged region in the
+example file) — never this repo.
+
+**Adopting this for a new tool repo:**
+1. Copy `templates/check_doc_snippets.py` into that repo (e.g.
+   `sdk_cpp/tools/check_doc_snippets.py`), adjusting `--examples-dir`'s
+   default if its example files don't live under `sdk_cpp/examples/`.
+2. Bracket the region a guide page cites with a `//! [tag]` ... `//! [tag]`
+   marker pair in the real example file, and mark the guide's fence with
+   `<!-- snippet: <file> <tag> -->` directly above it.
+3. Wire the script into that repo's own CI (`python3 <path> docs/*.md`).
+4. Add a `docSnippetsCheck: { script, markdownGlob, examplesDir }` entry to
+   that submodule's job in `scripts/external-jobs.js` here (see the
+   `2f85_cpp` docs job for a worked example) — no other change needed;
+   `scripts/check-doc-snippets.js` picks up any job that declares one.
+
+## The sidebar mirrors the Doxygen group hierarchy automatically
+
+`sidebars.js` doesn't hand-list the C++ API's groups. doxygen2docusaurus
+generates its own sidebar subtree directly from the Doxygen XML — no
+scanning generated Markdown for backlinks the way this site's previous
+Doxybook2-based pipeline needed a whole dedicated script for.
+`scripts/sync-external-docs.js` prunes and adapts that generated subtree
+(dropping the excluded folders/pages mentioned above), writes the result to
+`scripts/generated/doxygen-sidebar-<api-folder>.json`, and `sidebars.js`
+just reads it back:
+
+```js
+items: loadDoxygenSidebarItems('drivers/2F hande/SDK/C++/API'),
+```
+
+**Classes are re-nested under their owning group.** doxygen2docusaurus's own
+sidebar keeps two separate top-level trees — "Topics" (the
+`\defgroup`/`\ingroup` hierarchy) and "Classes" (every class flattened
+together) — with no built-in option to merge them. `sync-external-docs.js`
+does that merge itself: each group page's own generated "Classes" heading
+(inside its member-overview table — see below) already lists exactly which
+classes it owns, so that's read back out of the *finished* docs output and
+those sidebar nodes are moved from "Classes" into their owning group. This
+runs a **post-order** walk (children before parents) specifically because
+several group pages roll their subgroups' classes up onto their own
+overview too — without processing the deepest group first and removing a
+class from consideration once claimed, a class ends up double-listed under
+both its true owner and every ancestor that rolled it up.
+
+Once every class that has a group has moved, the old "Classes" category —
+by then just a tree-overview link with nothing of its own left to add — is
+removed outright in favor of the [Global Index](#global-index) below.
+
+This means adding, renaming, or removing a `\defgroup`/`\ingroup` upstream
+needs no `sidebars.js` edit — but see the ⚠️ note in
+[Previewing local edits to a submodule](./#previewing-local-edits-to-a-submodule)
+above: sidebar generation only runs once, at dev-server startup (as part of
+`npm run generate`), so adding or removing a *group* (not just editing one's
+content) needs a server restart to show up while previewing.
+
+## Global Index
+
+Doxygen's own alphabetical indices — and doxygen2docusaurus's — split by
+*lexical scope*: "Class Members" vs. "Namespace Members". Because this SDK
+organizes almost everything free-standing into Modules via
+`\ingroup`/`\addtogroup` instead (see
+[Controlling what's included](#controlling-whats-included) above), a
+grouped free function/enum/variable/typedef doesn't fully appear in either
+index — its namespace's XML only holds a bare cross-reference to it, not
+the full definition.
+
+`generateFreeSymbolsIndex` in `scripts/sync-external-docs.js` builds a
+page that actually is exhaustive — every class, and every free function,
+variable, data type, and enum in the project, regardless of how it's
+grouped — by reading the Doxygen XML directly rather than relying on either
+tool's own indices:
+
+- Walks every namespace this SDK actually has, discovered fresh each run
+  from Doxygen's own `index.xml` (`discoverNamespaceXmlPaths`) rather than a
+  hand-maintained list of namespace names — so a namespace added upstream
+  (this SDK has grown `Robotiq::profiles` and `Robotiq::units` since this
+  page was first written) needs no matching edit here. `std` is skipped as
+  external, and any namespace named `detail` at any nesting level is skipped
+  as this codebase's internal-implementation convention (`Robotiq::detail`
+  is where `\snippet`-tagged doc-comment examples live, not real API
+  surface) — both excluded by that general rule, never by naming a specific
+  namespace.
+- For an entry that's only a bare `<member refid="...">` reference (i.e.
+  it's `\ingroup`-owned), resolves the refid to whichever group's compound
+  XML actually holds the full `<memberdef>`, and links to that group page's
+  anchor — Doxygen's refid convention is always
+  `<compoundId>_1<memberAnchor>`, and that anchor half is exactly the HTML
+  id doxygen2docusaurus renders on the page that documents it.
+- For a genuinely ungrouped entry (Doxygen inlines the full `<memberdef>`
+  directly in the namespace's own XML in this case — e.g. this SDK's free
+  `operator==`/`operator!=` overloads), lists it without a link, since
+  there's no other page on this site that documents it either (Namespaces
+  are excluded — see above). See `check_doc_groups.py` above for catching
+  this upstream, before it ever reaches this fallback.
+- Classes are listed by enumerating the already-generated `classes/`/
+  `structs/` pages directly (they always have their own page, unlike free
+  symbols), reusing the same group resolution
+  `attachClassesToGroups` already computed for the sidebar merge above so a
+  class's listed group can never disagree between the sidebar and this
+  page.
+- A brief description is attached to each entry: read from the resolving
+  group's own XML (skipping past any `<enumvalue>` children first, so an
+  enum's *own* brief isn't mistaken for its first enumerator's — Doxygen
+  lists per-value briefs before the enum's own), or from the class page's
+  own intro paragraph.
+- **A function lists as a bare `name()`, and an overloaded name appears only
+  once**, no matter how many overloads it actually has. This is an index of
+  names to scan, not signatures to read — the group page a name links to
+  already shows every overload in full, so repeating each one here (or
+  spelling out parameter lists to tell them apart) would only add noise a
+  reader has to read past. Sort is stable, so which overload's own brief
+  ends up attached is whichever the source declares first.
+
+This page is generated fresh on every run (`indices/free-symbols.md`) and
+added to the sidebar as "Global Index" — there's nothing to hand-maintain
+here as classes, groups, or free symbols are added, renamed, or removed
+upstream.
+
+## Matching Doxygen's own reference look
+
+doxygen2docusaurus's raw output is close to, but not the same as, what
+`doxygen` itself renders in `doxygen-html/` — a few of its default choices
+read noticeably flatter or noisier once you have something to compare
+against. `sync-external-docs.js` post-processes its generated Markdown to
+close those gaps before it ever reaches `docs/`:
+
+- **A group/class/struct page's own description is whole, right under the
+  title** (`moveDetailedDescriptionToTop`), not split into a truncated
+  brief-plus-"More..." link with the full text repeated later, past the
+  whole Members table, under its own "## Description" heading — the split
+  doxygen2docusaurus reproduces from classic Doxygen HTML, where a reader
+  could at least still see the surrounding chrome while deciding whether to
+  click through. On a plain generated page, clicking "More..." is a bigger
+  cost for the same payoff: a scroll-past-the-member-list round trip just to
+  read what the page is actually about before you had any of its members in
+  front of you yet. The `#details` anchor other pages' own "More..." links
+  point at (e.g. a parent group's Members table linking to
+  `.../thisGroup/#details`) is preserved in place — just with no visible
+  heading left to jump to, now that the text it used to point at sits at the
+  top instead.
+- **Private members are stripped** (`stripPrivateMemberSections`) from
+  every class/struct page and from the alphabetical "Class Members" index
+  entries that would otherwise still list them by name — Doxygen's XML
+  always records a private member regardless of the Doxyfile's
+  `EXTRACT_PRIVATE` setting (verified against this SDK's own XML), so
+  filtering happens here instead.
+- **A class's member-overview table is one continuous table**
+  (`mergeMemberIndexTables`), with a bold in-table heading per kind
+  (Public Member Functions, Public Attributes, ...) instead of a separate
+  `"## <Kind> Index"` heading and its own `<table>` per kind, and no blank separator
+  row between members — matching Doxygen's own single `memberdecls` table
+  instead of doxygen2docusaurus's default of unconditionally emitting a
+  description row and a separator row after *every* member, used or not.
+- **Multi-parameter signatures render as a real aligned table**
+  (`splitMemberSignatures`) — four columns (prefix / paren / type / name),
+  left empty on every row but where they actually have something to say,
+  exactly like Doxygen's own `.memname` table. Because it's one continuous
+  table, every parameter lines up right after wherever `(` landed on the
+  first line regardless of how long that line's own namespace-qualified
+  prefix was — doxygen2docusaurus instead dumps the whole signature as flat
+  text in one cell, which wraps into a hard-to-follow run-on paragraph past
+  two or three parameters.
+- **`src/css/custom.css`** carries the styling for all of the above, adapted
+  from doxygen2docusaurus's own shipped reference stylesheet
+  (`templates/css/custom.css` in the npm package) rather than written from
+  scratch, so it already themes through this site's existing Infima
+  variables. Watch for two easy-to-miss gotchas when touching this CSS
+  further:
+  - **Docusaurus's default markdown table styling** (alternating row
+    background, per-cell borders) only shows up on a table with more than
+    one row — several of doxygen2docusaurus's own tables (the multi-row
+    signature table above, in particular) were always single-row before
+    these transforms, so nothing here ever disabled those defaults, and
+    they reappeared the moment a table gained real rows. Where that
+    happens, resetting every visual property at once
+    (`background`/`border`/`border-radius`/`box-shadow`, `!important`) has
+    proven more reliable than specificity-matching Docusaurus's rule for
+    one property at a time.
+  - **Prefer `table-layout: auto` with `max-width`/`overflow-wrap` over
+    `table-layout: fixed` with a fixed percentage** for any column that can
+    hold either very short content (a bare `class`/`struct` label, or
+    nothing at all for a group/topic listing) or a very long one (a
+    generic type like `std::array< uint8_t, N - M >`). `fixed` applies the
+    *same* column width to every row sharing that column, project-wide —
+    fixing the long case by reserving, say, 35% of the row leaves a large
+    wasted gap on every row that doesn't need it, including ones with no
+    type text at all. `auto` sizes each column from its own content, with
+    `max-width` only capping the rare pathological case and `overflow-wrap:
+    break-word` (not `anywhere`, which is happy to break a short word too)
+    as the last resort.
+
+## Standalone preview — entirely inside the tool repo, no site clone needed
+
+While you're tuning Doxygen comments, don't loop through this site at all —
+everything below runs against a plain clone of the tool repo (`grippers`),
+with no dependency on robotiq.github.io whatsoever:
+
+1. **Quick sanity check — Doxygen's own HTML, zero extra tools:**
+   ```bash
+   doxygen                          # reads the Doxyfile above
+   # open doxygen-html/index.html directly in a browser — no server needed
+   ```
+   This alone catches most problems: missing/malformed comments, broken
+   `\ref`/`@see` links, wrong grouping. It won't look like the final site,
+   but it's the fastest possible loop — re-run `doxygen` and refresh the
+   tab.
+2. **Closer check — the actual markdown doxygen2docusaurus will hand to the
+   site:**
+   ```bash
+   npx @xpack/doxygen2docusaurus --config doxygen2docusaurus.json
+   ```
+   with a minimal `doxygen2docusaurus.json` alongside it (see
+   [Wiring it into this site's build](#wiring-it-into-this-sites-build)
+   below for the fields this site's own build writes dynamically). Browse
+   the resulting output folder directly — it's HTML-in-Markdown rather than
+   plain Markdown, so a plain Markdown previewer won't render it faithfully;
+   pushing the branch and viewing the folder on GitHub gets closer, but
+   [Optional: full-fidelity preview on this site](#optional-full-fidelity-preview-on-this-site)
+   below is the only way to see it exactly as readers will.
+
+## Wiring it into this site's build
+
+Once the Doxyfile above is committed upstream, this site can generate and
+publish the reference automatically.
+
+**Install both tools once:**
+- **Doxygen**: installer at https://www.doxygen.nl/download.html (or
+  `choco install doxygen.install -y` on Windows, if Chocolatey isn't
+  blocked on your network).
+- **doxygen2docusaurus**: an ordinary npm `devDependency` —
+  `npm install --save-dev @xpack/doxygen2docusaurus` — no separate binary
+  download or PATH setup needed (unlike this site's previous
+  Doxybook2-based pipeline).
+
+Add a job with a `doxygen2docusaurus` field (instead of `from`) to that
+submodule's list in `scripts/external-jobs.js`:
+
+```js
+{
+  doxygen2docusaurus: { doxyfileDir: 'sdk_cpp' },
+  to: 'drivers/2F hande/SDK/C++/API',
+  exclude: [
+    'files', 'folders', 'indices/files',
+    'namespaces', 'indices/namespaces',
+    // ...see the comments on the real job for the full, current list.
+  ],
+},
+```
+
+`sync-external-docs.js`'s handling of a `doxygen2docusaurus` job first
+deletes that submodule's `doxygen-xml/` output folder, then runs `doxygen`.
+**Doxygen never cleans its own `OUTPUT_DIRECTORY` between runs** — an XML
+compound for a file or symbol that existed in some *previous* run (before it
+was excluded, or before it was deleted upstream) is simply left behind, not
+regenerated and not removed, and every step downstream reads that folder as
+if it were authoritative. Skipping the delete is a real, reproducible bug,
+not a hypothetical one: it's exactly how a `register_map.hpp` constant kept
+appearing in this site's Global Index for several runs after the SDK put
+that file behind `EXCLUDE` — the stale compound XML from before the
+exclusion just sat there, untouched, until something finally deleted the
+folder.
+
+It then writes a `doxygen2docusaurus.json` config next to the repo root
+(`apiFolderPath`/`apiBaseUrl` both set to the job's own `to`, so every
+generated slug and cross-reference is already correct for where the content
+ends up — no post-hoc link rewriting needed) and runs the tool against it,
+staged into a gitignored folder rather than straight into `docs/` (doxygen2docusaurus
+also wipes its own *output* folder on every run — staging keeps that
+separate from the post-processing pipeline below, and lets `pruneStale`
+compare "what should exist now" against what's actually in `docs/` before
+touching anything there). It then applies the transforms described in
+[Matching Doxygen's own reference look](#matching-doxygens-own-reference-look)
+above, copies the result into `docs/${to}/`, builds the [Global
+Index](#global-index), and writes the pruned/merged sidebar JSON — all
+before `sidebars.js` ever reads it back.
+
+**Every page under this job comes from the submodule alone — nothing here is
+hand-authored on this site**, including the section's own landing page:
+doxygen2docusaurus generates a top-level `index.md` itself (a "Topics"
+overview, titled from the submodule's own `Doxyfile` `PROJECT_BRIEF`), and
+that job's `exclude` list deliberately does **not** drop it, unlike the
+`files`/`folders`/`namespaces` categories above. A previous version of this
+site's pipeline instead hand-wrote `API/index.mdx` here and excluded the
+generated one — don't reintroduce that: any hand-authored page in this repo
+can only ever describe upstream content as of whenever someone last remembered
+to update it (this exact page went stale within days, listing a group that
+had already been renamed upstream), where the generated page is correct by
+construction on every run.
+
+Add `'drivers/2F hande/SDK/C++/API/index'` (Docusaurus resolves a doc's `id`
+from its path, regardless of whether the underlying file is `.md` or `.mdx`)
+to the sidebar; everything under it comes from
+`loadDoxygenSidebarItems('drivers/2F hande/SDK/C++/API')` as described in
+[The sidebar mirrors the Doxygen group hierarchy automatically](#the-sidebar-mirrors-the-doxygen-group-hierarchy-automatically)
+above.
+
+## Optional: full-fidelity preview on this site
+
+Everyday comment-tuning is covered by the standalone preview above and
+needs nothing from this repo. Only reach for this — typically once, right
+before opening a PR — to confirm the reference looks right with the site's
+actual theme, sidebar, and page chrome:
+
+1. Point `external/2f85_cpp` at your WIP branch (or copy your generated
+   output into it) — see
+   [Previewing local edits to a submodule](./#previewing-local-edits-to-a-submodule)
+   above.
+2. Run with the submodule reset disabled and open the real page:
+   ```bash
+   # macOS/Linux
+   SKIP_SUBMODULE_RESET=1 npm start
+
+   # Windows PowerShell
+   $env:SKIP_SUBMODULE_RESET = "1"; npm start
+   ```
+   `http://localhost:3000/docs/drivers/2F hande/SDK/C++/API`
+
+## Checklist: onboarding a new C++ tool repo
+
+Everything above is written against the `2f85_cpp` submodule (`grippers`)
+as a worked example, but none of the pipeline it describes is specific to
+that repo — every piece reads from the submodule's own `Doxyfile`/XML/`docs/`
+folder, or from a job entry naming that submodule, never from a hardcoded
+repo name, group name, or namespace. Bringing up a second C++ tool repo
+against this same pipeline is a matter of matching the conventions below in
+the **tool repo**, then adding one job entry **here** — nothing in
+`scripts/sync-external-docs.js` itself should need to change.
+
+**In the tool repo:**
+
+1. **A `Doxyfile`** generating both outputs this pipeline needs — see the
+   top of this page for the
+   `GENERATE_XML`/`FULL_PATH_NAMES`/`STRIP_FROM_INC_PATH` lines. Also set,
+   matching `2f85_cpp`'s own:
+   ```
+   WARN_IF_UNDOCUMENTED   = YES
+   WARN_AS_ERROR          = FAIL_ON_WARNINGS
+   ```
+   so an undocumented or misattached comment fails the tool repo's own CI
+   instead of silently shipping a gap — see
+   [Controlling what's included](#controlling-whats-included) above for what
+   `EXCLUDE`/`EXCLUDE_PATTERNS` and, for a single symbol, `\cond
+   DOXYGEN_EXCLUDE` / `\endcond` are each actually for.
+2. **A `groups.dox`** (or equivalent — any file Doxygen scans) declaring the
+   `\defgroup`/`\ingroup` hierarchy that becomes this site's sidebar and
+   Topics page — see
+   [The sidebar mirrors the Doxygen group hierarchy automatically](#the-sidebar-mirrors-the-doxygen-group-hierarchy-automatically)
+   above. Nest freely (`\ingroup` on a `\defgroup` itself, arbitrarily deep)
+   — `2f85_cpp`'s own goes four levels in places (Core API → Commands &
+   Status → Status → Fault Status). Every documented symbol needs an
+   `\ingroup` somewhere in this tree, or it's the "ungrouped, no page" gap
+   `check_doc_groups.py` (next) exists to catch.
+3. **`tools/check_doc_groups.py`** — copy
+   [templates/check_doc_groups.py](https://github.com/robotiq/robotiq.github.io/blob/main/templates/check_doc_groups.py)
+   in, adjusting the namespace glob near the bottom (`namespace_robotiq*`)
+   to this repo's own top-level namespace. Wire it into CI right after
+   `doxygen Doxyfile`:
+   ```yaml
+   - run: doxygen Doxyfile
+     working-directory: sdk_cpp
+   - run: python3 tools/check_doc_groups.py
+     working-directory: sdk_cpp
+   ```
+4. **`tools/check_doc_snippets.py`** (only needed if the repo has
+   hand-authored markdown guides quoting real code) — see
+   [Verifying markdown code examples against real source](#verifying-markdown-code-examples-against-real-source)
+   above for the full adoption steps and CI wiring.
+5. **Guide files under `docs/` named `NN-kebab-case.md`** (zero-padded,
+   kebab-case) if the repo has hand-authored guides beyond the README — see
+   ["Excluding content from a synced README" and "Splitting a tool page..."](./how-it-works#excluding-content-from-a-synced-readme)
+   in "How it works" for this naming convention and the README's own
+   `<!-- docs-site:exclude -->` markers (for content — like a "full docs at
+   robotiq.github.io" blurb, or a `docs/` links list this site's own sidebar
+   already covers — that belongs on GitHub but would be redundant or
+   circular once copied onto this site).
+6. **Every C++ `\code{.cpp}` block backed by `\snippet`**, and every markdown
+   fence quoting real code marked with `<!-- snippet: file tag -->`, per
+   [Compile-checked examples with `\snippet`](#compile-checked-examples-with-snippet)
+   above — not required, but a `\code`/hand-copied fence is exactly the kind
+   of thing that silently drifts once nothing compiles it.
+
+**Here, in `robotiq.github.io`:**
+
+7. Add a `doxygen2docusaurus` job to that submodule's list in
+   `scripts/external-jobs.js` — see
+   [Wiring it into this site's build](#wiring-it-into-this-sites-build)
+   above for the shape, and the `2f85_cpp` job for a full worked `exclude`
+   list (the `files`/`folders`/`namespaces`/redundant-`Classes`-listings
+   entries there apply to any doxygen2docusaurus output, not just this SDK —
+   copy them as a starting point).
+8. If the repo also has its own README and/or `docs/` guides, add those as
+   plain `{ from, to }` jobs in the same `submoduleJobs(...)` call — see
+   [Splitting a tool page into overview, API reference, and guides](./how-it-works#splitting-a-tool-page-into-overview-api-reference-and-guides)
+   in "How it works".
+9. Add the new section's sidebar entries — the tool's `index.mdx`, the
+   generated API reference's doc id, and the `docs/` guides' doc id, if
+   present — per the same "Splitting a tool page..." section.
+10. Run `npm run generate` (or `npm start`) once and check the console for
+    warnings — a missing `doxygen`/Doxyfile, a broken cross-reference link,
+    or `pruneStale` removing something unexpected are all surfaced there,
+    not silently.

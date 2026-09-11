@@ -1,0 +1,183 @@
+---
+title: How It Works
+sidebar_label: How it works
+displayed_sidebar: contributeSidebar
+---
+
+# How it works
+
+Each software tool (SDK, driver, ROS package, …) lives in its own
+GitHub repository. Embedding it here works in two steps:
+
+1. **Submodule** — a Git submodule under `external/` acts as a
+   pinned import of the tool's repository. It does not copy files;
+   it records the exact commit of the source repo that this site
+   should use. Running `git submodule update --init` checks out
+   those commits locally so their files become available.
+
+2. **Sync script** — [`scripts/sync-external-docs.js`](https://github.com/robotiq/robotiq.github.io/blob/main/scripts/sync-external-docs.js)
+   reads the checked-out submodule files and copies the ones you
+   declare into `docs/`, rewriting relative links so they resolve
+   correctly on this site. For a folder job, it also removes any
+   previously-synced file that source no longer has (e.g. the source repo
+   renamed or deleted a page) — except a folder's own hand-authored
+   `index.mdx`/`README`, which the sync never writes and never touches.
+
+## Repository layout
+
+```
+robotiq.github.io/
+├── external/                          ← pinned imports of source repos
+│   └── tactile_sensors/               ← TSF-85 SDK repo
+├── docs/
+│   ├── intro.mdx                       ← overview page, includes the
+│   │                                     auto-generated software tools tables
+│   └── drivers/
+│       ├── TSF-85/
+│       │   ├── index.mdx              ← product landing page (in git)
+│       │   ├── SDK/
+│       │   │   ├── C++/
+│       │   │   │   ├── index.mdx      ← wrapper page (in git)
+│       │   │   │   ├── _readme.md     ← synced from submodule
+│       │   │   │   ├── API/           ← generated API reference (Doxygen +
+│       │   │   │   │   └── index.mdx     doxygen2docusaurus), see below
+│       │   │   │   └── docs/          ← synced copy of the submodule's own
+│       │   │   │       └── index.mdx     docs/ folder (guides, design notes)
+│       │   │   └── Python/
+│       │   │       ├── index.mdx
+│       │   │       └── _readme.md
+│       │   ├── ROS/
+│       │   │   ├── index.mdx          ← ROS landing page (in git), holds
+│       │   │   │                         the per-distro compatibility table
+│       │   │   └── ROS2-Jazzy/index.mdx
+│       │   └── Physics Engine/
+│       │       └── Isaac Sim/index.mdx
+│       ├── FT300/
+│       │   ├── index.mdx
+│       │   ├── SDK/C/ …
+│       │   ├── SDK/Python/ …
+│       │   └── ROS/
+│       │       ├── index.mdx
+│       │       └── ROS2-Humble/ …
+│       └── 2F hande/
+│           ├── index.mdx
+│           ├── SDK/C++/ …
+│           ├── SDK/Python/ …
+│           ├── ROS/                    ← newest to oldest, per generation
+│           │   ├── index.mdx
+│           │   ├── ROS2-Rolling/ …
+│           │   ├── ROS2-Iron/ …
+│           │   ├── ROS2-Humble/ …
+│           │   ├── ROS1-Melodic/ …
+│           │   ├── ROS1-Kinetic/ …
+│           │   ├── ROS1-Jade/ …
+│           │   └── ROS1-Indigo/ …
+│           ├── Physics Engine/Isaac Sim/ …
+│           ├── Physics Engine/PyBullet/ …
+│           └── Other/GraspGen/ …      ← "Other" category
+├── draft/                              ← content with no nav link yet (never
+│                                          built into a page — outside docs/)
+├── scripts/
+│   ├── sync-external-docs.js
+│   └── generate-tools-table.js
+└── sidebars.js
+```
+
+Files prefixed with `_` are Docusaurus **partials** — imported by a
+wrapper `.mdx` but not standalone pages themselves.
+
+The `SDK/`, `ROS/`, `Physics Engine/`, and `Other/` folders are just
+organizational containers — `generate-tools-table.js` doesn't care about
+folder names, only about which `index.mdx` files carry a `Category` badge
+(see [step 3](./adding-a-tool#3-create-the-wrapper-page) of adding a new
+tool). A tool page could just as well sit directly under the product
+folder with no wrapper folder at all — it would still land in the right
+table, because classification comes from the badge, not the path. The
+wrapper folders exist purely to keep the repo tidy for humans browsing it.
+
+`ROS/` is a container with one exception: its own `index.mdx` is a real page
+(no `Category` badge, so the script still treats it as a container and
+recurses into it), used as the ROS landing page — it carries the
+auto-generated per-distro compatibility table for that product. Each ROS
+distro is its own leaf folder named `<Generation>-<Distro>` (e.g.
+`ROS2-Humble/`, `ROS1-Indigo/`), rather than one page listing every distro a
+generation supports — so every distro gets its own page, and its own link in
+the compatibility table, to a distro-specific reference.
+
+## Excluding content from a synced README
+
+A tool repo's README often carries things that only make sense on
+GitHub — e.g. a "full documentation at robotiq.github.io/..." blurb,
+which would be redundant (or circular) once that same README is
+copied onto this site. Wrap that content in a pair of HTML comment
+markers:
+
+```markdown
+<!-- docs-site:exclude -->
+📖 Full documentation: https://robotiq.github.io/...
+<!-- /docs-site:exclude -->
+```
+
+GitHub renders the text between the markers normally on the tool
+repo's own README (HTML comments are invisible), but
+`sync-external-docs.js` strips everything between
+`<!-- docs-site:exclude -->` and `<!-- /docs-site:exclude -->`
+before copying content into `docs/`, so it never reaches this site.
+
+## Splitting a tool page into overview, API reference, and guides
+
+A tool's `_readme.md` partial is meant to stay a short overview. Once a
+repository also has a generated API reference and its own prose
+documentation (design notes, guides — more than fits in a README), don't
+cram all three into one page. Split them into sibling folders next to the
+tool's `index.mdx`, as with `docs/drivers/2F hande/SDK/C++/`:
+
+- **`<Tool>/index.mdx`** — the manually maintained overview (unchanged);
+  still imports `_readme.md`, and links to the two folders below.
+- **`<Tool>/API/`** — the generated API reference. See
+  [Python — pydoc-markdown](./api-reference-python) or
+  [C++ — Doxygen + doxygen2docusaurus](./api-reference-cpp) for how the sync
+  script produces it.
+- **`<Tool>/docs/`** — a synced, verbatim copy of the source repo's own
+  `docs/` folder (or wherever it keeps guides), added as a normal folder
+  sync job inside the submodule's `submoduleJobs(...)` call in
+  `scripts/external-jobs.js`:
+
+  ```js
+  { from: 'docs', to: 'drivers/2F hande/SDK/C++/docs' },
+  ```
+
+  **Name the source repo's guide files `NN-kebab-case.md`** (e.g.
+  `01-environment-setup.md`, `02-quick-start.md`) — zero-padded so ordering
+  stays correct past 9, kebab-case so a reading-order table of contents never
+  needs `%20`-encoded spaces in its own links. This site's
+  `folder-sidebar.mjs` sorts a folder's pages alphabetically with no
+  hand-maintained `sidebarPositions` map to keep in sync with upstream
+  renames, so this naming *is* the reading order — get it right once
+  upstream instead of fixing it per-file here.
+
+Each folder needs its own `index.mdx` landing page (`title`/`sidebar_label`
+frontmatter only — no `Category`/`Supported_by` badges, since these aren't
+separate tools) and an entry in `sidebars.js` nested under the tool, which
+becomes a category instead of a single page:
+
+```js
+{
+  type: 'category',
+  label: 'C++',
+  link: { type: 'doc', id: 'drivers/2F hande/SDK/C++/index' },
+  items: [
+    'drivers/2F hande/SDK/C++/API/index',
+    'drivers/2F hande/SDK/C++/docs/index',
+  ],
+},
+```
+
+`generate-tools-table.js` stops walking a product's folder tree as soon as
+it finds an `index.mdx` with a `Category` badge (see
+[Auto-generated software tools tables](./tools-tables)) — so `API/` and
+`docs/` are never mistaken for separate tools, no matter what's inside
+them. If the repo has no `docs/` folder or Doxygen setup yet, still create
+both `index.mdx` placeholders (a short "coming soon" line is enough) so the
+sidebar structure and links are in place, and fill them in once the source
+repo catches up.

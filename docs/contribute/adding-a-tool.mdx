@@ -1,0 +1,286 @@
+---
+title: Adding a New Software Tool
+sidebar_label: Adding a new tool
+displayed_sidebar: contributeSidebar
+---
+
+# Step-by-step: adding a new software tool
+
+The steps below add a Python tool for the **2F hande** gripper family hosted
+at `https://github.com/robotiq/2f85-python-driver`.
+
+## 1. Add the submodule
+
+This registers the tool's repository as a pinned import under
+`external/`. Every contributor who clones this site will get the
+same version of the source repo.
+
+```bash
+git submodule add \
+  https://github.com/robotiq/2f85-python-driver \
+  external/2f85_python
+git submodule update --init
+```
+
+## 2. Declare the sync job
+
+Open [`scripts/external-jobs.js`](https://github.com/robotiq/robotiq.github.io/blob/main/scripts/external-jobs.js)
+and add an entry inside a `submoduleJobs(submodule, { repoUrl, branch },
+[...])` call — that helper merges the shared `submodule`/`repoUrl`/`branch`
+fields into every job passed to it, so a submodule with several jobs
+(README, docs/, API reference, ...) states them once instead of repeating
+them on each entry. Start a new call for a new submodule:
+
+```js
+...submoduleJobs('2f85_python', { repoUrl: 'https://github.com/robotiq/2f85-python-driver', branch: 'main' }, [
+  { from: 'README.md', to: 'drivers/2F hande/SDK/Python/_readme.md' },
+]),
+```
+
+For a repo that contains multiple tools, add one job per tool inside the
+same call:
+
+```js
+...submoduleJobs('2f85_drivers', { repoUrl: '...', branch: 'main' }, [
+  // C++ tool
+  { from: 'sdk_cpp/README.md', to: 'drivers/2F hande/SDK/C++/_readme.md' },
+  // Python tool
+  { from: 'python/README.md', to: 'drivers/2F hande/SDK/Python/_readme.md' },
+]),
+```
+
+If the submodule already has a `submoduleJobs(...)` call elsewhere in
+`JOBS` (e.g. you're adding a second tool from a repo already used for
+another one), add your job to its existing `jobs` array instead of
+starting a new call — one `submoduleJobs(...)` per submodule.
+
+Test locally:
+
+```bash
+node scripts/sync-external-docs.js
+```
+
+## 3. Create the wrapper page
+
+Create `docs/drivers/2F hande/SDK/Python/index.mdx`. This file
+is tracked in git and controls the page title, sidebar label, and
+any introductory text above the synced README:
+
+```mdx
+---
+title: Python
+sidebar_label: Python
+sidebar_position: 2
+---
+
+![SDK](https://img.shields.io/badge/Category-SDK-lightgrey)
+
+![Supported by Robotiq](https://img.shields.io/badge/Supported_by-Robotiq-blue)
+
+Brief description and link to the source repository.
+
+## Intro
+
+import Readme from './_readme.md';
+
+<Readme />
+```
+
+The `## Intro` heading and the import are optional — omit them if
+there is no synced README or if the content should start directly.
+
+**Both badges are required, not decorative** — `generate-tools-table.js`
+walks the folder tree looking for the `Category` badge to decide which
+table a page belongs to, and reads the `Supported_by` badge for the cell
+shown in that table (see
+[Auto-generated software tools tables](./tools-tables)). Valid `Category`
+values: `SDK`, `Physics_Engine`, `Other`, `ROS1`, `ROS2`. Use
+`Supported_by-Robotiq-blue` for tools developed and maintained by Robotiq,
+or `Supported_by-Third_party-lightgrey` for community-maintained tools.
+
+**ROS pages are one distro each.** A ROS tool page is a leaf just like any
+other — one `Category-ROS1` or `Category-ROS2` badge, one `Supported_by`
+badge — but its `title` is the bare distro name, not "ROS". `sidebar_label`
+is different: it's prefixed with the generation (`ROS1 · `/`ROS2 · `) since
+the sidebar lists every distro from every generation as one flat group,
+where a bare distro name alone wouldn't say which ROS version it's for:
+
+```mdx
+---
+title: Jazzy
+sidebar_label: ROS2 · Jazzy
+---
+
+![Category](https://img.shields.io/badge/Category-ROS2-lightgrey)
+![Supported by Robotiq](https://img.shields.io/badge/Supported_by-Robotiq-blue)
+
+Short description, and a **Reference:** link to the driver repository or
+manual that this distro's page documents.
+```
+
+`title` stays the bare distro name because `generate-tools-table.js` uses it
+as the table column header and legend key (see `COLUMN_DESCRIPTIONS` in that
+script) — prefixing it there would duplicate the table's own ROS2/ROS1
+section heading and break the legend lookup.
+
+Create this page under `ROS/<Generation><Distro>/index.mdx` — e.g.
+`docs/drivers/TSF-85/ROS/ROS2-Jazzy/index.mdx` (see that file for a full
+example with build/run instructions). A product supporting several distros
+gets one such folder per distro (see
+`docs/drivers/2F hande/ROS/` for a seven-distro example) — each with its own
+page, and its own link in the compatibility table, rather than one page
+listing every distro. List them in `sidebars.js` newest to oldest per
+generation (see [step 5](#5-register-in-sidebarsjs) below), and see
+[step 4](#4-create-the-product-landing-page) for the `ROS/index.mdx`
+landing page this requires.
+
+**No README or no software tool yet?** Skip steps 1 and 2 entirely
+and write the `index.mdx` manually. This is the right approach when
+a tool is planned but not yet available, or when the source repo has
+no suitable README to pull in. Write the page content directly with
+no import:
+
+```mdx
+---
+title: Python
+sidebar_label: Python
+sidebar_position: 2
+---
+
+![SDK](https://img.shields.io/badge/Category-SDK-lightgrey)
+
+![Supported by Robotiq](https://img.shields.io/badge/Supported_by-Third_party-lightgrey)
+
+Coming soon. In the meantime, see
+[org/repo](https://github.com/robotiq/...) on GitHub.
+```
+
+The page still appears in the sidebar and can be updated to import
+a synced README later, once the tool or its documentation exists.
+
+## 4. Create the product landing page
+
+If the product folder has no `index.mdx` yet, create
+`docs/drivers/2F hande/index.mdx`:
+
+```mdx
+---
+title: 2F / Hand-E
+sidebar_label: 2F / Hand-E
+sidebar_position: 0
+---
+
+Short description of the product family.
+
+## Available drivers
+
+### SDK
+
+{/* AUTO-GENERATED-PRODUCT-SDK-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-SDK-TABLE:END */}
+
+### ROS
+
+See the [ROS](ROS) page for the per-distro compatibility table.
+
+### Physics Engine
+
+{/* AUTO-GENERATED-PRODUCT-PHYSICS_ENGINE-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-PHYSICS_ENGINE-TABLE:END */}
+
+### Other
+
+{/* AUTO-GENERATED-PRODUCT-OTHER-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-OTHER-TABLE:END */}
+```
+
+Don't write any of these tables by hand — leave each marker pair next
+to each other and `scripts/generate-tools-table.js` fills in a
+single-row version of the matching category table (see
+[Auto-generated software tools tables](./tools-tables)) on the next build.
+The `title` here is what shows up as the row label there. A category with
+no tool yet renders a short "not documented yet" placeholder instead of an
+empty table, so it's safe to keep all four headings even before every
+category has content.
+
+**If the product has any ROS tool pages**, also create
+`docs/drivers/2F hande/ROS/index.mdx` — this is where the ROS2/ROS1 tables
+live instead, since a product's ROS distros usually outnumber its other
+tools:
+
+```mdx
+---
+title: ROS
+sidebar_label: ROS
+---
+
+Short description.
+
+### ROS2
+
+{/* AUTO-GENERATED-PRODUCT-ROS2-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-ROS2-TABLE:END */}
+
+### ROS1
+
+{/* AUTO-GENERATED-PRODUCT-ROS1-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-ROS1-TABLE:END */}
+```
+
+`generate-tools-table.js` throws a build error naming the missing file if a
+product has ROS tool pages but no `ROS/index.mdx` with these markers.
+
+## 5. Register in `sidebars.js`
+
+Add a category entry with a `link` pointing at the product landing
+page, nesting the tool pages under an SDK / ROS / Physics Engine / Other
+sub-category matching where they live on disk:
+
+```js
+{
+  type: 'category',
+  label: '2F / Hand-E',
+  link: { type: 'doc', id: 'drivers/2F hande/index' },
+  items: [
+    {
+      type: 'category',
+      label: 'SDK',
+      items: [
+        'drivers/2F hande/SDK/C++/index',
+        'drivers/2F hande/SDK/Python/index',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'ROS',
+      link: { type: 'doc', id: 'drivers/2F hande/ROS/index' },
+      items: [
+        // Newest to oldest, grouped by generation (ROS2 above ROS1).
+        'drivers/2F hande/ROS/ROS2-Rolling/index',
+        'drivers/2F hande/ROS/ROS2-Humble/index',
+        'drivers/2F hande/ROS/ROS1-Melodic/index',
+        'drivers/2F hande/ROS/ROS1-Indigo/index',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Physics Engine',
+      items: [
+        'drivers/2F hande/Physics Engine/Isaac Sim/index',
+        'drivers/2F hande/Physics Engine/PyBullet/index',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Other',
+      items: [
+        'drivers/2F hande/Other/GraspGen/index',
+      ],
+    },
+  ],
+},
+```
+
+Only include the sub-categories that actually have pages — e.g. FT300-S
+has no Physics Engine or Other tools yet, so its sidebar entry skips
+those two groups entirely.

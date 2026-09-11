@@ -34,7 +34,7 @@ const FeatureList = [
     images: [
       { src: '/img/C++-Logo.wine.png', alt: 'C++' },
       { src: '/img/python-logo-master-v3-TM-flattened.png', alt: 'Python' },
-      { src: '/img/Ros_logo.svg.png', alt: 'ROS2' },
+      { src: '/img/ros2.webp', alt: 'ROS2' },
     ],
     variant: 'logo',
   },
