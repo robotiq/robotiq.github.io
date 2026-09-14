@@ -7,8 +7,31 @@
 # Generated files
 .docusaurus
 .cache-loader
-docs/drivers/TSF-85/SDK/C++/_readme.md
-docs/drivers/TSF-85/SDK/Python/_readme.md
+# Every page scripts/sync-external-docs.js produces under docs/drivers/ — a
+# synced README partial, a synced docs/ guide, or the whole doxygen2docusaurus
+# API tree — is plain CommonMark (.md); every hand-authored wrapper/landing
+# page (including a folder's own index.mdx sitting next to synced siblings,
+# e.g. docs/drivers/<Product>/<Tool>/docs/index.mdx) is MDX (.mdx) — see the
+# `markdown.format: 'detect'` comment in docusaurus.config.js, which relies on
+# that same split. One generic pattern by extension, not a per-product path
+# list: covers every current product (2F hande, FT300, TSF-85) and any future
+# one with no edit needed here when a new tool repo is onboarded — see
+# "Checklist: onboarding a new C++ tool repo" in
+# docs/contribute/api-reference-cpp.mdx.
+docs/drivers/**/*.md
+# Exception: FT300's C driver has no submodule/sync job in external-jobs.js
+# yet (unlike every other _readme.md under drivers/) — this one is a plain
+# static file its wrapper index.mdx imports directly, so it must stay
+# tracked despite the extension. Confirmed the only one: `find docs/drivers
+# -iname '*.md' -not -iname '*.mdx'` cross-checked against every job's
+# actual output before adding the blanket rule above.
+!docs/drivers/FT300/SDK/C/_readme.md
+
+# doxygen2docusaurus scratch output (scripts/sync-external-docs.js stages
+# here, then copies the filtered result into docs/ — see external-jobs.js)
+/.doxygen2docusaurus-staging
+/doxygen2docusaurus.json
+/scripts/generated/
 
 # Editor / machine-specific
 .vscode/

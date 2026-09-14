@@ -1,0 +1,189 @@
+---
+title: Contributing Software Tool Documentation
+sidebar_label: Local development
+displayed_sidebar: contributeSidebar
+---
+
+# Contributing Software Tool Documentation
+
+This guide covers two things: setting up the repo locally and opening
+a pull request, and embedding a software tool repository as a Git
+submodule with optional auto-generated API docs. It's split by topic —
+see the sidebar for the rest ([How it works](./how-it-works),
+[Adding a new software tool](./adding-a-tool),
+[Auto-generated software tools tables](./tools-tables),
+[Auto-generated API reference](./api-reference-cpp), and a
+[Quick reference](./quick-reference) table).
+
+---
+
+## Local development workflow
+
+### Prerequisites
+
+- **Node.js** 20 or later — [nodejs.org](https://nodejs.org)
+- **Git** with submodule support
+
+### 1. Clone and initialise
+
+```bash
+git clone https://github.com/robotiq/robotiq.github.io
+cd robotiq.github.io
+git submodule update --init
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Sync external docs
+
+The sync script pulls content from submodules into `docs/`. It runs
+automatically on `npm start` and `npm run build`, but you can trigger
+it manually at any time to verify a new sync job:
+
+```bash
+node scripts/sync-external-docs.js
+```
+
+### 4. Start the dev server
+
+```bash
+npm start
+```
+
+Opens `http://localhost:3000` in your browser. The page hot-reloads
+when you edit files under `docs/`, `src/`, or `sidebars.js`.
+
+### Previewing local edits to a submodule
+
+Editing files under `docs/` hot-reloads instantly, but a submodule's own
+content — its README, a `docs/` folder, or a generated API reference — is a
+different story: `sync-external-docs.js` runs `git submodule update --init
+--force` before every sync, which resets `external/<submodule>/` to the
+exact commit pinned in this repo. That's what keeps the live site
+reproducible, but it also means any uncommitted edits sitting in
+`external/<submodule>/` — including a Doxygen run you just did by
+hand — get silently discarded the next time `npm start` or `npm run build`
+fires the sync step. This is the reason a tool's docs can be awkward to
+proofread while you're still iterating on it in its own repo.
+
+To see your in-progress edits rendered exactly as they'll appear on this
+site, before committing or pushing anything:
+
+**If you've pushed your edits somewhere** (a branch or fork — the common case
+once you're iterating on a WIP branch like `2f85_cpp`'s current `API`
+branch), this needs **two terminals**:
+
+Order matters, and so does *how* you start terminal 1 — plain `npm start`
+always resets the submodule first (its `prestart` hook runs the sync
+*without* `SKIP_SUBMODULE_RESET`), which silently undoes whatever `npm run
+preview` just checked out, even if `preview` ran first. Disable the reset on
+the `start` command too:
+
+- **Terminal 2** — run this **first**: one command that does steps 1–2 below
+  for every submodule declared in
+  [`scripts/external-jobs.js`](https://github.com/robotiq/robotiq.github.io/blob/main/scripts/external-jobs.js):
+  fetches each submodule's declared `repoUrl`/`branch`, checks it out, and
+  syncs with the reset disabled:
+  ```bash
+  npm run preview
+  ```
+- **Terminal 1** — start (or restart) the dev server only *after* terminal 2
+  has synced, with the reset disabled so this command's own `prestart`
+  doesn't reset the checkout terminal 2 just made:
+  ```bash
+  # macOS/Linux
+  SKIP_SUBMODULE_RESET=1 npm start
+
+  # Windows PowerShell
+  $env:SKIP_SUBMODULE_RESET = "1"; npm start
+  ```
+
+Once both are up, rerun `npm run preview` in terminal 2 after each push to
+pick up new commits — terminal 1's dev server hot-reloads the result, no
+restart needed. Skip to step 3.
+
+⚠️ **Exception: adding or removing a Doxygen group (`\defgroup`).** The C++
+API sidebar is built dynamically from whatever files currently exist under
+`API/Modules/` (see
+[`scripts/doxygen-groups-sidebar.mjs`](https://github.com/robotiq/robotiq.github.io/blob/main/scripts/doxygen-groups-sidebar.mjs)),
+but that scan only runs once, when the dev server starts — it isn't re-run
+on every file change the way doc content is. Editing an existing group's
+content hot-reloads fine, but a *new* or *deleted* group won't show up in
+the sidebar until you restart terminal 1 — and that restart must still use
+`SKIP_SUBMODULE_RESET=1 npm start` (or `$env:SKIP_SUBMODULE_RESET = "1";
+npm start` on Windows), never plain `npm start`, or you're back to the reset
+wiping out the preview checkout.
+
+⚠️ This is `npm run preview`, **not** `npm start preview`. The latter
+doesn't run the `preview` script at all — npm forwards `preview` as a CLI
+argument to `docusaurus start`, which treats its first argument as a site
+directory to serve, not a mode, and fails with an `ENOENT`/`lstat`
+error on a `preview` folder that doesn't exist.
+
+**If your edits are only sitting uncommitted in your own local clone** of the
+tool repo (nothing pushed yet), do it by hand instead:
+
+1. **Point the submodule at your branch.** `external/<submodule>/` is a real
+   checkout of the tool's repository. If you're working from a fork rather
+   than a branch pushed to the repo `.gitmodules` points at, fetch it
+   directly:
+   ```bash
+   cd external/2f85_cpp
+   git fetch https://github.com/<you>/grippers <your-branch>
+   git checkout FETCH_HEAD
+   cd ../..
+   ```
+   (If your branch already lives on the repo `.gitmodules` points at, a plain
+   `git fetch origin <your-branch> && git checkout <your-branch>` is enough.)
+2. **Run the sync with the reset disabled**, so it picks up what's actually
+   checked out in `external/` instead of resetting it to the pinned commit
+   first. For a Doxygen-based API reference (see
+   [C++ — Doxygen + doxygen2docusaurus](./api-reference-cpp) below), the sync
+   script runs Doxygen and doxygen2docusaurus for you whenever it finds a `Doxyfile`
+   in the submodule — no separate manual step needed:
+   ```bash
+   # macOS/Linux
+   SKIP_SUBMODULE_RESET=1 npm start
+
+   # Windows PowerShell
+   $env:SKIP_SUBMODULE_RESET = "1"; npm start
+   ```
+3. **Open the page at its real site URL**, e.g.
+   `http://localhost:3000/docs/drivers/2F hande/SDK/C++/API`. After each
+   further edit in the tool repo, rerun the sync in a second terminal (with
+   `SKIP_SUBMODULE_RESET` set in *that* shell too) and the dev server
+   hot-reloads the result:
+   ```bash
+   # macOS/Linux
+   SKIP_SUBMODULE_RESET=1 npm run generate
+
+   # Windows PowerShell
+   $env:SKIP_SUBMODULE_RESET = "1"; npm run generate
+   ```
+4. **Unset `SKIP_SUBMODULE_RESET`** (or just open a fresh terminal) once
+   you're done, so the next normal `npm start`/`npm run build` goes back to
+   syncing from the actual pinned commit — never commit or push a build that
+   was produced with the reset skipped.
+
+### 5. Open a pull request
+
+1. Create a branch:
+   ```bash
+   git checkout -b my-feature
+   ```
+2. Commit your changes:
+   ```bash
+   git add .
+   git commit -m "Add FT300 Python tool page"
+   ```
+3. Push and open a pull request from your branch to `main`:
+   ```bash
+   git push -u origin my-feature
+   ```
+
+The CI pipeline builds the site and reports broken links or MDX
+errors before the PR is merged.

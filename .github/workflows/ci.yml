@@ -37,6 +37,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # scripts/sync-external-docs.js shells out to the `doxygen` binary
+      # (see its doxygen2docusaurus job handling) to build the C++ SDK's
+      # API reference — not an npm package, so `npm ci` above can't provide
+      # it. ubuntu-latest doesn't have it preinstalled. graphviz (`dot`) is
+      # also required even though this repo's own Doxyfiles never set
+      # HAVE_DOT=YES: the apt-installed Doxygen version's own default is
+      # YES (newer Doxygen releases default it to NO, which is why this
+      # was never hit testing locally against a newer local install) — so
+      # it tries to render inheritance/collaboration graphs regardless.
+      # Without `dot`, that fails outright ("problems opening map file ...
+      # for inclusion in the docs"), and WARN_AS_ERROR=FAIL_ON_WARNINGS
+      # (see the submodule's own Doxyfile) turns that into a hard failure
+      # here. Confirmed by reproducing this exact failure in a clean
+      # Ubuntu container with the apt-installed Doxygen version, then
+      # confirming `apt install graphviz` alone fixes it.
+      - name: Install Doxygen and Graphviz
+        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+
       # Fails on broken internal links / anchors (onBrokenLinks: 'throw')
       # and runs the sync + tools-table generators via the prebuild hook.
       - name: Build
