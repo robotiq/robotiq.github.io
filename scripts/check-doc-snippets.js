@@ -1,7 +1,7 @@
 // Runs each submodule's own doc-snippet verifier, for every job in
 // external-jobs.js that declares a `docSnippetsCheck` (see that file's
 // comment on the 2f85_cpp docs job, and "Verifying markdown code examples
-// against real source" in contribute.mdx).
+// against real source" in docs/contribute/api-reference-cpp.mdx).
 //
 // This is a *verifier*, not a generator: it fails the build loudly on a
 // mismatch rather than silently rewriting the copied markdown. It runs the

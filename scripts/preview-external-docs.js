@@ -7,7 +7,7 @@
 // This only helps once those commits are pushed somewhere. For edits still
 // sitting uncommitted in your own local clone of the tool repo, point
 // external/<submodule> at that clone by hand instead — see
-// "Previewing local edits to a submodule" in docs/contribute.mdx.
+// "Previewing local edits to a submodule" in docs/contribute/index.mdx.
 const path = require('path');
 const { execSync } = require('child_process');
 

@@ -1,0 +1,15 @@
+# Keeps every git submodule's pinned commit from silently drifting behind
+# its own repo's default branch. Reads .gitmodules directly, so a new
+# submodule (a future tool repo registered in scripts/external-jobs.js)
+# is covered automatically — nothing here is specific to any one repo.
+# See "Refreshing submodule pins automatically" in
+# docs/contribute/how-it-works.mdx for the full story, including why the
+# actual safety gate is the "build-and-test" required status check on the
+# prToMain ruleset (not this file) and how the opened PR gets approved and
+# merged without a human (.github/workflows/dependabot-auto-merge.yml).
+version: 2
+updates:
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    schedule:
+      interval: "daily"
