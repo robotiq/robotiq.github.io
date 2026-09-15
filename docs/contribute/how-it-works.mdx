@@ -181,3 +181,53 @@ them. If the repo has no `docs/` folder or Doxygen setup yet, still create
 both `index.mdx` placeholders (a short "coming soon" line is enough) so the
 sidebar structure and links are in place, and fill them in once the source
 repo catches up.
+
+## Refreshing submodule pins automatically
+
+A git submodule pins an exact commit — nothing tells this repo when a
+registered tool repo advances, so the deployed site can silently drift
+behind upstream for however long it takes someone to notice and bump the
+pin by hand. That's exactly what happened once: the C++ SDK docs PR's pin
+predated a `grippers` fix (adding `\ingroup` tags to `DeviceProfile`/
+`units.hpp`) that merged a few hours later, and the deployed Global Index
+kept listing those symbols as ungrouped until someone manually re-ran the
+sync against the newer commit and pushed the bump.
+
+Two pieces close that gap, both first-party GitHub features rather than
+custom code — an earlier version of this used a hand-rolled script and
+workflow to do both jobs; this replaced it once we realized the platform
+already covers each half:
+
+1. **`.github/dependabot.yml`** (`package-ecosystem: "gitsubmodule"`,
+   checked daily) reads `.gitmodules` directly and opens a PR bumping any
+   submodule behind its own repo's default branch — covers whatever's
+   registered there, nothing hardcoded to any one tool repo, and nothing
+   to update here when a future tool repo's submodule is added.
+2. **`.github/workflows/dependabot-auto-merge.yml`** approves and merges
+   that PR without a human. This needs two ruleset pieces already in place
+   on `main` (the `prToMain` repository ruleset):
+   - A **required `build-and-test` status check** (the `ci.yml` job) —
+     this is the actual safety gate. `gh pr merge --auto` in that workflow
+     queues the merge but won't complete it until that check passes, so a
+     submodule bump that breaks the build sits as an open, failing PR
+     instead of ever reaching `main`.
+   - The existing **required-approving-review rule** (1 approval) still
+     applies, but doesn't need a workaround here: it blocks a PR's
+     *author* from approving its own PR, not any bot from approving *any*
+     PR. Dependabot opens the PR; the workflow's own `GITHUB_TOKEN` (a
+     distinct actor, `github-actions`, not `dependabot`) submits the
+     approval — not self-approval, so GitHub accepts it. No dedicated bot
+     account, no extra secret, needed at all.
+   - This runs on `pull_request_target` rather than plain `pull_request`,
+     because GitHub deliberately hands a read-only, secret-less token to a
+     plain-`pull_request` run on a Dependabot PR (to stop a malicious
+     bumped dependency from exfiltrating secrets) — `gh pr review`/
+     `gh pr merge` need a real token. `pull_request_target` is a
+     well-known footgun *only* when a job also checks out and runs code
+     from the PR head with that same elevated token; this workflow never
+     does — no checkout step at all, just two `gh` API calls — and should
+     stay that way.
+3. Both can also be triggered on demand: `dependabot.yml`'s check via
+   "Dependabot" → "Check for updates" on the repo's Insights →
+   Dependency graph page, or the auto-merge workflow re-runs automatically
+   on its own `pull_request_target` trigger for any Dependabot PR.

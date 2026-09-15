@@ -1,0 +1,56 @@
+name: Dependabot auto-merge
+
+# Approves and merges Dependabot's own PRs (currently just the gitsubmodule
+# pin bumps from .github/dependabot.yml) without a human — see "Refreshing
+# submodule pins automatically" in docs/contribute/how-it-works.mdx.
+#
+# Why this doesn't need a dedicated bot account: the prToMain ruleset's
+# required-review rule blocks a PR's *author* from approving its own PR —
+# it doesn't block a different actor from doing so. Dependabot opens the
+# PR; this workflow's own GITHUB_TOKEN (a distinct actor, github-actions
+# rather than dependabot) submits the approval. That's not self-approval,
+# so GitHub accepts it.
+#
+# Why this is safe to merge without further human review: prToMain also
+# requires the "build-and-test" status check (ci.yml) to pass before
+# anything can merge — `gh pr merge --auto` queues the merge but won't
+# complete it until that check reports success, so a submodule bump that
+# breaks the build sits as an open, unmerged, failing PR instead of ever
+# reaching main.
+#
+# Why pull_request_target and not pull_request: GitHub deliberately hands
+# a read-only, secret-less token to a plain `pull_request`-triggered run
+# on a Dependabot PR, specifically to stop a malicious bumped dependency
+# from exfiltrating secrets — `gh pr review`/`gh pr merge` need a real
+# token, so this needs pull_request_target's full-permission token instead.
+# That trigger is a well-known footgun ONLY when a job also checks out and
+# executes code from the PR head with that same elevated token — this job
+# never does (no checkout step at all, just two API calls) — keep it that
+# way; don't add one.
+#
+# If dependabot.yml ever grows a second ecosystem (npm, etc.), this same
+# workflow will auto-merge those too, gated only by the actor check below
+# and whatever ci.yml catches — revisit whether that's still desired then.
+
+on: pull_request_target
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr review --approve "$PR_URL"
+
+      - name: Enable auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --squash "$PR_URL"
