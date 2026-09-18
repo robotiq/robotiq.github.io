@@ -24,7 +24,7 @@ const REQUIRED_PAGES = [
   '404.html',
   'docs/intro/index.html',
   'docs/contribute/index.html',
-  'docs/drivers/TSF-85/index.html',
+  'docs/drivers/Tactile Sensor/index.html',
 ];
 
 const errors = [];

@@ -63,3 +63,13 @@ jobs:
       # Smoke-tests the generated output (key pages + tools table present).
       - name: Test
         run: npm test
+
+      # Catches forgetting to point external/<submodule> back at its real
+      # branch after prototyping against a WIP one (see "Previewing local
+      # edits to a submodule" in docs/contribute/index.mdx) — the pin must
+      # be reachable from external-jobs.js's declared branch, not just any
+      # commit. Runs after Build/Test (not before) so it reuses the
+      # submodule checkout sync-external-docs.js's own build step already
+      # did, rather than fetching it again here.
+      - name: Verify submodule pins are on their declared branch
+        run: node scripts/check-submodule-pins.js

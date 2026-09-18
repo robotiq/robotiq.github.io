@@ -253,7 +253,7 @@ Doxybook2-based pipeline needed a whole dedicated script for.
 just reads it back:
 
 ```js
-items: loadDoxygenSidebarItems('drivers/2F hande/SDK/C++/API'),
+items: loadDoxygenSidebarItems('drivers/Adaptive grippers/SDK/C++/API'),
 ```
 
 **Classes are re-nested under their owning group.** doxygen2docusaurus's own
@@ -466,7 +466,7 @@ submodule's list in `scripts/external-jobs.js`:
 ```js
 {
   doxygen2docusaurus: { doxyfileDir: 'sdk_cpp' },
-  to: 'drivers/2F hande/SDK/C++/API',
+  to: 'drivers/Adaptive grippers/SDK/C++/API',
   exclude: [
     'files', 'folders', 'indices/files',
     'namespaces', 'indices/namespaces',
@@ -515,10 +515,10 @@ to update it (this exact page went stale within days, listing a group that
 had already been renamed upstream), where the generated page is correct by
 construction on every run.
 
-Add `'drivers/2F hande/SDK/C++/API/index'` (Docusaurus resolves a doc's `id`
+Add `'drivers/Adaptive grippers/SDK/C++/API/index'` (Docusaurus resolves a doc's `id`
 from its path, regardless of whether the underlying file is `.md` or `.mdx`)
 to the sidebar; everything under it comes from
-`loadDoxygenSidebarItems('drivers/2F hande/SDK/C++/API')` as described in
+`loadDoxygenSidebarItems('drivers/Adaptive grippers/SDK/C++/API')` as described in
 [The sidebar mirrors the Doxygen group hierarchy automatically](#the-sidebar-mirrors-the-doxygen-group-hierarchy-automatically)
 above.
 
@@ -541,7 +541,7 @@ actual theme, sidebar, and page chrome:
    # Windows PowerShell
    $env:SKIP_SUBMODULE_RESET = "1"; npm start
    ```
-   `http://localhost:3000/docs/drivers/2F hande/SDK/C++/API`
+   `http://localhost:3000/docs/drivers/Adaptive grippers/SDK/C++/API`
 
 ## Checklist: onboarding a new C++ tool repo
 

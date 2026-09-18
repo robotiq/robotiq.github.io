@@ -48,7 +48,7 @@ const JOBS = require('./external-jobs');
 // there is no hand-authored content of this site's own to protect here.
 // `apiFolderPath`/`apiBaseUrl` are both set to the
 // job's own `to` (this site's real mount point for the section, e.g.
-// 'drivers/2F hande/SDK/C++/API'), so every generated slug and internal
+// 'drivers/Adaptive grippers/SDK/C++/API'), so every generated slug and internal
 // cross-reference link is already correct for where the content ends up —
 // no post-hoc link rewriting needed — and every sidebar entry's doc `id`
 // (built from the same apiFolderPath) already matches the real doc id once
@@ -62,8 +62,9 @@ const DOXYGEN2DOCUSAURUS_BIN = require.resolve('@xpack/doxygen2docusaurus/bin/do
 // stable path, checked into .gitignore, regenerated on every sync.
 function doxygenSidebarOutputPath(apiFolderPath) {
   // Collapsing every non-alphanumeric run to one '-' is lossy — e.g.
-  // 'drivers/FT300/SDK/C++/API' and 'drivers/FT300/SDK/C/API' both become
-  // 'drivers-FT300-SDK-C-API' ('/' and '+' collapse identically), so a
+  // 'drivers/Force Torque Sensor/SDK/C++/API' and
+  // 'drivers/Force Torque Sensor/SDK/C/API' both become
+  // 'drivers-Force-Torque-Sensor-SDK-C-API' ('/' and '+' collapse identically), so a
   // second doxygen2docusaurus job for a plain C driver alongside a C++ one
   // would silently overwrite the first job's sidebar file with no error.
   // A short content hash of the real, un-collapsed path guarantees two
@@ -559,6 +560,283 @@ function buildAnchorToSlugMap(destPath) {
   return map;
 }
 
+// ---------------------------------------------------------------------
+// Linking a member's detailed prototype using Doxygen's own resolved data
+// ---------------------------------------------------------------------
+//
+// doxygen2docusaurus renders a member's detailed signature from Doxygen's
+// XML <definition> field (see the "prototype" variable in its own
+// members-vm.js), which is always a flat, unlinked string by Doxygen's own
+// XML schema — unlike <type>, which carries a real <ref> whenever Doxygen
+// resolved the type. That's why e.g. "GripperStatus" in "GripperStatus
+// Robotiq::Gripper::getStatus()" isn't clickable here even though the
+// exact same type IS linked in the member summary table just above it on
+// the same page (built from <type>, not <definition>) — and even though
+// Doxygen's OWN HTML output links it too (confirmed directly: hovering it
+// there resolves to struct_robotiq_1_1_gripper_status.html).
+//
+// This recovers those links from data already available, deterministically
+// — never by guessing "does a type named X probably have a page":
+//  - A return type's <type> field, read back out of the same compound's
+//    own Doxygen XML, already carries a <ref> whenever Doxygen resolved it
+//    (fixes the getStatus() case on its own).
+//  - A parameter's <type> field sometimes has no <ref> even when Doxygen
+//    resolved it for its OWN HTML rendering (confirmed for
+//    toString(ConnectionState) — Doxygen's HTML links "ConnectionState",
+//    its XML <param><type> doesn't). For exactly that gap, fall back to
+//    Doxygen's own generated HTML for the same member — same refid scheme,
+//    parallel XML/HTML filenames per compound — and reuse whatever link it
+//    already resolved there, matched by the plain type text (identical
+//    either way).
+// Either way, once resolved to a refid, the same two maps used everywhere
+// else in this file turn it into an actual site URL — a target this
+// pipeline doesn't otherwise know about is left as plain text, same
+// "degrade rather than guess" rule as stripDeadDoxygenLinks.
+
+function extractTypeRef(typeFieldXml) {
+  const m = (typeFieldXml || '').match(/<ref refid="([^"]+)" kindref="([^"]+)">([^<]*)<\/ref>/);
+  return m ? { refid: m[1], kindref: m[2], text: m[3] } : null;
+}
+
+// Same plain-text rendering Doxygen itself shows for a <type> field
+// (ref or not) — used only to know what text to search/match, never to
+// invent new visible text.
+function typeFieldPlainText(typeFieldXml) {
+  return (typeFieldXml || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+}
+
+// One member's own <type> (return) and <param><type> (each parameter),
+// read from its compound's XML file and cached — several members share one
+// compound's file.
+const memberFieldsCache = new Map();
+function getMemberFields(doxygenXmlDir, basename, localAnchor) {
+  const cacheKey = `${basename}::${localAnchor}`;
+  if (memberFieldsCache.has(cacheKey)) return memberFieldsCache.get(cacheKey);
+
+  let result = null;
+  const xmlPath = path.join(doxygenXmlDir, `${basename}.xml`);
+  if (fs.existsSync(xmlPath)) {
+    const memberXml = fs
+      .readFileSync(xmlPath, 'utf8')
+      .match(new RegExp(`<memberdef\\b[^>]*\\bid="[^"]*_1${localAnchor}"[\\s\\S]*?<\\/memberdef>`))?.[0];
+    if (memberXml) {
+      result = {
+        returnType: memberXml.match(/<type>([\s\S]*?)<\/type>/)?.[1] ?? null,
+        params: [...memberXml.matchAll(/<param>([\s\S]*?)<\/param>/g)]
+          .map((m) => ({ type: m[1].match(/<type>([\s\S]*?)<\/type>/)?.[1] ?? null })),
+      };
+    }
+  }
+  memberFieldsCache.set(cacheKey, result);
+  return result;
+}
+
+// A member's local anchor (e.g. "a9b1120dc938148af2e7804db99a2e1ce") to the
+// basename of the XML/HTML file pair that defines it (e.g.
+// "class_robotiq_1_1_gripper"). Every memberdef id in Doxygen's XML is
+// "<compoundBasename>_1<localAnchor>", and a compound's XML and HTML
+// output share that same basename (confirmed: class_robotiq_1_1_gripper.xml
+// / .html, group__connection.xml / .html) — so this needs no per-member
+// guessing, just one scan of every XML file's own memberdef ids.
+function buildMemberBasenameMap(doxygenXmlDir) {
+  const map = new Map();
+  for (const name of fs.readdirSync(doxygenXmlDir)) {
+    if (!name.endsWith('.xml') || name === 'index.xml') continue;
+    const basename = name.slice(0, -4);
+    const content = fs.readFileSync(path.join(doxygenXmlDir, name), 'utf8');
+    for (const m of content.matchAll(/<memberdef\b[^>]*\bid="([^"]+)"/g)) {
+      const idx = m[1].lastIndexOf('_1');
+      if (idx !== -1) map.set(m[1].slice(idx + 2), basename);
+    }
+  }
+  return map;
+}
+
+// Every compound (class/struct/union) Doxygen documented, mapped to the
+// slug of the page doxygen2docusaurus generated for it. Needed because a
+// return/parameter type that's a whole compound (not a member within one)
+// never appears as an anchor inside its OWN page (nothing there to
+// self-reference), so buildAnchorToSlugMap alone can't resolve it. Matched
+// by the fully-qualified name Doxygen's index.xml and every generated
+// compound page's own H1 ("<Qualified::Name> Struct"/"... Class"/...) both
+// carry.
+function buildCompoundToSlugMap(doxygenXmlDir, destPath) {
+  const map = new Map();
+  const indexPath = path.join(doxygenXmlDir, 'index.xml');
+  if (!fs.existsSync(indexPath)) return map;
+
+  const compounds = [...fs.readFileSync(indexPath, 'utf8').matchAll(
+    /<compound refid="([^"]+)" kind="(?:class|struct|union|interface)"><name>([^<]*)<\/name>/g
+  )].map(([, refid, name]) => ({ refid, name }));
+  if (compounds.length === 0) return map;
+
+  for (const file of walkMarkdownFiles(destPath)) {
+    const content = fs.readFileSync(file, 'utf8');
+    const h1 = content.replace(/^---\n[\s\S]*?\n---\n/, '').match(/^# (.+)$/m);
+    if (!h1) continue;
+    const compound = compounds.find((c) => h1[1] === c.name || h1[1].startsWith(`${c.name} `));
+    if (compound) {
+      const slug = readDocSlug(file, content);
+      if (slug) map.set(compound.refid, slug);
+    }
+  }
+  return map;
+}
+
+// Doxygen's classic HTML href for a target ("struct_x.html",
+// "group__y.html#gaz...", or same-file "#gaz...") back into the refid
+// scheme the rest of this file already uses (doxygenAnchorFromRefId,
+// buildAnchorToSlugMap) — the mirror image of how such an href was
+// generated in the first place: a compound's XML and HTML output share one
+// basename, and a member's HTML anchor is always the same "<localAnchor>"
+// tail its XML memberdef id has.
+function doxygenHrefToRefid(href, currentBasename) {
+  const hashIdx = href.indexOf('#');
+  const filePart = hashIdx === -1 ? href : href.slice(0, hashIdx);
+  const fragment = hashIdx === -1 ? null : href.slice(hashIdx + 1);
+  const basename = filePart ? filePart.replace(/\.html$/, '') : currentBasename;
+  return fragment ? `${basename}_1${fragment}` : basename;
+}
+
+// Doxygen's own HTML sometimes resolves a cross-reference its XML export
+// doesn't carry (confirmed for parameter types, e.g. toString's
+// ConnectionState) — reusing whatever it already resolved there, rather
+// than re-deriving it, for exactly that gap. Searches only this one
+// member's own <table class="memname"> block in its compound's classic
+// HTML page (never the whole file — a type name could otherwise coincide
+// with an unrelated link elsewhere on the page) and matches by the exact
+// plain type text, so a genuinely unresolvable type (e.g. std::string_view,
+// unlinked in Doxygen's HTML too) correctly yields nothing here either.
+const memberHtmlBlockCache = new Map();
+function findLinkInDoxygenHtml(doxygenHtmlDir, basename, localAnchor, plainText, anchorToSlug, compoundToSlug) {
+  const cacheKey = `${basename}::${localAnchor}`;
+  let block = memberHtmlBlockCache.get(cacheKey);
+  if (block === undefined) {
+    block = null;
+    const htmlPath = path.join(doxygenHtmlDir, `${basename}.html`);
+    if (fs.existsSync(htmlPath)) {
+      const html = fs.readFileSync(htmlPath, 'utf8');
+      const idIdx = html.indexOf(`id="${localAnchor}"`);
+      const tableIdx = idIdx === -1 ? -1 : html.indexOf('<table class="memname">', idIdx);
+      const tableEnd = tableIdx === -1 ? -1 : html.indexOf('</table>', tableIdx);
+      if (tableIdx !== -1 && tableEnd !== -1) block = html.slice(tableIdx, tableEnd);
+    }
+    memberHtmlBlockCache.set(cacheKey, block);
+  }
+  if (!block) return null;
+
+  for (const m of block.matchAll(/<a class="el" href="([^"]+)">([^<]+)<\/a>/g)) {
+    // Doxygen's HTML only ever wraps the bare type name — "Gripper" in
+    // "Gripper &amp;", never "Gripper &amp;" itself — while plainText here
+    // is the *whole* <type> field (qualifiers, "&"/"*" and all), so this
+    // has to be a prefix check, not an exact match; a plainText that
+    // exactly equals the link text (no trailing qualifier) still passes.
+    if (!plainText.startsWith(m[2])) continue;
+    const linkText = m[2];
+    const href = m[1];
+    const refid = doxygenHrefToRefid(href, basename);
+    // Whether this points at a whole compound (a bare "struct_x.html", no
+    // "#") or a member within one ("...html#localAnchor", or a same-file
+    // "#localAnchor") has to come from the href itself, not be re-derived
+    // from refid afterwards: doxygenAnchorFromRefId assumes a
+    // "<compound>_1<memberHash>" shape, but a *compound*'s own refid (e.g.
+    // "struct_robotiq_1_1_fault_status") already contains "_1" pairs of its
+    // own, from Doxygen's "::" encoding — running it through that function
+    // regardless produced garbage fragments (#_fault_status and friends).
+    if (href.includes('#')) {
+      const anchor = doxygenAnchorFromRefId(refid);
+      const slug = anchorToSlug.get(anchor);
+      if (slug) return { text: linkText, href: `/docs${slug}#${anchor}` };
+    } else {
+      const slug = compoundToSlug.get(refid);
+      if (slug) return { text: linkText, href: `/docs${slug}` };
+    }
+  }
+  return null;
+}
+
+// Resolves one <type> field (a memberdef's return type, or one of its
+// <param>s) to a site URL, preferring the ref Doxygen's XML already carries
+// and falling back to Doxygen's own HTML only when the XML has none.
+function resolveTypeLink(typeFieldXml, ctx) {
+  const plainText = typeFieldPlainText(typeFieldXml);
+  if (!plainText) return null;
+
+  const ref = extractTypeRef(typeFieldXml);
+  if (ref) {
+    const anchor = doxygenAnchorFromRefId(ref.refid);
+    const slug = ref.kindref === 'compound' ? ctx.compoundToSlug.get(ref.refid) : ctx.anchorToSlug.get(anchor);
+    // Only the ref's own text gets linked (e.g. "Foo", not "const Foo &") —
+    // matches Doxygen's own convention of never wrapping a surrounding
+    // qualifier, and matters even though neither getStatus() nor
+    // ActivationResult (the two return-type cases this was verified
+    // against) actually have one, since a future "const Foo &" return type
+    // otherwise would.
+    if (slug) return { plainText: ref.text, href: `/docs${slug}${ref.kindref === 'compound' ? '' : `#${anchor}`}` };
+  }
+
+  const found = findLinkInDoxygenHtml(ctx.doxygenHtmlDir, ctx.basename, ctx.localAnchor, plainText, ctx.anchorToSlug, ctx.compoundToSlug);
+  return found ? { plainText: found.text, href: found.href } : null;
+}
+
+// Splices a resolved { plainText, href } into a doxyMemberName-family
+// cell's leading text only — a "const " qualifier or trailing "&"/"*"
+// stays untouched, and a plainText that happens to also appear again later
+// in the same cell (a parameter name coinciding with a type name, however
+// unlikely) is never touched.
+function linkifyLeadingText(cellHtml, resolved) {
+  if (!resolved || !cellHtml.startsWith(resolved.plainText)) return cellHtml;
+  return `<a href="${resolved.href}">${resolved.plainText}</a>${cellHtml.slice(resolved.plainText.length)}`;
+}
+
+// Runs once per doxygen2docusaurus job, after every page it produced has
+// been written (see runDoxygen2Docusaurus) — needs the finished docs/
+// output to build anchorToSlug/compoundToSlug from, the same way
+// stripDanglingAnchorLinksAcrossFiles does.
+function linkifyMemberPrototypes(destPath, doxygenXmlDir, doxygenHtmlDir) {
+  if (!fs.existsSync(doxygenXmlDir) || !fs.existsSync(doxygenHtmlDir)) return;
+
+  const anchorToSlug = buildAnchorToSlugMap(destPath);
+  const compoundToSlug = buildCompoundToSlugMap(doxygenXmlDir, destPath);
+  const memberBasename = buildMemberBasenameMap(doxygenXmlDir);
+
+  for (const file of walkMarkdownFiles(destPath)) {
+    const content = fs.readFileSync(file, 'utf8');
+    const updated = content.replace(
+      /\{#([A-Za-z0-9_]+)\}\n\n<div class="doxyMemberItem">\n<div class="doxyMemberProto">[\s\S]*?<table class="doxyMemberName">\n([\s\S]*?)\n<\/table>/g,
+      (whole, localAnchor, tableBody) => {
+        const basename = memberBasename.get(localAnchor);
+        const fields = basename && getMemberFields(doxygenXmlDir, basename, localAnchor);
+        if (!fields) return whole;
+
+        const ctx = { basename, localAnchor, doxygenHtmlDir, anchorToSlug, compoundToSlug };
+        const returnTypeLink = resolveTypeLink(fields.returnType, ctx);
+        let paramIndex = 0;
+        const newBody = tableBody
+          .replace(
+            /(<td class="doxyMemberName">)([\s\S]*?)(<\/td>)/,
+            (m, open, text, close) => `${open}${linkifyLeadingText(text, returnTypeLink)}${close}`
+          )
+          .replace(
+            /(<td class="doxyMemberNamePrefix">)([\s\S]*?)(<\/td>)/,
+            (m, open, text, close) => `${open}${linkifyLeadingText(text, returnTypeLink)}${close}`
+          )
+          .replace(
+            /(<td class="doxyMemberNameParamType">)([\s\S]*?)(<\/td>)/g,
+            (m, open, text, close) => {
+              const param = fields.params[paramIndex];
+              paramIndex += 1;
+              return `${open}${param ? linkifyLeadingText(text, resolveTypeLink(param.type, ctx)) : text}${close}`;
+            }
+          );
+
+        return newBody === tableBody ? whole : whole.replace(tableBody, newBody);
+      }
+    );
+    if (updated !== content) fs.writeFileSync(file, updated, 'utf8');
+  }
+}
+
 // Every enum/typedef/variable/function directly inside a namespace's own
 // sectiondefs (kind="enum"/"typedef"/"var"/"func"/"user-defined" — Doxygen
 // uses "user-defined" for a \addtogroup-tagged block of mixed kinds) is, by
@@ -673,7 +951,7 @@ function renderFreeSymbolsIndex(namespaceXmlPaths, anchorToSlug, classEntries, a
     lines.push('## Classes', '');
     for (const entry of classEntries.slice().sort((a, b) => a.title.localeCompare(b.title))) {
       // Raw HTML, not `[text](url)` — every one of this site's slugs under
-      // this API section contains a literal space ("2F hande"), and
+      // this API section contains a literal space ("Adaptive grippers"), and
       // CommonMark's bare (no angle-bracket) link-destination syntax
       // doesn't permit a literal space, so it silently fails to parse as a
       // link at all and prints as literal text instead. This is exactly why
@@ -903,6 +1181,7 @@ function runDoxygen2Docusaurus(job, written, folderDestPaths) {
   }, stagingApiDir, written);
   folderDestPaths.add(destPath);
   stripDanglingAnchorLinksAcrossFiles(destPath);
+  linkifyMemberPrototypes(destPath, doxygenXmlDirAbs, path.join(doxyfileDir, 'doxygen-html'));
 
   // Doxybook2 (this site's previous generator) nested a group's own classes
   // directly under that group in the sidebar; doxygen2docusaurus instead
@@ -1177,7 +1456,12 @@ function rewriteLinks(content, { srcFile, destFile, copiedRoot, destCopiedRoot, 
   // Docusaurus's own default (first H1 = page title, when no frontmatter
   // title is set) do the right thing instead.
   if (!copiedRoot) {
-    content = content.replace(/^# .*\n+/m, '');
+    // `\r?\n` (not a bare `\n`) — a source file with Windows CRLF line
+    // endings (confirmed for robotiq/isaacsim_assets's guide) has `.`
+    // stop right before the `\r`, one character short of the literal `\n`
+    // this used to require immediately after — silently leaving the H1
+    // (and its redundant page title) in place instead of stripping it.
+    content = content.replace(/^# .*(?:\r?\n)+/m, '');
   }
 
   // Convert <url> autolinks to [url](url) — MDX treats angle-bracket URLs as JSX and fails.
@@ -1223,6 +1507,39 @@ function rewriteLinks(content, { srcFile, destFile, copiedRoot, destCopiedRoot, 
     const hasExt = path.extname(relToSubmodule) !== '';
     const ghBase = hasExt ? `${repoUrl}/blob/${branch}` : `${repoUrl}/tree/${branch}`;
     return `[${text}](${ghBase}/${relToSubmodule}${anchor})`;
+  });
+}
+
+// A submodule's own guides are written for GitHub's renderer, which turns
+// `> **Note:** ...` into a plain indented quote — readable enough there,
+// but flat and unstyled once copied verbatim onto this site. Docusaurus
+// has a real, better-looking equivalent (":::note ... :::", a properly
+// styled callout box — see docs/intro.mdx), so convert every such
+// blockquote to it here, once, for every synced doc from any submodule,
+// rather than leaving each one to render poorly (or need a per-file fix
+// that the next sync would just overwrite anyway).
+const BLOCKQUOTE_ADMONITION_TYPE = {
+  note: 'note',
+  tip: 'tip',
+  info: 'info',
+  important: 'info',
+  warning: 'warning',
+  caution: 'warning',
+  danger: 'danger',
+};
+
+function convertBlockquoteAdmonitions(content) {
+  return content.replace(/(^>.*(?:\r?\n>.*)*)/gm, (block) => {
+    const joined = block
+      .split(/\r?\n/)
+      .map((line) => line.replace(/^>\s?/, ''))
+      .join('\n');
+    const m = joined.match(/^\*\*(Note|Tip|Info|Important|Warning|Caution|Danger)\s*:\*\*\s*/i);
+    if (!m) return block; // an ordinary quotation, not a callout — leave it as a blockquote
+
+    const type = BLOCKQUOTE_ADMONITION_TYPE[m[1].toLowerCase()];
+    const body = joined.slice(m[0].length).replace(/\n+$/, '');
+    return `:::${type}\n${body}\n:::`;
   });
 }
 
@@ -1294,6 +1611,7 @@ function processFile(srcFile, destFile, opts) {
     let raw = applyTitleOverride(fs.readFileSync(srcFile, 'utf8'), opts.titleOverride);
     raw = applySidebarPosition(raw, opts.sidebarPosition);
     raw = sanitizeFrontmatter(raw);
+    raw = convertBlockquoteAdmonitions(raw);
     fs.writeFileSync(destFile, rewriteLinks(raw, { srcFile, destFile, ...opts }), 'utf8');
   } else {
     fs.copyFileSync(srcFile, destFile);

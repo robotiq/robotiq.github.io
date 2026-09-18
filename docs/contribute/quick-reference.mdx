@@ -19,7 +19,7 @@ displayed_sidebar: contributeSidebar
 | Compile-checked C++ examples | `\snippet <file> <tag>` in a doc comment, tagged in a real file under `sdk_cpp/examples/` — not a hand-written `\code` block. C++ only; Python has no equivalent. See [Compile-checked examples with `\snippet`](./api-reference-cpp#compile-checked-examples-with-snippet) |
 | Verified code examples in guide pages (outside Doxygen's reach) | `<!-- snippet: file tag -->` above a fenced code block; checked by `check_doc_snippets.py` in both the tool repo's own CI and here via `scripts/check-doc-snippets.js` + `docSnippetsCheck` in `external-jobs.js`. Template at `templates/check_doc_snippets.py`. See [Verifying markdown code examples against real source](./api-reference-cpp#verifying-markdown-code-examples-against-real-source) |
 | Synced guide docs folder (verbatim copy of the repo's own `docs/`) | `docs/drivers/<Product>/<Category>/<Tool>/docs/` |
-| Category badge (SDK / ROS1 / ROS2 / Physics_Engine / Other) | `![...](.../Category-<Name>-lightgrey)` at the top of each wrapper page |
+| Category badge (SDK / ROS1 / ROS2 / Simulation / Other) | `![...](.../Category-<Name>-lightgrey)` at the top of each wrapper page |
 | Support badge | `![Supported by <Label>](.../Supported_by-<Label>-<color>)`, right after the Category badge |
 | ROS distro pages | one leaf folder per distro, `ROS/<Generation>-<Distro>/index.mdx` (e.g. `ROS/ROS2-Humble/`), `title` = the distro name |
 | ROS distro `sidebar_label` | generation-prefixed, e.g. `ROS2 · Humble` — `title` stays bare (`Humble`) for the table generator |
@@ -29,7 +29,15 @@ displayed_sidebar: contributeSidebar
 | Draft / not-yet-linked content (never built into a page) | `draft/` at the repo root, outside `docs/` |
 | Auto-generated tools tables script | `scripts/generate-tools-table.js` |
 | Auto-generated overview tables output | `docs/intro.mdx`, between each `AUTO-GENERATED-<CATEGORY>-TABLE` marker pair |
-| Auto-generated per-product SDK/Physics Engine/Other tables output | `docs/drivers/<Product>/index.mdx`, between each `AUTO-GENERATED-PRODUCT-<CATEGORY>-TABLE` marker pair |
+| Auto-generated per-product SDK/Simulation/Other tables output | `docs/drivers/<Product>/index.mdx`, between each `AUTO-GENERATED-PRODUCT-<CATEGORY>-TABLE` marker pair |
 | Auto-generated per-product ROS2/ROS1 tables output | `docs/drivers/<Product>/ROS/index.mdx`, between the `AUTO-GENERATED-PRODUCT-ROS2-TABLE` / `AUTO-GENERATED-PRODUCT-ROS1-TABLE` marker pairs |
+| A tool page's own sub-section list (e.g. "API Reference"/"Introduction guides" boxes) | self-installed by `generate-tools-table.js` between an `AUTO-GENERATED-SUBPAGES-TABLE` marker pair — see [A tool page's own sub-section list](./tools-tables#a-tool-pages-own-sub-section-list) |
+| A guide folder's own contents list (e.g. each guide as a box on `<Tool>/docs/index.mdx`) | same script, `AUTO-GENERATED-GUIDES-TABLE` marker pair — see the same section |
+| Where either list lands on a page | right after a `## Contents` heading if the page has one, else after the badges, else after the frontmatter — add `## Contents` yourself to control the spot |
+| Sub-section display order | `SUBPAGE_ORDER` in `generate-tools-table.js` |
+| `Robotiq` rendered as the brand wordmark (bold, uppercase, blue) | wrap it in backticks — `` `Robotiq` `` — anywhere in a `.mdx`/`.md` page; handled by `src/remark/robotiqWordmark.mjs` |
+| External links (`http(s)://...`) open in a new tab | automatic site-wide, including hand-written JSX `<a href="...">` — `src/remark/externalLinksNewTab.mjs`; no `target="_blank"` needed by hand |
+| A page's primary call-to-action button style | `.cta-button` in `src/css/custom.css` (e.g. "Get the software tool" on the C++ SDK page) — distinct from `.subpage-link`'s solid box, meant for the one main action on a page |
 | Sidebar config | `sidebars.js` |
-| Doc ID format | `drivers/TSF-85/SDK/C++/index` |
+| Doc ID format | `drivers/Tactile Sensor/SDK/C++/index` |
+| CI check that a submodule pin (and `external-jobs.js`'s declared branch) is actually on the repo's real default branch, not a forgotten WIP branch | `scripts/check-submodule-pins.js`, run from `.github/workflows/ci.yml`; see "Previewing local edits to a submodule" |

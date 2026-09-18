@@ -11,6 +11,18 @@
   --ifm-color-primary-lighter: #3eb5eb;
   --ifm-color-primary-lightest: #68c6ef;
 
+  /* :::info admonitions (e.g. docs/intro.mdx) use Robotiq blue instead of
+     Infima's default cyan, so they read as on-brand rather than generic. */
+  --ifm-color-info: var(--ifm-color-primary);
+  --ifm-color-info-dark: var(--ifm-color-primary-dark);
+  --ifm-color-info-darker: var(--ifm-color-primary-darker);
+  --ifm-color-info-darkest: var(--ifm-color-primary-darkest);
+  --ifm-color-info-light: var(--ifm-color-primary-light);
+  --ifm-color-info-lighter: var(--ifm-color-primary-lighter);
+  --ifm-color-info-lightest: var(--ifm-color-primary-lightest);
+  --ifm-color-info-contrast-background: #e7f6fd;
+  --ifm-color-info-contrast-foreground: var(--ifm-color-primary-darkest);
+
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(30, 166, 230, 0.12);
 
@@ -39,6 +51,16 @@
   --ifm-color-primary-lighter: #65c9f4;
   --ifm-color-primary-lightest: #8fd5f7;
   --docusaurus-highlighted-code-line-bg: rgba(30, 166, 230, 0.2);
+
+  --ifm-color-info: var(--ifm-color-primary);
+  --ifm-color-info-dark: var(--ifm-color-primary-dark);
+  --ifm-color-info-darker: var(--ifm-color-primary-darker);
+  --ifm-color-info-darkest: var(--ifm-color-primary-darkest);
+  --ifm-color-info-light: var(--ifm-color-primary-light);
+  --ifm-color-info-lighter: var(--ifm-color-primary-lighter);
+  --ifm-color-info-lightest: var(--ifm-color-primary-lightest);
+  --ifm-color-info-contrast-background: #123047;
+  --ifm-color-info-contrast-foreground: var(--ifm-color-primary-lightest);
 }
 
 /* ── Navbar: always dark (black + blue accent) ── */
@@ -131,10 +153,94 @@ table thead tr {
   border-left: 3px solid var(--robotiq-blue);
 }
 
-/* ── Admonitions ── */
-.alert--info {
+/* ── Admonitions ── these are plain Infima classes, not scoped to the
+   doxygen2docusaurus API pages, so this same treatment already applies
+   everywhere a :::info/:::warning/:::note appears — including the ones
+   sync-external-docs.js's convertBlockquoteAdmonitions now generates from
+   a submodule's own `> **Note:**`/`> **Warning:**` blockquotes.
+
+   `:::note` maps to Infima's `alert--secondary` (not `alert--note`), which
+   was never themed — it rendered as Infima's plain grey default, visually
+   inconsistent with `:::info`'s blue. Same rule as .alert--info here so
+   the two read as one consistent style rather than two different ones. */
+.alert--info,
+.alert--secondary {
   --ifm-alert-background-color: rgba(30, 166, 230, 0.08);
   --ifm-alert-border-color: var(--robotiq-blue);
+  /* Infima derives the "NOTE"/"INFO" title + icon color from this, not
+     from --ifm-alert-border-color — .alert--secondary's own default
+     (--ifm-color-secondary-contrast-foreground) is a plain grey, which is
+     what left the icon/title mismatched even with the border/background
+     above already unified. */
+  --ifm-alert-foreground-color: var(--ifm-color-info-contrast-foreground);
+}
+
+.alert--warning {
+  --ifm-alert-background-color: rgba(236, 103, 26, 0.08);
+  --ifm-alert-border-color: var(--robotiq-orange);
+}
+
+/* ── Subpage links (scripts/generate-tools-table.js's ensureSubpagesBlock):
+   "TEXT IN BLUE BOX" — bold, uppercase, white-on-blue — is the graphic
+   chart's own documented way to emphasize a short label, reused here for
+   a tool page's list of sub-sections (e.g. "API Reference"/"Documentation"
+   on the C++ SDK page) instead of a plain bullet list. ── */
+.subpage-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.subpage-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1.25rem;
+  background: var(--ifm-color-primary);
+  color: #ffffff;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.subpage-link:hover {
+  background: var(--ifm-color-primary-dark);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+/* A page's single primary call to action (e.g. "Get the software tool" on
+   the C++ SDK page) — deliberately a different treatment from
+   .subpage-link's solid "text in blue box" (blue fill, white text) so the
+   one primary action on a page doesn't blend in with the stacked list of
+   secondary sub-page links: a light blue fill, close to white rather than the
+   :::info admonition's stronger tint (which flips to dark navy in dark
+   mode — wrong for this, so it's a fixed color, not theme-aware) with a
+   blue border and text throughout — hover just darkens the border/text a
+   shade, the fill never inverts. */
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 2rem;
+  background: #ffffff;
+  color: var(--ifm-color-primary);
+  border: 2px solid var(--ifm-color-primary);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 1.1rem;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.cta-button:hover {
+  border-color: var(--ifm-color-primary-dark);
+  color: var(--ifm-color-primary-dark);
+  text-decoration: none;
 }
 
 /* ── Logo chips: third-party logos are often dark-on-transparent and
@@ -147,6 +253,20 @@ table thead tr {
   display: inline-flex;
 }
 
+/* Robotiq wordmark — see src/remark/robotiqWordmark.mjs: an inline code
+   span reading exactly `Robotiq` renders with this treatment instead of
+   plain text. Echoes the logo (bold, uppercase, tight tracking, brand
+   blue) as a font style rather than swapping in the actual logo image, so
+   it stays real text — screen readers, copy-paste, and browser search all
+   still see "Robotiq". Color follows --ifm-color-primary, which already
+   has its own light/dark values, so no separate dark-mode override here. */
+.robotiq-wordmark {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--ifm-color-primary);
+}
+
 /* ══════════════════════════════════════════════════════════════════════
    C++ SDK generated API reference (doxygen2docusaurus)
 
@@ -154,7 +274,7 @@ table thead tr {
    (node_modules/@xpack/doxygen2docusaurus/templates/css/custom.css) for
    the `doxyPage`/`doxyMembersIndex`/`doxyMemberLabel`/`doxyProgramListing`/
    `doxyHighlight`/etc. classes its generated Markdown uses under
-   docs/drivers/2F hande/SDK/C++/API/ — see scripts/sync-external-docs.js's
+   docs/drivers/Adaptive grippers/SDK/C++/API/ — see scripts/sync-external-docs.js's
    `runDoxygen2Docusaurus` and external-jobs.js's `doxygen2docusaurus` job.
    Left mostly as shipped: it already themes itself through this site's own
    Infima variables above (--ifm-color-primary drives member-label pills and
