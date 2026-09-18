@@ -5,6 +5,8 @@
 // See: https://docusaurus.io/docs/api/docusaurus-config
 
 import {themes as prismThemes} from 'prism-react-renderer';
+import remarkRobotiqWordmark from './src/remark/robotiqWordmark.mjs';
+import rehypeExternalLinksNewTab from './src/remark/externalLinksNewTab.mjs';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -48,10 +50,10 @@ const config = {
   onBrokenLinks: 'throw',
   // 'warn' (not 'throw') — currently masking one real anchor mismatch, not
   // a generated-content quirk: a submodule's own synced guide
-  // (docs/drivers/2F hande/SDK/C++/docs/03-how-it-works.md) links to a
+  // (docs/drivers/Adaptive grippers/Libraries/C++/docs/03-how-it-works.md) links to a
   // heading in a sibling guide that was since renamed
   // (04-robust-example-walkthrough.md#sharing-one-logger no longer exists;
-  // the heading is now "Naming the loggers"). Fixed upstream in the SDK
+  // the heading is now "Naming the loggers"). Fixed upstream in the library
   // repo (grippers), pending push + re-sync — restore this to 'throw' once
   // that lands and the build is clean again, rather than leaving broken
   // hand-authored cross-references silently tolerated site-wide.
@@ -87,6 +89,8 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           // editUrl: 'https://github.com/robotiq/robotiq.github.io/tree/main/',
+          remarkPlugins: [remarkRobotiqWordmark],
+          rehypePlugins: [rehypeExternalLinksNewTab],
         },
         blog: false,
 theme: {
@@ -119,7 +123,7 @@ theme: {
             type: 'docSidebar',
             sidebarId: 'driverSidebar',
             position: 'left',
-            label: 'Docs',
+            label: 'Software Tools',
           },
           // Examples navbar item — uncomment when content is ready
           // {

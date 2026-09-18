@@ -112,7 +112,7 @@ both live in the **tool repository**, not in this site's
 block in a doc comment.** Nothing compiles it — it can drift out of sync
 with the API it's demonstrating (a renamed member, a changed signature)
 and nobody finds out until a reader copy-pastes it and it fails to build.
-This applies to the **C++ SDK only** — Python's API reference is generated
+This applies to the **C++ library only** — Python's API reference is generated
 by [pydoc-markdown](./api-reference-python) from docstrings directly, which
 has no equivalent mechanism; a compile/run-checked Python example story
 would need something else entirely (e.g. doctest-style testing) and isn't
@@ -253,7 +253,7 @@ Doxybook2-based pipeline needed a whole dedicated script for.
 just reads it back:
 
 ```js
-items: loadDoxygenSidebarItems('drivers/2F hande/SDK/C++/API'),
+items: loadDoxygenSidebarItems('drivers/Adaptive grippers/Libraries/C++/API'),
 ```
 
 **Classes are re-nested under their owning group.** doxygen2docusaurus's own
@@ -284,7 +284,7 @@ content) needs a server restart to show up while previewing.
 ## Global Index
 
 Doxygen's own alphabetical indices — and doxygen2docusaurus's — split by
-*lexical scope*: "Class Members" vs. "Namespace Members". Because this SDK
+*lexical scope*: "Class Members" vs. "Namespace Members". Because this library
 organizes almost everything free-standing into Modules via
 `\ingroup`/`\addtogroup` instead (see
 [Controlling what's included](#controlling-whats-included) above), a
@@ -298,10 +298,10 @@ variable, data type, and enum in the project, regardless of how it's
 grouped — by reading the Doxygen XML directly rather than relying on either
 tool's own indices:
 
-- Walks every namespace this SDK actually has, discovered fresh each run
+- Walks every namespace this library actually has, discovered fresh each run
   from Doxygen's own `index.xml` (`discoverNamespaceXmlPaths`) rather than a
   hand-maintained list of namespace names — so a namespace added upstream
-  (this SDK has grown `Robotiq::profiles` and `Robotiq::units` since this
+  (this library has grown `Robotiq::profiles` and `Robotiq::units` since this
   page was first written) needs no matching edit here. `std` is skipped as
   external, and any namespace named `detail` at any nesting level is skipped
   as this codebase's internal-implementation convention (`Robotiq::detail`
@@ -315,7 +315,7 @@ tool's own indices:
   `<compoundId>_1<memberAnchor>`, and that anchor half is exactly the HTML
   id doxygen2docusaurus renders on the page that documents it.
 - For a genuinely ungrouped entry (Doxygen inlines the full `<memberdef>`
-  directly in the namespace's own XML in this case — e.g. this SDK's free
+  directly in the namespace's own XML in this case — e.g. this library's free
   `operator==`/`operator!=` overloads), lists it without a link, since
   there's no other page on this site that documents it either (Namespaces
   are excluded — see above). See `check_doc_groups.py` above for catching
@@ -370,7 +370,7 @@ close those gaps before it ever reaches `docs/`:
   every class/struct page and from the alphabetical "Class Members" index
   entries that would otherwise still list them by name — Doxygen's XML
   always records a private member regardless of the Doxyfile's
-  `EXTRACT_PRIVATE` setting (verified against this SDK's own XML), so
+  `EXTRACT_PRIVATE` setting (verified against this library's own XML), so
   filtering happens here instead.
 - **A class's member-overview table is one continuous table**
   (`mergeMemberIndexTables`), with a bold in-table heading per kind
@@ -466,7 +466,7 @@ submodule's list in `scripts/external-jobs.js`:
 ```js
 {
   doxygen2docusaurus: { doxyfileDir: 'sdk_cpp' },
-  to: 'drivers/2F hande/SDK/C++/API',
+  to: 'drivers/Adaptive grippers/Libraries/C++/API',
   exclude: [
     'files', 'folders', 'indices/files',
     'namespaces', 'indices/namespaces',
@@ -483,7 +483,7 @@ was excluded, or before it was deleted upstream) is simply left behind, not
 regenerated and not removed, and every step downstream reads that folder as
 if it were authoritative. Skipping the delete is a real, reproducible bug,
 not a hypothetical one: it's exactly how a `register_map.hpp` constant kept
-appearing in this site's Global Index for several runs after the SDK put
+appearing in this site's Global Index for several runs after the library put
 that file behind `EXCLUDE` — the stale compound XML from before the
 exclusion just sat there, untouched, until something finally deleted the
 folder.
@@ -515,10 +515,10 @@ to update it (this exact page went stale within days, listing a group that
 had already been renamed upstream), where the generated page is correct by
 construction on every run.
 
-Add `'drivers/2F hande/SDK/C++/API/index'` (Docusaurus resolves a doc's `id`
+Add `'drivers/Adaptive grippers/Libraries/C++/API/index'` (Docusaurus resolves a doc's `id`
 from its path, regardless of whether the underlying file is `.md` or `.mdx`)
 to the sidebar; everything under it comes from
-`loadDoxygenSidebarItems('drivers/2F hande/SDK/C++/API')` as described in
+`loadDoxygenSidebarItems('drivers/Adaptive grippers/Libraries/C++/API')` as described in
 [The sidebar mirrors the Doxygen group hierarchy automatically](#the-sidebar-mirrors-the-doxygen-group-hierarchy-automatically)
 above.
 
@@ -541,7 +541,7 @@ actual theme, sidebar, and page chrome:
    # Windows PowerShell
    $env:SKIP_SUBMODULE_RESET = "1"; npm start
    ```
-   `http://localhost:3000/docs/drivers/2F hande/SDK/C++/API`
+   `http://localhost:3000/docs/drivers/Adaptive grippers/Libraries/C++/API`
 
 ## Checklist: onboarding a new C++ tool repo
 
@@ -614,7 +614,7 @@ the **tool repo**, then adding one job entry **here** — nothing in
    [Wiring it into this site's build](#wiring-it-into-this-sites-build)
    above for the shape, and the `2f85_cpp` job for a full worked `exclude`
    list (the `files`/`folders`/`namespaces`/redundant-`Classes`-listings
-   entries there apply to any doxygen2docusaurus output, not just this SDK —
+   entries there apply to any doxygen2docusaurus output, not just this library —
    copy them as a starting point).
 8. If the repo also has its own README and/or `docs/` guides, add those as
    plain `{ from, to }` jobs in the same `submoduleJobs(...)` call — see
