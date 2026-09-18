@@ -6,7 +6,7 @@ displayed_sidebar: contributeSidebar
 
 # Step-by-step: adding a new software tool
 
-The steps below add a Python tool for the **2F hande** gripper family hosted
+The steps below add a Python tool for the **Adaptive grippers** family hosted
 at `https://github.com/robotiq/2f85-python-driver`.
 
 ## 1. Add the submodule
@@ -33,7 +33,7 @@ them on each entry. Start a new call for a new submodule:
 
 ```js
 ...submoduleJobs('2f85_python', { repoUrl: 'https://github.com/robotiq/2f85-python-driver', branch: 'main' }, [
-  { from: 'README.md', to: 'drivers/2F hande/SDK/Python/_readme.md' },
+  { from: 'README.md', to: 'drivers/Adaptive grippers/SDK/Python/_readme.md' },
 ]),
 ```
 
@@ -43,9 +43,9 @@ same call:
 ```js
 ...submoduleJobs('2f85_drivers', { repoUrl: '...', branch: 'main' }, [
   // C++ tool
-  { from: 'sdk_cpp/README.md', to: 'drivers/2F hande/SDK/C++/_readme.md' },
+  { from: 'sdk_cpp/README.md', to: 'drivers/Adaptive grippers/SDK/C++/_readme.md' },
   // Python tool
-  { from: 'python/README.md', to: 'drivers/2F hande/SDK/Python/_readme.md' },
+  { from: 'python/README.md', to: 'drivers/Adaptive grippers/SDK/Python/_readme.md' },
 ]),
 ```
 
@@ -62,7 +62,7 @@ node scripts/sync-external-docs.js
 
 ## 3. Create the wrapper page
 
-Create `docs/drivers/2F hande/SDK/Python/index.mdx`. This file
+Create `docs/drivers/Adaptive grippers/SDK/Python/index.mdx`. This file
 is tracked in git and controls the page title, sidebar label, and
 any introductory text above the synced README:
 
@@ -94,7 +94,7 @@ walks the folder tree looking for the `Category` badge to decide which
 table a page belongs to, and reads the `Supported_by` badge for the cell
 shown in that table (see
 [Auto-generated software tools tables](./tools-tables)). Valid `Category`
-values: `SDK`, `Physics_Engine`, `Other`, `ROS1`, `ROS2`. Use
+values: `SDK`, `Simulation`, `Other`, `ROS1`, `ROS2`. Use
 `Supported_by-Robotiq-blue` for tools developed and maintained by Robotiq,
 or `Supported_by-Third_party-lightgrey` for community-maintained tools.
 
@@ -124,10 +124,10 @@ script) — prefixing it there would duplicate the table's own ROS2/ROS1
 section heading and break the legend lookup.
 
 Create this page under `ROS/<Generation><Distro>/index.mdx` — e.g.
-`docs/drivers/TSF-85/ROS/ROS2-Jazzy/index.mdx` (see that file for a full
+`docs/drivers/Tactile Sensor/ROS/ROS2-Jazzy/index.mdx` (see that file for a full
 example with build/run instructions). A product supporting several distros
 gets one such folder per distro (see
-`docs/drivers/2F hande/ROS/` for a seven-distro example) — each with its own
+`docs/drivers/Adaptive grippers/ROS/` for a seven-distro example) — each with its own
 page, and its own link in the compatibility table, rather than one page
 listing every distro. List them in `sidebars.js` newest to oldest per
 generation (see [step 5](#5-register-in-sidebarsjs) below), and see
@@ -161,12 +161,12 @@ a synced README later, once the tool or its documentation exists.
 ## 4. Create the product landing page
 
 If the product folder has no `index.mdx` yet, create
-`docs/drivers/2F hande/index.mdx`:
+`docs/drivers/Adaptive grippers/index.mdx`:
 
 ```mdx
 ---
-title: 2F / Hand-E
-sidebar_label: 2F / Hand-E
+title: Adaptive grippers
+sidebar_label: Adaptive grippers
 sidebar_position: 0
 ---
 
@@ -183,10 +183,10 @@ Short description of the product family.
 
 See the [ROS](ROS) page for the per-distro compatibility table.
 
-### Physics Engine
+### Simulation
 
-{/* AUTO-GENERATED-PRODUCT-PHYSICS_ENGINE-TABLE:START */}
-{/* AUTO-GENERATED-PRODUCT-PHYSICS_ENGINE-TABLE:END */}
+{/* AUTO-GENERATED-PRODUCT-SIMULATION-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-SIMULATION-TABLE:END */}
 
 ### Other
 
@@ -204,7 +204,7 @@ empty table, so it's safe to keep all four headings even before every
 category has content.
 
 **If the product has any ROS tool pages**, also create
-`docs/drivers/2F hande/ROS/index.mdx` — this is where the ROS2/ROS1 tables
+`docs/drivers/Adaptive grippers/ROS/index.mdx` — this is where the ROS2/ROS1 tables
 live instead, since a product's ROS distros usually outnumber its other
 tools:
 
@@ -233,54 +233,54 @@ product has ROS tool pages but no `ROS/index.mdx` with these markers.
 ## 5. Register in `sidebars.js`
 
 Add a category entry with a `link` pointing at the product landing
-page, nesting the tool pages under an SDK / ROS / Physics Engine / Other
+page, nesting the tool pages under an SDK / ROS / Simulation / Other
 sub-category matching where they live on disk:
 
 ```js
 {
   type: 'category',
-  label: '2F / Hand-E',
-  link: { type: 'doc', id: 'drivers/2F hande/index' },
+  label: 'Adaptive grippers',
+  link: { type: 'doc', id: 'drivers/Adaptive grippers/index' },
   items: [
     {
       type: 'category',
       label: 'SDK',
       items: [
-        'drivers/2F hande/SDK/C++/index',
-        'drivers/2F hande/SDK/Python/index',
+        'drivers/Adaptive grippers/SDK/C++/index',
+        'drivers/Adaptive grippers/SDK/Python/index',
       ],
     },
     {
       type: 'category',
       label: 'ROS',
-      link: { type: 'doc', id: 'drivers/2F hande/ROS/index' },
+      link: { type: 'doc', id: 'drivers/Adaptive grippers/ROS/index' },
       items: [
         // Newest to oldest, grouped by generation (ROS2 above ROS1).
-        'drivers/2F hande/ROS/ROS2-Rolling/index',
-        'drivers/2F hande/ROS/ROS2-Humble/index',
-        'drivers/2F hande/ROS/ROS1-Melodic/index',
-        'drivers/2F hande/ROS/ROS1-Indigo/index',
+        'drivers/Adaptive grippers/ROS/ROS2-Rolling/index',
+        'drivers/Adaptive grippers/ROS/ROS2-Humble/index',
+        'drivers/Adaptive grippers/ROS/ROS1-Melodic/index',
+        'drivers/Adaptive grippers/ROS/ROS1-Indigo/index',
       ],
     },
     {
       type: 'category',
-      label: 'Physics Engine',
+      label: 'Simulation',
       items: [
-        'drivers/2F hande/Physics Engine/Isaac Sim/index',
-        'drivers/2F hande/Physics Engine/PyBullet/index',
+        'drivers/Adaptive grippers/Simulation/Isaac Sim/index',
+        'drivers/Adaptive grippers/Simulation/PyBullet/index',
       ],
     },
     {
       type: 'category',
       label: 'Other',
       items: [
-        'drivers/2F hande/Other/GraspGen/index',
+        'drivers/Adaptive grippers/Other/GraspGen/index',
       ],
     },
   ],
 },
 ```
 
-Only include the sub-categories that actually have pages — e.g. FT300-S
-has no Physics Engine or Other tools yet, so its sidebar entry skips
-those two groups entirely.
+Only include the sub-categories that actually have pages — e.g. Force
+Torque Sensor has no Simulation or Other tools yet, so its sidebar
+entry skips those two groups entirely.

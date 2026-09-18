@@ -69,8 +69,8 @@ const sidebars = {
     'intro',
     {
       type: 'category',
-      label: '2F / Hand-E',
-      link: { type: 'doc', id: 'drivers/2F hande/index' },
+      label: 'Adaptive grippers',
+      link: { type: 'doc', id: 'drivers/Adaptive grippers/index' },
       items: [
         {
           type: 'category',
@@ -79,17 +79,17 @@ const sidebars = {
             {
               type: 'category',
               label: 'C++',
-              link: { type: 'doc', id: 'drivers/2F hande/SDK/C++/index' },
+              link: { type: 'doc', id: 'drivers/Adaptive grippers/SDK/C++/index' },
               items: [
                 {
                   type: 'category',
-                  label: 'Documentation',
-                  link: { type: 'doc', id: 'drivers/2F hande/SDK/C++/docs/index' },
+                  label: 'Introduction guides',
+                  link: { type: 'doc', id: 'drivers/Adaptive grippers/SDK/C++/docs/index' },
                   // Ordered by each guide's sidebar_position (stamped by
                   // sync-external-docs.js from the source repo's own README
                   // order) — see scripts/folder-sidebar.mjs. No per-guide
                   // entry to maintain here.
-                  items: generateFolderSidebarItems('drivers/2F hande/SDK/C++/docs'),
+                  items: generateFolderSidebarItems('drivers/Adaptive grippers/SDK/C++/docs'),
                 },
                 // "Topics" (the Doxygen \defgroup/\ingroup hierarchy: Core
                 // API > Commands & Status / Connection & Configuration /
@@ -103,92 +103,110 @@ const sidebars = {
                 // groups/classes are added, renamed, or removed upstream.
                 // Omitted entirely (not just empty) if that job hasn't
                 // produced output yet — see doxygenApiCategory above.
-                ...doxygenApiCategory('drivers/2F hande/SDK/C++/API', 'drivers/2F hande/SDK/C++/API/index', 'API Reference'),
+                ...doxygenApiCategory('drivers/Adaptive grippers/SDK/C++/API', 'drivers/Adaptive grippers/SDK/C++/API/index', 'API Reference'),
               ],
             },
-            'drivers/2F hande/SDK/Python/index',
+            'drivers/Adaptive grippers/SDK/Python/index',
           ],
         },
         {
           type: 'category',
           label: 'ROS',
-          link: { type: 'doc', id: 'drivers/2F hande/ROS/index' },
+          link: { type: 'doc', id: 'drivers/Adaptive grippers/ROS/index' },
           items: [
-            'drivers/2F hande/ROS/ROS2-Rolling/index',
-            'drivers/2F hande/ROS/ROS2-Iron/index',
-            'drivers/2F hande/ROS/ROS2-Humble/index',
-            'drivers/2F hande/ROS/ROS1-Melodic/index',
-            'drivers/2F hande/ROS/ROS1-Kinetic/index',
-            'drivers/2F hande/ROS/ROS1-Jade/index',
-            'drivers/2F hande/ROS/ROS1-Indigo/index',
+            'drivers/Adaptive grippers/ROS/ROS2-Lyrical/index',
+            'drivers/Adaptive grippers/ROS/ROS2-Jazzy/index',
+            'drivers/Adaptive grippers/ROS/ROS2-Humble/index',
+            'drivers/Adaptive grippers/ROS/ROS1-Melodic/index',
+            'drivers/Adaptive grippers/ROS/ROS1-Kinetic/index',
+            'drivers/Adaptive grippers/ROS/ROS1-Indigo/index',
           ],
         },
         {
           type: 'category',
-          label: 'Physics Engine',
+          label: 'Simulation',
           items: [
-            'drivers/2F hande/Physics Engine/Isaac Sim/index',
-            'drivers/2F hande/Physics Engine/PyBullet/index',
+            'drivers/Adaptive grippers/Simulation/Isaac Sim/index',
+            'drivers/Adaptive grippers/Simulation/PyBullet/index',
+            'drivers/Adaptive grippers/Simulation/MuJoCo/index',
           ],
         },
         {
           type: 'category',
           label: 'Other',
           items: [
-            'drivers/2F hande/Other/GraspGen/index',
+            'drivers/Adaptive grippers/Other/GraspGen/index',
           ],
         },
       ],
     },
     {
       type: 'category',
-      label: 'TSF-85',
-      link: { type: 'doc', id: 'drivers/TSF-85/index' },
+      label: 'Tactile Sensor',
+      link: { type: 'doc', id: 'drivers/Tactile Sensor/index' },
       items: [
         {
           type: 'category',
           label: 'SDK',
           items: [
-            'drivers/TSF-85/SDK/C++/index',
-            'drivers/TSF-85/SDK/Python/index',
+            'drivers/Tactile Sensor/SDK/C++/index',
+            'drivers/Tactile Sensor/SDK/Python/index',
           ],
         },
         {
           type: 'category',
           label: 'ROS',
-          link: { type: 'doc', id: 'drivers/TSF-85/ROS/index' },
+          link: { type: 'doc', id: 'drivers/Tactile Sensor/ROS/index' },
           items: [
-            'drivers/TSF-85/ROS/ROS2-Jazzy/index',
+            'drivers/Tactile Sensor/ROS/ROS2-Lyrical/index',
+            'drivers/Tactile Sensor/ROS/ROS2-Jazzy/index',
+            'drivers/Tactile Sensor/ROS/ROS2-Humble/index',
+            'drivers/Tactile Sensor/ROS/ROS1-Noetic/index',
           ],
         },
         {
           type: 'category',
-          label: 'Physics Engine',
+          label: 'Simulation',
           items: [
-            'drivers/TSF-85/Physics Engine/Isaac Sim/index',
+            'drivers/Tactile Sensor/Simulation/Isaac Sim/index',
           ],
         },
       ],
     },
     {
       type: 'category',
-      label: 'FT300-S',
-      link: { type: 'doc', id: 'drivers/FT300/index' },
+      label: 'Force Torque Sensor',
+      link: { type: 'doc', id: 'drivers/Force Torque Sensor/index' },
       items: [
         {
           type: 'category',
           label: 'SDK',
           items: [
-            'drivers/FT300/SDK/C/index',
-            'drivers/FT300/SDK/Python/index',
+            'drivers/Force Torque Sensor/SDK/C/index',
+            'drivers/Force Torque Sensor/SDK/Python/index',
           ],
         },
         {
           type: 'category',
           label: 'ROS',
-          link: { type: 'doc', id: 'drivers/FT300/ROS/index' },
+          link: { type: 'doc', id: 'drivers/Force Torque Sensor/ROS/index' },
           items: [
-            'drivers/FT300/ROS/ROS2-Humble/index',
+            'drivers/Force Torque Sensor/ROS/ROS2-Humble/index',
+          ],
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'EPick',
+      link: { type: 'doc', id: 'drivers/EPick/index' },
+      items: [
+        {
+          type: 'category',
+          label: 'ROS',
+          link: { type: 'doc', id: 'drivers/EPick/ROS/index' },
+          items: [
+            'drivers/EPick/ROS/ROS2-Humble/index',
           ],
         },
       ],

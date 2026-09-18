@@ -153,7 +153,7 @@ tool repo (nothing pushed yet), do it by hand instead:
    $env:SKIP_SUBMODULE_RESET = "1"; npm start
    ```
 3. **Open the page at its real site URL**, e.g.
-   `http://localhost:3000/docs/drivers/2F hande/SDK/C++/API`. After each
+   `http://localhost:3000/docs/drivers/Adaptive grippers/SDK/C++/API`. After each
    further edit in the tool repo, rerun the sync in a second terminal (with
    `SKIP_SUBMODULE_RESET` set in *that* shell too) and the dev server
    hot-reloads the result:
@@ -169,6 +169,16 @@ tool repo (nothing pushed yet), do it by hand instead:
    syncing from the actual pinned commit — never commit or push a build that
    was produced with the reset skipped.
 
+Either way, don't worry too much about forgetting to point everything back
+at the real branch before committing: CI's `scripts/check-submodule-pins.js`
+(see `.github/workflows/ci.yml`) fails the build if a submodule's pinned
+commit isn't reachable from that repo's actual default branch, or if
+`external-jobs.js`'s own `branch` field doesn't match it either — the
+second check exists because that field is exactly the kind of thing this
+workflow can leave pointed at a WIP branch too, not just the pin itself.
+It only ever looks at what's actually committed, never at your local
+checkout, so it can't get in the way of the prototyping loop above.
+
 ### 5. Open a pull request
 
 1. Create a branch:
@@ -178,7 +188,7 @@ tool repo (nothing pushed yet), do it by hand instead:
 2. Commit your changes:
    ```bash
    git add .
-   git commit -m "Add FT300 Python tool page"
+   git commit -m "Add Force Torque Sensor Python tool page"
    ```
 3. Push and open a pull request from your branch to `main`:
    ```bash
