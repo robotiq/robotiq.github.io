@@ -12,7 +12,7 @@ function submoduleJobs(submodule, { repoUrl, branch }, jobs) {
 const JOBS = [
   ...submoduleJobs('2f85_cpp', { repoUrl: 'https://github.com/robotiq/grippers', branch: 'main' }, [
     // 2F 85 CPP driver README
-    { from: 'README.md', to: 'drivers/2F hande/SDK/C++/_readme.md' },
+    { from: 'README.md', to: 'drivers/Adaptive grippers/Libraries/C++/_readme.md' },
 
     // 2F 85 CPP driver docs/ folder. No sidebarPositions needed: the repo
     // itself now names these guides with a numeric prefix (1-introduction.md,
@@ -31,7 +31,7 @@ const JOBS = [
     // too, not just in grippers' own CI.
     {
       from: 'docs',
-      to: 'drivers/2F hande/SDK/C++/docs',
+      to: 'drivers/Adaptive grippers/Libraries/C++/docs',
       docSnippetsCheck: {
         script: 'sdk_cpp/tools/check_doc_snippets.py',
         markdownGlob: 'docs/*.md',
@@ -79,7 +79,7 @@ const JOBS = [
     // never hand-authors or curates content on top.
     {
       doxygen2docusaurus: { doxyfileDir: 'sdk_cpp' },
-      to: 'drivers/2F hande/SDK/C++/API',
+      to: 'drivers/Adaptive grippers/Libraries/C++/API',
       exclude: [
         'files', 'folders', 'indices/files',
         'namespaces', 'indices/namespaces',
@@ -107,11 +107,17 @@ const JOBS = [
 
   ...submoduleJobs('tactile_sensors', { repoUrl: 'https://github.com/robotiq/tactile_sensors', branch: 'main' }, [
     // TSF 85 CPP driver README
-    { from: 'sdk_cpp/README.md', to: 'drivers/TSF-85/SDK/C++/_readme.md' },
+    { from: 'sdk_cpp/README.md', to: 'drivers/Tactile Sensor/Libraries/C++/_readme.md' },
     // TSF 85 Python driver README
-    { from: 'sensor_quickstart/README.md', to: 'drivers/TSF-85/SDK/Python/_readme.md' },
+    { from: 'sensor_quickstart/README.md', to: 'drivers/Tactile Sensor/Libraries/Python/_readme.md' },
     // Folder example — uncomment when a repo has a docs/ folder:
     // { from: 'docs', to: 'drivers/tsf-85' },
+  ]),
+
+  ...submoduleJobs('isaacsim_assets', { repoUrl: 'https://github.com/robotiq/isaacsim_assets', branch: 'main' }, [
+    // Robotiq's own 2F gripper Isaac Sim assets/guide — no README, just this
+    // one guide file (no separate docs/ split yet: nothing else to put there).
+    { from: 'grippers/GRIPPER_SIMULATION_GUIDE.md', to: 'drivers/Adaptive grippers/Simulation/Isaac Sim/_readme.md' },
   ]),
 ];
 

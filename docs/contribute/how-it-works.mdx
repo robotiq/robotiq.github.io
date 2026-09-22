@@ -6,7 +6,7 @@ displayed_sidebar: contributeSidebar
 
 # How it works
 
-Each software tool (SDK, driver, ROS package, …) lives in its own
+Each software tool (library, driver, ROS package, …) lives in its own
 GitHub repository. Embedding it here works in two steps:
 
 1. **Submodule** — a Git submodule under `external/` acts as a
@@ -28,14 +28,14 @@ GitHub repository. Embedding it here works in two steps:
 ```
 robotiq.github.io/
 ├── external/                          ← pinned imports of source repos
-│   └── tactile_sensors/               ← TSF-85 SDK repo
+│   └── tactile_sensors/               ← Tactile Sensor library repo
 ├── docs/
 │   ├── intro.mdx                       ← overview page, includes the
 │   │                                     auto-generated software tools tables
 │   └── drivers/
-│       ├── TSF-85/
+│       ├── Tactile Sensor/
 │       │   ├── index.mdx              ← product landing page (in git)
-│       │   ├── SDK/
+│       │   ├── Libraries/
 │       │   │   ├── C++/
 │       │   │   │   ├── index.mdx      ← wrapper page (in git)
 │       │   │   │   ├── _readme.md     ← synced from submodule
@@ -50,30 +50,29 @@ robotiq.github.io/
 │       │   │   ├── index.mdx          ← ROS landing page (in git), holds
 │       │   │   │                         the per-distro compatibility table
 │       │   │   └── ROS2-Jazzy/index.mdx
-│       │   └── Physics Engine/
+│       │   └── Simulation/
 │       │       └── Isaac Sim/index.mdx
-│       ├── FT300/
+│       ├── Force Torque Sensor/
 │       │   ├── index.mdx
-│       │   ├── SDK/C/ …
-│       │   ├── SDK/Python/ …
+│       │   ├── Libraries/C/ …
+│       │   ├── Libraries/Python/ …
 │       │   └── ROS/
 │       │       ├── index.mdx
 │       │       └── ROS2-Humble/ …
-│       └── 2F hande/
+│       └── Adaptive grippers/
 │           ├── index.mdx
-│           ├── SDK/C++/ …
-│           ├── SDK/Python/ …
+│           ├── Libraries/C++/ …
+│           ├── Libraries/Python/ …
 │           ├── ROS/                    ← newest to oldest, per generation
 │           │   ├── index.mdx
-│           │   ├── ROS2-Rolling/ …
-│           │   ├── ROS2-Iron/ …
+│           │   ├── ROS2-Lyrical/ …
+│           │   ├── ROS2-Jazzy/ …
 │           │   ├── ROS2-Humble/ …
 │           │   ├── ROS1-Melodic/ …
 │           │   ├── ROS1-Kinetic/ …
-│           │   ├── ROS1-Jade/ …
 │           │   └── ROS1-Indigo/ …
-│           ├── Physics Engine/Isaac Sim/ …
-│           ├── Physics Engine/PyBullet/ …
+│           ├── Simulation/Isaac Sim/ …
+│           ├── Simulation/PyBullet/ …
 │           └── Other/GraspGen/ …      ← "Other" category
 ├── draft/                              ← content with no nav link yet (never
 │                                          built into a page — outside docs/)
@@ -86,7 +85,7 @@ robotiq.github.io/
 Files prefixed with `_` are Docusaurus **partials** — imported by a
 wrapper `.mdx` but not standalone pages themselves.
 
-The `SDK/`, `ROS/`, `Physics Engine/`, and `Other/` folders are just
+The `Libraries/`, `ROS/`, `Simulation/`, and `Other/` folders are just
 organizational containers — `generate-tools-table.js` doesn't care about
 folder names, only about which `index.mdx` files carry a `Category` badge
 (see [step 3](./adding-a-tool#3-create-the-wrapper-page) of adding a new
@@ -124,16 +123,27 @@ repo's own README (HTML comments are invisible), but
 `<!-- docs-site:exclude -->` and `<!-- /docs-site:exclude -->`
 before copying content into `docs/`, so it never reaches this site.
 
+A submodule's own guides are also written for GitHub's renderer, which
+turns `> **Note:** ...`/`> **Warning:** ...` into a plain, unstyled
+indented quote. `sync-external-docs.js`'s `convertBlockquoteAdmonitions`
+converts these into real Docusaurus callouts (`:::note`/`:::warning`, styled
+in `src/css/custom.css`'s `.alert--*` rules) during the sync, for every
+synced doc from any submodule — nothing to do upstream or here, a source
+repo's README/guides can keep writing plain GitHub-style callouts.
+
 ## Splitting a tool page into overview, API reference, and guides
 
 A tool's `_readme.md` partial is meant to stay a short overview. Once a
 repository also has a generated API reference and its own prose
 documentation (design notes, guides — more than fits in a README), don't
 cram all three into one page. Split them into sibling folders next to the
-tool's `index.mdx`, as with `docs/drivers/2F hande/SDK/C++/`:
+tool's `index.mdx`, as with `docs/drivers/Adaptive grippers/Libraries/C++/`:
 
 - **`<Tool>/index.mdx`** — the manually maintained overview (unchanged);
-  still imports `_readme.md`, and links to the two folders below.
+  still imports `_readme.md`. No need to link to the two folders below by
+  hand — see "A tool page's own sub-section list" in
+  [Auto-generated software tools tables](./tools-tables#a-tool-pages-own-sub-section-list)
+  for the auto-generated list that does it instead.
 - **`<Tool>/API/`** — the generated API reference. See
   [Python — pydoc-markdown](./api-reference-python) or
   [C++ — Doxygen + doxygen2docusaurus](./api-reference-cpp) for how the sync
@@ -144,7 +154,7 @@ tool's `index.mdx`, as with `docs/drivers/2F hande/SDK/C++/`:
   `scripts/external-jobs.js`:
 
   ```js
-  { from: 'docs', to: 'drivers/2F hande/SDK/C++/docs' },
+  { from: 'docs', to: 'drivers/Adaptive grippers/Libraries/C++/docs' },
   ```
 
   **Name the source repo's guide files `NN-kebab-case.md`** (e.g.
@@ -154,7 +164,12 @@ tool's `index.mdx`, as with `docs/drivers/2F hande/SDK/C++/`:
   `folder-sidebar.mjs` sorts a folder's pages alphabetically with no
   hand-maintained `sidebarPositions` map to keep in sync with upstream
   renames, so this naming *is* the reading order — get it right once
-  upstream instead of fixing it per-file here.
+  upstream instead of fixing it per-file here. The same order (and the
+  labels the guides' own `# <Heading>` supplies, since synced guides
+  usually carry no frontmatter) also drives the `<Tool>/docs/index.mdx`
+  landing page's own auto-generated contents list — see
+  [Auto-generated software tools tables](./tools-tables#a-tool-pages-own-sub-section-list)
+  again.
 
 Each folder needs its own `index.mdx` landing page (`title`/`sidebar_label`
 frontmatter only — no `Category`/`Supported_by` badges, since these aren't
@@ -165,10 +180,10 @@ becomes a category instead of a single page:
 {
   type: 'category',
   label: 'C++',
-  link: { type: 'doc', id: 'drivers/2F hande/SDK/C++/index' },
+  link: { type: 'doc', id: 'drivers/Adaptive grippers/Libraries/C++/index' },
   items: [
-    'drivers/2F hande/SDK/C++/API/index',
-    'drivers/2F hande/SDK/C++/docs/index',
+    'drivers/Adaptive grippers/Libraries/C++/API/index',
+    'drivers/Adaptive grippers/Libraries/C++/docs/index',
   ],
 },
 ```
@@ -187,7 +202,7 @@ repo catches up.
 A git submodule pins an exact commit — nothing tells this repo when a
 registered tool repo advances, so the deployed site can silently drift
 behind upstream for however long it takes someone to notice and bump the
-pin by hand. That's exactly what happened once: the C++ SDK docs PR's pin
+pin by hand. That's exactly what happened once: the C++ library docs PR's pin
 predated a `grippers` fix (adding `\ingroup` tags to `DeviceProfile`/
 `units.hpp`) that merged a few hours later, and the deployed Global Index
 kept listing those symbols as ungrouped until someone manually re-ran the

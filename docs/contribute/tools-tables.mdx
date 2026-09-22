@@ -7,7 +7,7 @@ displayed_sidebar: contributeSidebar
 # Auto-generated software tools tables
 
 `docs/intro.mdx` has five "Software tools" tables, one per category —
-**SDK**, **ROS2**, **ROS1**, **Physics Engine**, **Other** — each listing
+**Libraries**, **ROS2**, **ROS1**, **Simulation**, **Other** — each listing
 every product that has a tool in that category, with each cell showing
 that tool's support badge linked to its page. Every category is built the
 same way: one column per distinct tool `title` found under that category's
@@ -16,7 +16,7 @@ because a ROS leaf page's `title` **is** its distro name (see
 [step 3](./adding-a-tool#3-create-the-wrapper-page) of adding a new tool)
 — there's no separate distro-vs-tool distinction in the script.
 
-**SDK / Physics Engine / Other** get the same tables again, single-row
+**Libraries / Simulation / Other** get the same tables again, single-row
 versions scoped to just that product, on that product's own
 `docs/drivers/<Product>/index.mdx`. **ROS2 / ROS1** get theirs on that
 product's `docs/drivers/<Product>/ROS/index.mdx` instead — since a
@@ -29,7 +29,7 @@ which runs automatically on `npm start` / `npm run build` (same as
 
 The script walks each `docs/drivers/<Product>/` folder tree looking for
 tool leaf pages — an `index.mdx` carrying a `Category` badge — regardless
-of how deeply it's nested (`SDK/`, `ROS/`, `Physics Engine/`, `Other/`, or
+of how deeply it's nested (`Libraries/`, `ROS/`, `Simulation/`, `Other/`, or
 no container folder at all). For each leaf page found:
 
 - **Row** — the product's own `title` frontmatter (from
@@ -38,6 +38,15 @@ no container folder at all). For each leaf page found:
 - **Cell** — the tool's `Supported_by-<Label>-<color>` badge, shown
   compactly (no "Supported by" prefix — only the source page keeps the
   full badge), linking to that tool's own page.
+
+A page can carry extra badges beyond `Category`/`Supported_by` — e.g. the
+archived ROS-Industrial packages under `Adaptive grippers/ROS/ROS1-*` add
+`![Legacy](.../badge/Status-Legacy-000000)` next to their (accurate)
+`Supported_by-Third_party` badge. Only `Supported_by-` feeds the tables, so
+any other `badge/<Key>-<Value>-<color>` (a different key, not `Supported_by`)
+shows on that tool's own page without ever leaking into the summary tables —
+useful for a status that's real but not "who maintains it," which is all
+the tables are meant to answer.
 
 This means adding a new product or tool page, with a title and the right
 badges, is enough to make it appear in the matching tables on the next
@@ -62,11 +71,11 @@ node scripts/generate-tools-table.js
 ```
 
 It rewrites the content between each `AUTO-GENERATED-<CATEGORY>-TABLE`
-marker pair (`AUTO-GENERATED-SDK-TABLE`, `AUTO-GENERATED-ROS2-TABLE`,
-`AUTO-GENERATED-ROS1-TABLE`, `AUTO-GENERATED-PHYSICS_ENGINE-TABLE`,
+marker pair (`AUTO-GENERATED-LIBRARIES-TABLE`, `AUTO-GENERATED-ROS2-TABLE`,
+`AUTO-GENERATED-ROS1-TABLE`, `AUTO-GENERATED-SIMULATION-TABLE`,
 `AUTO-GENERATED-OTHER-TABLE`) in `docs/intro.mdx`, the matching
-`AUTO-GENERATED-PRODUCT-<CATEGORY>-TABLE` marker pairs for SDK / Physics
-Engine / Other in each product's own `index.mdx`, and the
+`AUTO-GENERATED-PRODUCT-<CATEGORY>-TABLE` marker pairs for Libraries /
+Simulation / Other in each product's own `index.mdx`, and the
 `AUTO-GENERATED-PRODUCT-ROS2-TABLE` / `AUTO-GENERATED-PRODUCT-ROS1-TABLE`
 pairs in each product's `ROS/index.mdx` — leaving the rest of each page
 untouched. If a product has ROS tool pages but no `ROS/index.mdx` with
@@ -80,3 +89,64 @@ product's own page needs page-relative links (`<Tool>`); a product's
 deeper than the product root). Reusing the wrong style would silently
 double or misalign the path — the script keeps these as three separate
 href fields (`href`, `localHref`, `rosLocalHref`) to avoid that.
+
+## A tool page's own sub-section list
+
+A tool page that's been [split into overview, API reference, and
+guides](./how-it-works#splitting-a-tool-page-into-overview-api-reference-and-guides)
+also gets its own auto-generated list, right on `<Tool>/index.mdx`, linking
+to whichever of those sub-sections actually exist — rendered as boxes
+(`.subpage-link` in `src/css/custom.css`, the graphic chart's own
+documented "text in blue box" emphasis style) rather than a plain bullet
+list. Two independent things use the same mechanism:
+
+- **A tool's own sub-sections** — `collectSubpages` looks at a tool's
+  immediate subdirectories for one that has its own index page (`.mdx`, or
+  `.md` for doxygen2docusaurus's generated `API/index.md`) but carries no
+  `Category` badge of its own — i.e. it's a sub-section of this tool, not a
+  different tool. Generic, not hardcoded to `API`/`docs`: any folder
+  matching that shape becomes an entry, labeled from its own `title`
+  frontmatter (except `API/`, which always shows "API Reference" — that
+  generated page's own title is long and product-specific, so this matches
+  the fixed label `sidebars.js` already uses for it via
+  `doxygenApiCategory`). Order follows `SUBPAGE_ORDER` in the script
+  (guides before the generated API reference, matching `sidebars.js`'s own
+  convention) — a folder not listed there still appears, just sorted
+  alphabetically after the known ones.
+- **A guide folder's own contents** — the same mechanism runs again, one
+  level deeper, on a guide folder's *own* `docs/index.mdx` (or equivalent),
+  this time via `collectFolderGuides`: the guide files themselves (e.g.
+  `01-environment-setup.md`), ordered the same way
+  [`folder-sidebar.mjs`](./how-it-works#splitting-a-tool-page-into-overview-api-reference-and-guides)
+  orders them in the sidebar (`sidebar_position` frontmatter, else
+  filename), labeled from `sidebar_label`/`title` frontmatter or — since a
+  synced guide usually has neither — its own first `# Heading`, matching
+  Docusaurus's own fallback for a page with no frontmatter title. A folder
+  with no sibling guide files (e.g. the generated `API/` folder, whose only
+  children are subfolders like `classes/`/`groups/`) yields an empty list,
+  same as a tool with no sub-sections.
+
+Both are self-installing: unlike the category tables above, the
+`AUTO-GENERATED-SUBPAGES-TABLE`/`AUTO-GENERATED-GUIDES-TABLE` marker pair
+isn't expected to pre-exist on every page — most pages will never have
+anything to list, and an always-empty marker block on each of them would
+be pure clutter. The first time a page actually has something to list, the
+script inserts the marker itself — right after a `## Contents` heading if
+the page already has one (prepare this heading wherever you want the list
+to land), else right after the page's badges, else right after its
+frontmatter — and keeps the block up to date after that (never deleting the
+marker itself). Once the marker exists, you're free to move it (and its
+surrounding heading) anywhere else on the page — the script only ever
+rewrites what's *between* the markers, never their position.
+
+Both lists are derived from gitignored, sync-generated folders (a tool's
+`API/index.md`, a guide folder's own `.md` files) — genuinely absent on a
+fresh clone before the first full build, or after a Doxygen failure
+`sync-external-docs.js` warned-and-continued through. To avoid wiping real,
+committed content over a transient local gap like that, an empty result
+here only ever *fills* a previously-empty block, never empties an
+already non-empty one — a page that finds nothing to list this run, but
+whose tracked block isn't already empty, is left untouched (with a console
+warning) instead. A guide or API reference genuinely, permanently removed
+upstream still needs a one-time manual edit to clear the stale list here —
+the same way a reviewer would catch any other stale content in the diff.

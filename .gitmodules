@@ -4,3 +4,6 @@
 [submodule "external/2f85_cpp"]
 	path = external/2f85_cpp
 	url = https://github.com/robotiq/grippers
+[submodule "external/isaacsim_assets"]
+	path = external/isaacsim_assets
+	url = https://github.com/robotiq/isaacsim_assets

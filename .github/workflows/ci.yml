@@ -38,7 +38,7 @@ jobs:
         run: npm ci
 
       # scripts/sync-external-docs.js shells out to the `doxygen` binary
-      # (see its doxygen2docusaurus job handling) to build the C++ SDK's
+      # (see its doxygen2docusaurus job handling) to build the C++ library's
       # API reference — not an npm package, so `npm ci` above can't provide
       # it. ubuntu-latest doesn't have it preinstalled. graphviz (`dot`) is
       # also required even though this repo's own Doxyfiles never set
@@ -60,6 +60,33 @@ jobs:
       - name: Build
         run: npm run build
 
+      # generate-tools-table.js (run above, via the prebuild hook) rewrites
+      # docs/intro.mdx, every product's own index.mdx/ROS/index.mdx, and any
+      # tool/guide page that's grown a self-installed sub-section list — all
+      # committed files, none of them gitignored (only the submodule-synced
+      # docs/drivers/**/*.md content is — see the comment above that rule in
+      # .gitignore). Nothing else regenerates and commits these after a
+      # merge, so a PR that changes something the generator depends on
+      # (e.g. a Dependabot submodule bump) without also re-running it
+      # locally would otherwise silently ship a deployed site that doesn't
+      # match what's committed. This catches that here, generically — no
+      # file list to keep in sync as the generator's own output grows.
+      - name: Verify generated content is committed
+        run: git diff --exit-code -- docs/
+
       # Smoke-tests the generated output (key pages + tools table present).
       - name: Test
         run: npm test
+
+      # Catches forgetting to point external/<submodule> back at its real
+      # branch after prototyping against a WIP one (see "Previewing local
+      # edits to a submodule" in docs/contribute/index.mdx) — the pin must
+      # be reachable from the submodule repo's own actual default branch
+      # (checked directly against the remote, not external-jobs.js's
+      # `branch` field — see check-submodule-pins.js's own header comment
+      # for why that field can't be trusted as ground truth here). Runs
+      # after Build/Test (not before) so it reuses the submodule checkout
+      # sync-external-docs.js's own build step already did, rather than
+      # fetching it again here.
+      - name: Verify submodule pins are on their repo's default branch
+        run: node scripts/check-submodule-pins.js

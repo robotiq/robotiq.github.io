@@ -30,7 +30,7 @@ const FeatureList = [
     title: 'Integrate',
     subtitle: 'C++ · Python · ROS2',
     description:
-      'Connect Robotiq hardware to any robot controller using the SDK, Python library, or ROS2 packages.',
+      'Connect Robotiq hardware to any robot controller using the C++ or Python library, or ROS2 packages.',
     images: [
       { src: '/img/C++-Logo.wine.png', alt: 'C++' },
       { src: '/img/python-logo-master-v3-TM-flattened.png', alt: 'Python' },
