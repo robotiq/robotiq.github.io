@@ -6,6 +6,7 @@
 
 import {themes as prismThemes} from 'prism-react-renderer';
 import remarkRobotiqWordmark from './src/remark/robotiqWordmark.mjs';
+import remarkYoutubeEmbed from './src/remark/youtubeEmbed.mjs';
 import rehypeExternalLinksNewTab from './src/remark/externalLinksNewTab.mjs';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
@@ -89,7 +90,7 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           // editUrl: 'https://github.com/robotiq/robotiq.github.io/tree/main/',
-          remarkPlugins: [remarkRobotiqWordmark],
+          remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
           rehypePlugins: [rehypeExternalLinksNewTab],
         },
         blog: false,
