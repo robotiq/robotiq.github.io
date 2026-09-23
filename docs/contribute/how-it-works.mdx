@@ -231,8 +231,16 @@ already covers each half:
      *author* from approving its own PR, not any bot from approving *any*
      PR. Dependabot opens the PR; the workflow's own `GITHUB_TOKEN` (a
      distinct actor, `github-actions`, not `dependabot`) submits the
-     approval — not self-approval, so GitHub accepts it. No dedicated bot
-     account, no extra secret, needed at all.
+     approval — not self-approval, so GitHub accepts it.
+   - **Auto-merge is enabled with the `robotiq-readme-bot` GitHub App
+     token**, not `GITHUB_TOKEN`. GitHub doesn't start workflow runs from
+     events created by `GITHUB_TOKEN`, and an auto-merge completes as
+     whoever enabled it. When this used `GITHUB_TOKEN`, every Dependabot
+     merge advanced `main` without ever firing `deploy.yml`'s `push`
+     trigger, and the live site silently stayed frozen for over a week.
+     With the App token, the merge is attributed to the App and deploys
+     like a human merge. `deploy.yml` also has a daily `schedule` trigger
+     as a backstop.
    - This runs on `pull_request_target` rather than plain `pull_request`,
      because GitHub deliberately hands a read-only, secret-less token to a
      plain-`pull_request` run on a Dependabot PR (to stop a malicious

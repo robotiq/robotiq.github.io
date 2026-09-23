@@ -5,6 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+  # Backstop only: pushes to main (including Dependabot auto-merges, see
+  # dependabot-auto-merge.yml) are the normal trigger. This catches any
+  # merge path that ever fails to fire `push` again, within a day. It
+  # rebuilds even when main hasn't changed, which is harmless.
+  schedule:
+    - cron: '30 6 * * *'
 
 permissions:
   contents: read
