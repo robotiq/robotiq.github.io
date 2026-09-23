@@ -28,6 +28,18 @@ name: Dependabot auto-merge
 # never does (no checkout step at all, just two API calls) — keep it that
 # way; don't add one.
 #
+# Why auto-merge is enabled with the robotiq-readme-bot App token and not
+# GITHUB_TOKEN: GitHub doesn't start workflow runs from events created by
+# GITHUB_TOKEN, and an auto-merge is completed as whoever enabled it. With
+# GITHUB_TOKEN, the merge commit on main never fired deploy.yml's `push`
+# trigger, so main kept advancing while the live site stayed frozen for
+# over a week. With the App token, the merge is attributed to the App, a
+# real actor, and deploy.yml runs as it does for a human merge. The
+# approval stays on GITHUB_TOKEN: it only needs to come from someone other
+# than the PR's author (Dependabot). Same App as robotiq/.github's
+# update-readme.yml; it must be installed on this repo, with APP_ID and
+# APP_PRIVATE_KEY available here.
+#
 # If dependabot.yml ever grows a second ecosystem (npm, etc.), this same
 # workflow will auto-merge those too, gated only by the actor check below
 # and whatever ci.yml catches — revisit whether that's still desired then.
@@ -49,8 +61,15 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: gh pr review --approve "$PR_URL"
 
+      - name: Mint App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Enable auto-merge
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: gh pr merge --auto --squash "$PR_URL"
