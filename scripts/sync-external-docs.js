@@ -46,17 +46,33 @@ const JOBS = require('./external-jobs');
 // plus prune whatever the previous run left behind that the submodule no
 // longer has. Every page under this job comes straight from the submodule —
 // there is no hand-authored content of this site's own to protect here.
-// `apiFolderPath`/`apiBaseUrl` are both set to the
-// job's own `to` (this site's real mount point for the section, e.g.
-// 'drivers/Adaptive grippers/Libraries/C++/API'), so every generated slug and internal
-// cross-reference link is already correct for where the content ends up —
-// no post-hoc link rewriting needed — and every sidebar entry's doc `id`
-// (built from the same apiFolderPath) already matches the real doc id once
-// the matching file lands at that path under docs/, so the two only need to
-// stay in agreement, never be transformed into each other.
+//
+// `apiFolderPath`/`apiBaseUrl` drive every generated slug, sidebar doc id,
+// and internal cross-reference link doxygen2docusaurus bakes in — for a job
+// on the single default docs instance, that's the job's own `to` (this
+// site's real mount point, e.g. 'drivers/Adaptive grippers/Libraries/C++/API'),
+// so nothing needs post-hoc rewriting: the file lands at exactly the path
+// its own baked-in links already assume. A job with `destRoot` (its own
+// versioned plugin instance — see draft/documentation-versioning.md) is
+// different: `apiBaseUrl` there is just the instance-relative tail (e.g.
+// 'API'), since the instance's own `routeBasePath` already supplies
+// everything before it — doxygen2docusaurus's own slug/id construction
+// doesn't know that, so runDoxygen2Docusaurus additionally sets
+// `docsBaseUrl` to the instance's full routeBasePath (for the *absolute*
+// `<a href="/docs/...">` backlinks doxygen2docusaurus bakes into raw HTML,
+// which — unlike a Docusaurus slug — never gets combined with routeBasePath
+// automatically) and this script's own downstream helpers (everything from
+// here down that reads or constructs a `/docs/...`-shaped path) read
+// `currentRoutePrefix`/`currentDocsRoot` instead of hardcoding `/docs` or
+// `docs/`. Module-level, not threaded as parameters, because this whole
+// pipeline only ever processes one job at a time, strictly sequentially —
+// see where runDoxygen2Docusaurus sets them, right before doing any work.
 const DOXYGEN2DOCUSAURUS_STAGING_DIR = path.join(ROOT, '.doxygen2docusaurus-staging');
 const DOXYGEN2DOCUSAURUS_CONFIG_PATH = path.join(ROOT, 'doxygen2docusaurus.json');
 const DOXYGEN2DOCUSAURUS_BIN = require.resolve('@xpack/doxygen2docusaurus/bin/doxygen2docusaurus.js');
+
+let currentDocsRoot = path.join(ROOT, 'docs');
+let currentRoutePrefix = '/docs';
 
 // Where sidebars.js reads the (pruned) generated sidebar subtree from —
 // stable path, checked into .gitignore, regenerated on every sync.
@@ -108,7 +124,7 @@ function pruneDoxygenSidebarNode(node, apiFolderPath, exclude) {
 // excluded path — same "don't ship a dead link" rule rewriteLinks already
 // applies to relative markdown-style links from a README-style job.
 function stripDeadDoxygenLinks(content, apiFolderPath, exclude) {
-  const prefix = `/docs/${apiFolderPath}/`;
+  const prefix = `${currentRoutePrefix}/${apiFolderPath}/`;
   return content.replace(/<a href="([^"]*)">([\s\S]*?)<\/a>/g, (match, href, text) => {
     if (!href.startsWith(prefix)) return match;
     // `rel` comes from a URL, so it never has a file extension — but an
@@ -483,7 +499,7 @@ function resolveAnchorTarget(href, bySlug) {
   const hashIdx = href.indexOf('#');
   if (hashIdx === -1) return null;
   const id = href.slice(hashIdx + 1);
-  let pathPart = href.slice('/docs'.length, hashIdx);
+  let pathPart = href.slice(currentRoutePrefix.length, hashIdx);
   if (pathPart.endsWith('/')) pathPart = pathPart.slice(0, -1);
   const ids = bySlug.get(pathPart);
   if (!ids) return true; // target page unknown to us — treat as fine, leave alone
@@ -763,10 +779,10 @@ function findLinkInDoxygenHtml(doxygenHtmlDir, basename, localAnchor, plainText,
     if (href.includes('#')) {
       const anchor = doxygenAnchorFromRefId(refid);
       const slug = anchorToSlug.get(anchor);
-      if (slug) return { text: linkText, href: `/docs${slug}#${anchor}` };
+      if (slug) return { text: linkText, href: `${currentRoutePrefix}${slug}#${anchor}` };
     } else {
       const slug = compoundToSlug.get(refid);
-      if (slug) return { text: linkText, href: `/docs${slug}` };
+      if (slug) return { text: linkText, href: `${currentRoutePrefix}${slug}` };
     }
   }
   return null;
@@ -789,7 +805,7 @@ function resolveTypeLink(typeFieldXml, ctx) {
     // ActivationResult (the two return-type cases this was verified
     // against) actually have one, since a future "const Foo &" return type
     // otherwise would.
-    if (slug) return { plainText: ref.text, href: `/docs${slug}${ref.kindref === 'compound' ? '' : `#${anchor}`}` };
+    if (slug) return { plainText: ref.text, href: `${currentRoutePrefix}${slug}${ref.kindref === 'compound' ? '' : `#${anchor}`}` };
   }
 
   const found = findLinkInDoxygenHtml(ctx.doxygenHtmlDir, ctx.basename, ctx.localAnchor, plainText, ctx.anchorToSlug, ctx.compoundToSlug);
@@ -993,7 +1009,7 @@ function renderFreeSymbolsIndex(namespaceXmlPaths, anchorToSlug, classEntries, a
       const trailers = [];
       if (entry.group) trailers.push(`<strong>${entry.group}</strong>`);
       if (entry.brief) trailers.push(entry.brief);
-      lines.push(`- <a href="/docs${entry.slug}">${entry.title}</a>${trailers.length ? ` — ${trailers.join(' — ')}` : ''}`);
+      lines.push(`- <a href="${currentRoutePrefix}${entry.slug}">${entry.title}</a>${trailers.length ? ` — ${trailers.join(' — ')}` : ''}`);
     }
     lines.push('');
   }
@@ -1030,7 +1046,7 @@ function renderFreeSymbolsIndex(namespaceXmlPaths, anchorToSlug, classEntries, a
         if (groupTitle) trailers.push(`<strong>${groupTitle}</strong>`);
         const brief = findGroupMemberBrief(doxygenXmlDir, entry.refid);
         if (brief) trailers.push(brief);
-        lines.push(`- <a href="/docs${slug}#${anchor}"><code>${displayName}</code></a>${trailers.length ? ` — ${trailers.join(' — ')}` : ''}`);
+        lines.push(`- <a href="${currentRoutePrefix}${slug}#${anchor}"><code>${displayName}</code></a>${trailers.length ? ` — ${trailers.join(' — ')}` : ''}`);
       } else {
         // Not \ingroup-tagged, so there's no Modules page (or any other
         // page — Namespaces are out of this site's scope) documenting it.
@@ -1097,7 +1113,7 @@ function generateFreeSymbolsIndex(destPath, doxygenXmlDir, apiFolderPath, classI
         ? stripMarkupToText(briefMatch[1].replace(/\s*<a href="#details">More\.\.\.<\/a>\s*$/, ''))
         : '';
       if (slug && titleMatch) {
-        const id = path.relative(path.join(ROOT, 'docs'), file).replace(/\.mdx?$/, '').split(path.sep).join('/');
+        const id = path.relative(currentDocsRoot, file).replace(/\.mdx?$/, '').split(path.sep).join('/');
         classEntries.push({ slug, title: titleMatch[1], brief, group: classIdToGroupLabel.get(id) });
       }
     }
@@ -1129,7 +1145,20 @@ function runDoxygen2Docusaurus(job, written, folderDestPaths) {
   fs.rmSync(doxygenXmlDirAbs, { recursive: true, force: true });
   execSync('doxygen', { cwd: doxyfileDir, stdio: 'inherit' });
 
-  const apiFolderPath = job.to;
+  // See the big comment above DOXYGEN2DOCUSAURUS_STAGING_DIR for the full
+  // reasoning. Short version: a job with `destRoot` gets its own versioned
+  // plugin instance, whose `routeBasePath` already supplies everything up
+  // to the tool's own root — so `apiFolderPath` (which drives every slug,
+  // sidebar doc id, and staging path doxygen2docusaurus produces) is
+  // reduced to just the tail past that root (its own basename, e.g.
+  // 'API'), and every downstream helper needs `currentDocsRoot`/
+  // `currentRoutePrefix` set to match before it runs.
+  const apiFolderPath = job.destRoot ? path.basename(job.to) : job.to;
+  currentDocsRoot = job.destRoot
+    ? path.join(ROOT, job.destRoot, path.dirname(job.to))
+    : path.join(ROOT, 'docs');
+  currentRoutePrefix = job.destRoot ? job.routeBasePath : '/docs';
+
   const doxygenXmlInputFolderPath = path
     .relative(ROOT, doxygenXmlDirAbs)
     .split(path.sep)
@@ -1143,7 +1172,15 @@ function runDoxygen2Docusaurus(job, written, folderDestPaths) {
     docsFolderPath: stagingDirRel,
     apiFolderPath,
     baseUrl: '/',
-    docsBaseUrl: 'docs',
+    // Unlike a Docusaurus slug (which Docusaurus itself combines with the
+    // owning instance's routeBasePath at routing time), the *absolute*
+    // `<a href="/docs/...">` backlinks doxygen2docusaurus bakes straight
+    // into raw HTML never go through that combination — docsBaseUrl has to
+    // already be the full public prefix for those to land on the right
+    // page. currentRoutePrefix is that prefix with its leading '/' already
+    // stripped off here to match this option's own (bare, no-leading-
+    // slash) convention, same as the default 'docs' value it replaces.
+    docsBaseUrl: job.destRoot ? currentRoutePrefix.replace(/^\//, '') : 'docs',
     apiBaseUrl: apiFolderPath,
     sidebarCategoryFilePath,
     sidebarCategoryLabel: 'API Reference',
@@ -1189,7 +1226,7 @@ function runDoxygen2Docusaurus(job, written, folderDestPaths) {
   // destination tree first (except the hand-authored index.mdx/README,
   // which pruneStale itself always exempts) sidesteps this regardless of
   // what casing a previous pipeline left behind.
-  const destPath = path.join(ROOT, 'docs', job.to);
+  const destPath = path.join(ROOT, job.destRoot || 'docs', job.to);
   if (fs.existsSync(destPath)) {
     for (const entry of fs.readdirSync(destPath, { withFileTypes: true })) {
       const base = entry.name.replace(/\.[^.]+$/, '');
@@ -1249,7 +1286,7 @@ function runDoxygen2Docusaurus(job, written, folderDestPaths) {
     // AFTER attachClassesToGroups above, not as a job-level `exclude` entry,
     // since that would delete the class docs nested under this same
     // category (Classes > Hierarchy > ...) before the merge ever ran.
-    if (classesNode.link) fs.rmSync(path.join(ROOT, 'docs', `${classesNode.link.id}.md`), { force: true });
+    if (classesNode.link) fs.rmSync(path.join(currentDocsRoot, `${classesNode.link.id}.md`), { force: true });
     prunedItems = prunedItems
       .map((n) => (n === topicsNode ? newTopicsNode : n === classesNode ? null : n))
       .filter(Boolean);
@@ -1260,14 +1297,14 @@ function runDoxygen2Docusaurus(job, written, folderDestPaths) {
   prunedItems.push({
     type: 'doc',
     label: 'Global Index',
-    id: path.relative(path.join(ROOT, 'docs'), freeSymbolsIndexPath).replace(/\.md$/, '').split(path.sep).join('/'),
+    id: path.relative(currentDocsRoot, freeSymbolsIndexPath).replace(/\.md$/, '').split(path.sep).join('/'),
   });
 
   const sidebarOutputPath = doxygenSidebarOutputPath(apiFolderPath);
   fs.mkdirSync(path.dirname(sidebarOutputPath), { recursive: true });
   fs.writeFileSync(sidebarOutputPath, JSON.stringify(prunedItems, null, 2));
   console.log(`[sync-external-docs] doxygen2docusaurus sidebar → ${path.relative(ROOT, sidebarOutputPath)}`);
-  console.log(`[sync-external-docs] ${job.submodule} (doxygen2docusaurus) → docs/${job.to}/`);
+  console.log(`[sync-external-docs] ${job.submodule} (doxygen2docusaurus) → ${job.destRoot || 'docs'}/${job.to}/`);
 }
 
 function readDocSlug(file, preReadContent) {
@@ -1283,7 +1320,7 @@ function readDocSlug(file, preReadContent) {
 // these generated pages carry a `title:` frontmatter field, so the H1 is
 // the only source for a human-readable name.
 function readPageH1(slug) {
-  const file = path.join(ROOT, 'docs', `${slug}.md`);
+  const file = path.join(currentDocsRoot, `${slug}.md`);
   if (!fs.existsSync(file)) return null;
   const afterFrontmatter = fs.readFileSync(file, 'utf8').replace(/^---\n[\s\S]*?\n---\n/, '');
   const m = afterFrontmatter.match(/^# (.+)$/m);
@@ -1299,7 +1336,7 @@ function readPageH1(slug) {
 function collectLeavesBySlug(node, out) {
   const id = node.type === 'doc' ? node.id : node.link?.type === 'doc' ? node.link.id : null;
   if (id) {
-    const file = path.join(ROOT, 'docs', `${id}.md`);
+    const file = path.join(currentDocsRoot, `${id}.md`);
     if (fs.existsSync(file)) {
       const content = fs.readFileSync(file, 'utf8');
       const slug = readDocSlug(file, content);
@@ -1344,8 +1381,9 @@ function classSlugsOwnedByGroupPage(file) {
     // brief is free-form prose that can — and does — link to OTHER classes
     // in passing (Platform's own one-line description mentions Gripper),
     // which must not be mistaken for a second "Classes" entry.
-    for (const itemMatch of section.matchAll(/doxyMemberIndexItemName"[^>]*><a href="(\/docs\/[^"]*)">/g)) {
-      let slug = itemMatch[1].slice('/docs'.length);
+    const hrefRe = new RegExp(`doxyMemberIndexItemName"[^>]*><a href="(${escapeRegExp(currentRoutePrefix)}/[^"]*)">`, 'g');
+    for (const itemMatch of section.matchAll(hrefRe)) {
+      let slug = itemMatch[1].slice(currentRoutePrefix.length);
       if (slug.endsWith('/')) slug = slug.slice(0, -1);
       slugs.push(slug);
     }
@@ -1363,7 +1401,7 @@ function collectDescendantSlugs(node) {
   for (const child of node.items || []) {
     const id = child.type === 'doc' ? child.id : child.link?.type === 'doc' ? child.link.id : null;
     if (id) {
-      const file = path.join(ROOT, 'docs', `${id}.md`);
+      const file = path.join(currentDocsRoot, `${id}.md`);
       if (fs.existsSync(file)) {
         const slug = readDocSlug(file, fs.readFileSync(file, 'utf8'));
         if (slug) slugs.add(slug);
@@ -1390,7 +1428,7 @@ function attachClassesToGroups(node, slugToClassNode, matchedNodes) {
 
   const id = result.type === 'doc' ? result.id : result.link?.type === 'doc' ? result.link.id : null;
   if (!id) return result;
-  const file = path.join(ROOT, 'docs', `${id}.md`);
+  const file = path.join(currentDocsRoot, `${id}.md`);
   if (!fs.existsSync(file)) return result;
 
   // doxygen2docusaurus's own "Classes" tree already nests a derived class
@@ -1716,7 +1754,17 @@ for (const job of JOBS) {
 
   const submoduleRoot = path.join(ROOT, 'external', job.submodule);
   const srcPath = path.join(submoduleRoot, job.from);
-  const destPath = path.join(ROOT, 'docs', job.to);
+  // Defaults to 'docs' for every existing job. A job whose content needs to
+  // live outside the main Docusaurus docs instance's own tree — e.g. a tool
+  // piloting per-tool documentation versioning (see
+  // draft/documentation-versioning.md) as its own separate plugin instance
+  // — sets destRoot explicitly instead. Physically nesting that instance's
+  // files inside docs/ (even with the default instance's own `exclude`
+  // covering them) reproducibly breaks MDX compilation with a bogus
+  // "Unexpected FunctionDeclaration ... non-esm" error — confirmed by
+  // bisecting content (irrelevant) and path (moving the exact same files
+  // outside docs/ fixed it) while building the tactile-python pilot.
+  const destPath = path.join(ROOT, job.destRoot || 'docs', job.to);
 
   if (!fs.existsSync(srcPath)) {
     console.warn(`[sync-external-docs] Missing: external/${job.submodule}/${job.from} — run: git submodule update --init`);
@@ -1738,11 +1786,11 @@ for (const job of JOBS) {
   if (isDir) {
     processFolder(srcPath, destPath, opts, srcPath, written);
     folderDestPaths.add(destPath);
-    console.log(`[sync-external-docs] ${job.submodule}/${job.from}/ → docs/${job.to}/`);
+    console.log(`[sync-external-docs] ${job.submodule}/${job.from}/ → ${job.destRoot || 'docs'}/${job.to}/`);
   } else {
     processFile(srcPath, destPath, { ...opts, srcFile: srcPath, destFile: destPath });
     written.add(destPath);
-    console.log(`[sync-external-docs] ${job.submodule}/${job.from} → docs/${job.to}`);
+    console.log(`[sync-external-docs] ${job.submodule}/${job.from} → ${job.destRoot || 'docs'}/${job.to}`);
   }
 }
 

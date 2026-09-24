@@ -38,10 +38,18 @@ function stripNumberPrefix(filename) {
 }
 
 /**
- * @param {string} docPrefix Doc-id of the folder, e.g. 'drivers/.../docs'.
+ * @param {string} docPrefix Doc-id of the folder, relative to `fsRoot`
+ *   (which is itself relative to whichever plugin instance owns it) — e.g.
+ *   'drivers/.../docs' for the default instance, or just 'docs' for a
+ *   folder that's the versioned-instance root of its own tool.
+ * @param {string} [fsRoot] Filesystem root `docPrefix` is relative to —
+ *   defaults to the default instance's own `docs/`. A tool with its own
+ *   versioned plugin instance (see draft/documentation-versioning.md)
+ *   passes its own `versioned-tools/<Product>/<Tool>` root instead, since
+ *   its doc-id namespace starts there, not at the site's `docs/`.
  */
-export function generateFolderSidebarItems(docPrefix) {
-  const dir = path.join(ROOT, 'docs', ...docPrefix.split('/'));
+export function generateFolderSidebarItems(docPrefix, fsRoot = path.join(ROOT, 'docs')) {
+  const dir = path.join(fsRoot, ...docPrefix.split('/'));
   if (!fs.existsSync(dir)) return [];
 
   const entries = fs.readdirSync(dir).filter((f) => {

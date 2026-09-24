@@ -65,14 +65,18 @@ jobs:
       # tool/guide page that's grown a self-installed sub-section list — all
       # committed files, none of them gitignored (only the submodule-synced
       # docs/drivers/**/*.md content is — see the comment above that rule in
-      # .gitignore). Nothing else regenerates and commits these after a
-      # merge, so a PR that changes something the generator depends on
-      # (e.g. a Dependabot submodule bump) without also re-running it
-      # locally would otherwise silently ship a deployed site that doesn't
-      # match what's committed. This catches that here, generically — no
-      # file list to keep in sync as the generator's own output grows.
+      # .gitignore). It does the exact same thing under versioned-tools/ for
+      # a per-tool-versioned tool's own wrapper page (see
+      # docs/contribute/versioning.mdx) — same gitignore split there
+      # (versioned-tools/**/*.md), so this check covers both directories.
+      # Nothing else regenerates and commits these after a merge, so a PR
+      # that changes something the generator depends on (e.g. a Dependabot
+      # submodule bump) without also re-running it locally would otherwise
+      # silently ship a deployed site that doesn't match what's committed.
+      # This catches that here, generically — no file list to keep in sync
+      # as the generator's own output grows.
       - name: Verify generated content is committed
-        run: git diff --exit-code -- docs/
+        run: git diff --exit-code -- docs/ versioned-tools/
 
       # Smoke-tests the generated output (key pages + tools table present).
       - name: Test

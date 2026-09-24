@@ -35,23 +35,17 @@ robotiq.github.io/
 │   └── drivers/
 │       ├── Tactile Sensor/
 │       │   ├── index.mdx              ← product landing page (in git)
-│       │   ├── Libraries/
-│       │   │   ├── C++/
-│       │   │   │   ├── index.mdx      ← wrapper page (in git)
-│       │   │   │   ├── _readme.md     ← synced from submodule
-│       │   │   │   ├── API/           ← generated API reference (Doxygen +
-│       │   │   │   │   └── index.mdx     doxygen2docusaurus), see below
-│       │   │   │   └── docs/          ← synced copy of the submodule's own
-│       │   │   │       └── index.mdx     docs/ folder (guides, design notes)
-│       │   │   └── Python/
-│       │   │       ├── index.mdx
-│       │   │       └── _readme.md
+│       │   ├── Libraries/              ← C++ and Python are VERSIONED tools
+│       │   │                             (see versioned-tools/ below) — this
+│       │   │                             folder holds no tool pages, only
+│       │   │                             the sidebar link to each
 │       │   ├── ROS/
 │       │   │   ├── index.mdx          ← ROS landing page (in git), holds
 │       │   │   │                         the per-distro compatibility table
 │       │   │   └── ROS2-Jazzy/index.mdx
 │       │   └── Simulation/
-│       │       └── Isaac Sim/index.mdx
+│       │       └── Isaac Sim/index.mdx ← NOT versioned (own Isaac Sim page,
+│       │                                  distinct from Adaptive grippers')
 │       ├── Force Torque Sensor/
 │       │   ├── index.mdx
 │       │   ├── Libraries/C/ …
@@ -61,8 +55,9 @@ robotiq.github.io/
 │       │       └── ROS2-Humble/ …
 │       └── Adaptive grippers/
 │           ├── index.mdx
-│           ├── Libraries/C++/ …
-│           ├── Libraries/Python/ …
+│           ├── Libraries/              ← C++ is a VERSIONED tool (below);
+│           │                             Python isn't yet
+│           │   └── Python/ …
 │           ├── ROS/                    ← newest to oldest, per generation
 │           │   ├── index.mdx
 │           │   ├── ROS2-Lyrical/ …
@@ -71,19 +66,54 @@ robotiq.github.io/
 │           │   ├── ROS1-Melodic/ …
 │           │   ├── ROS1-Kinetic/ …
 │           │   └── ROS1-Indigo/ …
-│           ├── Simulation/Isaac Sim/ …
 │           ├── Simulation/PyBullet/ …
 │           └── Other/GraspGen/ …      ← "Other" category
+├── versioned-tools/                    ← content for VERSIONED tools (own
+│   │                                     Docusaurus plugin instance each,
+│   │                                     Latest/Stable/Previous versions —
+│   │                                     see contribute/versioning.mdx),
+│   │                                     mirrors docs/drivers/'s own shape
+│   │                                     one level in from <Product>
+│   ├── Tactile Sensor/
+│   │   └── Libraries/
+│   │       ├── C++/
+│   │       │   ├── index.mdx          ← wrapper page (in git)
+│   │       │   ├── _readme.md         ← synced from submodule
+│   │       │   ├── API/               ← generated API reference (Doxygen +
+│   │       │   │   └── index.mdx         doxygen2docusaurus), see below
+│   │       │   └── docs/              ← synced copy of the submodule's own
+│   │       │       └── index.mdx         docs/ folder (guides, design notes)
+│   │       └── Python/
+│   │           ├── index.mdx
+│   │           └── _readme.md
+│   └── Adaptive grippers/
+│       ├── Libraries/C++/ …           ← same guides+API shape as above
+│       └── Simulation/Isaac Sim/ …    ← single page, Latest only so far
 ├── draft/                              ← content with no nav link yet (never
 │                                          built into a page — outside docs/)
 ├── scripts/
 │   ├── sync-external-docs.js
-│   └── generate-tools-table.js
-└── sidebars.js
+│   ├── generate-tools-table.js
+│   └── site-nav-tree.mjs               ← shared nav tree, see
+│                                           contribute/versioning.mdx
+├── sidebars.js                         ← main instance's sidebar
+└── sidebars.<tool>.js                  ← one per versioned tool
 ```
 
 Files prefixed with `_` are Docusaurus **partials** — imported by a
 wrapper `.mdx` but not standalone pages themselves.
+
+**A tool listed above as "VERSIONED" lives under `versioned-tools/`, not
+`docs/`, and has its own Docusaurus plugin instance with its own
+Latest/Stable/Previous versions switcher** — see
+[Per-tool documentation versioning](./versioning) for the whole mechanism,
+why it needs a separate top-level folder rather than living inside
+`docs/`, and how to add it to a new tool. Everything else on this page
+(the sync script, the exclude-content markers, splitting a tool into
+guides/API/overview, refreshing submodule pins) applies identically to a
+versioned or non-versioned tool — versioning only changes *where* the
+files live and *how many builds* exist of them, not how they're
+authored or synced.
 
 The `Libraries/`, `ROS/`, `Simulation/`, and `Other/` folders are just
 organizational containers — `generate-tools-table.js` doesn't care about
@@ -151,7 +181,13 @@ A tool's `_readme.md` partial is meant to stay a short overview. Once a
 repository also has a generated API reference and its own prose
 documentation (design notes, guides — more than fits in a README), don't
 cram all three into one page. Split them into sibling folders next to the
-tool's `index.mdx`, as with `docs/drivers/Adaptive grippers/Libraries/C++/`:
+tool's `index.mdx`. The example below is written against a plain,
+non-versioned tool under `docs/`; the real worked example on this site,
+`versioned-tools/Adaptive grippers/Libraries/C++/`, is a *versioned* tool
+(see [Per-tool documentation versioning](./versioning)) — same folder
+shape, but under `versioned-tools/` instead of `docs/`, and with a
+different sidebar entry (`sidebars.adaptive-grippers-cpp.js`'s `cppItem`,
+not a `sidebars.js` entry):
 
 - **`<Tool>/index.mdx`** — the manually maintained overview (unchanged);
   still imports `_readme.md`. No need to link to the two folders below by
@@ -168,7 +204,7 @@ tool's `index.mdx`, as with `docs/drivers/Adaptive grippers/Libraries/C++/`:
   `scripts/external-jobs.js`:
 
   ```js
-  { from: 'docs', to: 'drivers/Adaptive grippers/Libraries/C++/docs' },
+  { from: 'docs', to: 'drivers/<Product>/<Category>/<Tool>/docs' },
   ```
 
   **Name the source repo's guide files `NN-kebab-case.md`** (e.g.
@@ -193,11 +229,11 @@ becomes a category instead of a single page:
 ```js
 {
   type: 'category',
-  label: 'C++',
-  link: { type: 'doc', id: 'drivers/Adaptive grippers/Libraries/C++/index' },
+  label: '<Tool>',
+  link: { type: 'doc', id: 'drivers/<Product>/<Category>/<Tool>/index' },
   items: [
-    'drivers/Adaptive grippers/Libraries/C++/API/index',
-    'drivers/Adaptive grippers/Libraries/C++/docs/index',
+    'drivers/<Product>/<Category>/<Tool>/API/index',
+    'drivers/<Product>/<Category>/<Tool>/docs/index',
   ],
 },
 ```
@@ -269,3 +305,34 @@ already covers each half:
    repo's Insights → Dependency graph page, or the auto-merge workflow
    re-runs automatically on its own `pull_request_target` trigger for any
    Dependabot PR.
+
+## Manually refreshing the deployed site
+
+The site updates itself once a day: Dependabot checks every tool repo at
+around 00:45 UTC, and any bump it opens is auto-merged and deployed (see
+[Refreshing submodule pins automatically](#refreshing-submodule-pins-automatically)).
+A change pushed to a tool repo after that check only reaches the site at
+the next one, up to a day later.
+
+Dependabot's default 3-day cooldown is switched off in
+`.github/dependabot.yml` (`cooldown.exclude: ["*"]`). With the default,
+any tool-repo commit younger than 3 days is ignored, even by **Check for
+updates** below, so a docs change took 3 to 4 days to go live.
+
+To run that same daily update right away from the GitHub web interface:
+
+1. Open the repository on GitHub and go to **Insights → Dependency graph →
+   Dependabot**
+   ([direct link](https://github.com/robotiq/robotiq.github.io/network/updates)).
+2. On the `gitsubmodule` entry, click **Check for updates**.
+
+Dependabot opens one bump PR per submodule that is behind its repo's
+default branch. Each one auto-merges once `build-and-test` passes, and
+each merge deploys the site, usually within 10 minutes. You can follow
+the PRs in the **Pull requests** tab and the deploys in the **Actions**
+tab. If no PR appears, every pin was already up to date.
+
+Re-running **Deploy to GitHub Pages** from the **Actions** tab doesn't
+pick up new tool-repo content: it rebuilds from the pins already on
+`main`. It's only useful for republishing the current state, for example
+after a failed deploy.

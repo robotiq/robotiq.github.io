@@ -11,6 +11,7 @@ a pull request, and embedding a software tool repository as a Git
 submodule with optional auto-generated API docs. It's split by topic —
 see the sidebar for the rest ([How it works](./how-it-works),
 [Adding a new software tool](./adding-a-tool),
+[Per-tool documentation versioning](./versioning),
 [Auto-generated software tools tables](./tools-tables),
 [Auto-generated API reference](./api-reference-cpp), and a
 [Quick reference](./quick-reference) table).
@@ -55,7 +56,9 @@ npm start
 ```
 
 Opens `http://localhost:3000` in your browser. The page hot-reloads
-when you edit files under `docs/`, `src/`, or `sidebars.js`.
+when you edit files under `docs/`, `src/`, `sidebars.js`, or, for a
+versioned tool (see [Per-tool documentation versioning](./versioning)),
+`versioned-tools/`, `sidebars.<tool>.js`, or `scripts/site-nav-tree.mjs`.
 
 ### Previewing local edits to a submodule
 
@@ -107,9 +110,9 @@ pick up new commits — terminal 1's dev server hot-reloads the result, no
 restart needed. Skip to step 3.
 
 ⚠️ **Exception: adding or removing a Doxygen group (`\defgroup`).** The C++
-API sidebar is built dynamically from whatever files currently exist under
-`API/Modules/` (see
-[`scripts/doxygen-groups-sidebar.mjs`](https://github.com/robotiq/robotiq.github.io/blob/main/scripts/doxygen-groups-sidebar.mjs)),
+API sidebar is read once from `scripts/generated/doxygen-sidebar-<api-folder>.json`
+(written by `sync-external-docs.js`'s `doxygen2docusaurus` handling — see
+[The sidebar mirrors the Doxygen group hierarchy automatically](./api-reference-cpp#the-sidebar-mirrors-the-doxygen-group-hierarchy-automatically)),
 but that scan only runs once, when the dev server starts — it isn't re-run
 on every file change the way doc content is. Editing an existing group's
 content hot-reloads fine, but a *new* or *deleted* group won't show up in

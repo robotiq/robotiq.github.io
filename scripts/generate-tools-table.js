@@ -33,6 +33,14 @@ const matter = require('gray-matter');
 
 const ROOT = path.resolve(__dirname, '..');
 const DRIVERS_DIR = path.join(ROOT, 'docs', 'drivers');
+// A tool piloting per-tool documentation versioning (see
+// draft/documentation-versioning.md) lives here instead of under
+// DRIVERS_DIR — its own Docusaurus plugin instance can't be nested inside
+// the main docs/ tree (see the destRoot comment in sync-external-docs.js).
+// Mirrors DRIVERS_DIR's own <Product>/<...> structure underneath each
+// product folder, so a tool moving here needs no href-computation changes,
+// just an extra folder to also walk.
+const VERSIONED_TOOLS_DIR = path.join(ROOT, 'versioned-tools');
 const INTRO_FILE = path.join(ROOT, 'docs', 'intro.mdx');
 
 // Categories, in the order their tables appear on docs/intro.mdx. Every
@@ -387,10 +395,10 @@ for (const hardwareName of fs.readdirSync(DRIVERS_DIR).sort()) {
   };
   for (const catKey of CATEGORIES) product.tools[catKey] = {};
 
-  for (const tool of collectToolPages(hardwareDir, hardwareDir)) {
+  const addTool = (tool) => {
     ensureSubpagesBlock(tool.indexPath);
 
-    if (!CATEGORIES.includes(tool.category)) continue; // unknown category badge — ignore
+    if (!CATEGORIES.includes(tool.category)) return; // unknown category badge — ignore
 
     categoryColumns[tool.category].add(tool.title);
     product.tools[tool.category][tool.title] = {
@@ -402,6 +410,17 @@ for (const hardwareName of fs.readdirSync(DRIVERS_DIR).sort()) {
       rosLocalHref: docHref(...tool.relSegments.slice(1)),
       badge: readCompactBadge(tool.raw),
     };
+  };
+
+  for (const tool of collectToolPages(hardwareDir, hardwareDir)) addTool(tool);
+
+  // Same walk, over this product's mirror folder under VERSIONED_TOOLS_DIR
+  // (if it has one) — relSegments come out identical either way since the
+  // structure underneath mirrors DRIVERS_DIR/<hardwareName>, so href
+  // computation above needs no branching on where a tool actually lives.
+  const versionedHardwareDir = path.join(VERSIONED_TOOLS_DIR, hardwareName);
+  if (fs.existsSync(versionedHardwareDir) && isDirectory(versionedHardwareDir)) {
+    for (const tool of collectToolPages(versionedHardwareDir, versionedHardwareDir)) addTool(tool);
   }
 
   products.push(product);

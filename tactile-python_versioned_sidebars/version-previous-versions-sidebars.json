@@ -1,0 +1,208 @@
+{
+  "tactilePythonSidebar": [
+    {
+      "type": "link",
+      "label": "Overview",
+      "href": "/docs/intro"
+    },
+    {
+      "type": "category",
+      "label": "Adaptive grippers",
+      "items": [
+        {
+          "type": "category",
+          "label": "Libraries",
+          "items": [
+            {
+              "type": "link",
+              "label": "C++",
+              "href": "/docs/drivers/Adaptive%20grippers/Libraries/C++"
+            },
+            {
+              "type": "link",
+              "label": "Python",
+              "href": "/docs/drivers/Adaptive%20grippers/Libraries/Python"
+            }
+          ]
+        },
+        {
+          "type": "category",
+          "label": "ROS",
+          "items": [
+            {
+              "type": "link",
+              "label": "ROS2 · Lyrical",
+              "href": "/docs/drivers/Adaptive%20grippers/ROS/ROS2-Lyrical"
+            },
+            {
+              "type": "link",
+              "label": "ROS2 · Jazzy",
+              "href": "/docs/drivers/Adaptive%20grippers/ROS/ROS2-Jazzy"
+            },
+            {
+              "type": "link",
+              "label": "ROS2 · Humble",
+              "href": "/docs/drivers/Adaptive%20grippers/ROS/ROS2-Humble"
+            },
+            {
+              "type": "link",
+              "label": "ROS1 · Melodic",
+              "href": "/docs/drivers/Adaptive%20grippers/ROS/ROS1-Melodic"
+            },
+            {
+              "type": "link",
+              "label": "ROS1 · Kinetic",
+              "href": "/docs/drivers/Adaptive%20grippers/ROS/ROS1-Kinetic"
+            },
+            {
+              "type": "link",
+              "label": "ROS1 · Indigo",
+              "href": "/docs/drivers/Adaptive%20grippers/ROS/ROS1-Indigo"
+            }
+          ]
+        },
+        {
+          "type": "category",
+          "label": "Simulation",
+          "items": [
+            {
+              "type": "link",
+              "label": "Isaac Sim",
+              "href": "/docs/drivers/Adaptive%20grippers/Simulation/Isaac%20Sim"
+            },
+            {
+              "type": "link",
+              "label": "PyBullet",
+              "href": "/docs/drivers/Adaptive%20grippers/Simulation/PyBullet"
+            },
+            {
+              "type": "link",
+              "label": "MuJoCo",
+              "href": "/docs/drivers/Adaptive%20grippers/Simulation/MuJoCo"
+            }
+          ]
+        },
+        {
+          "type": "category",
+          "label": "Other",
+          "items": [
+            {
+              "type": "link",
+              "label": "GraspGen",
+              "href": "/docs/drivers/Adaptive%20grippers/Other/GraspGen"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Tactile Sensor",
+      "items": [
+        {
+          "type": "category",
+          "label": "Libraries",
+          "items": [
+            {
+              "type": "link",
+              "label": "C++",
+              "href": "/docs/drivers/Tactile%20Sensor/Libraries/C++"
+            },
+            {
+              "type": "doc",
+              "id": "index",
+              "label": "Python"
+            }
+          ]
+        },
+        {
+          "type": "category",
+          "label": "ROS",
+          "items": [
+            {
+              "type": "link",
+              "label": "ROS2 · Lyrical",
+              "href": "/docs/drivers/Tactile%20Sensor/ROS/ROS2-Lyrical"
+            },
+            {
+              "type": "link",
+              "label": "ROS2 · Jazzy",
+              "href": "/docs/drivers/Tactile%20Sensor/ROS/ROS2-Jazzy"
+            },
+            {
+              "type": "link",
+              "label": "ROS2 · Humble",
+              "href": "/docs/drivers/Tactile%20Sensor/ROS/ROS2-Humble"
+            },
+            {
+              "type": "link",
+              "label": "ROS1 · Noetic",
+              "href": "/docs/drivers/Tactile%20Sensor/ROS/ROS1-Noetic"
+            }
+          ]
+        },
+        {
+          "type": "category",
+          "label": "Simulation",
+          "items": [
+            {
+              "type": "link",
+              "label": "Isaac Sim",
+              "href": "/docs/drivers/Tactile%20Sensor/Simulation/Isaac%20Sim"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Force Torque Sensor",
+      "items": [
+        {
+          "type": "category",
+          "label": "Libraries",
+          "items": [
+            {
+              "type": "link",
+              "label": "C",
+              "href": "/docs/drivers/Force%20Torque%20Sensor/Libraries/C"
+            },
+            {
+              "type": "link",
+              "label": "Python",
+              "href": "/docs/drivers/Force%20Torque%20Sensor/Libraries/Python"
+            }
+          ]
+        },
+        {
+          "type": "category",
+          "label": "ROS",
+          "items": [
+            {
+              "type": "link",
+              "label": "ROS2 · Humble",
+              "href": "/docs/drivers/Force%20Torque%20Sensor/ROS/ROS2-Humble"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "EPick",
+      "items": [
+        {
+          "type": "category",
+          "label": "ROS",
+          "items": [
+            {
+              "type": "link",
+              "label": "ROS2 · Humble",
+              "href": "/docs/drivers/EPick/ROS/ROS2-Humble"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
