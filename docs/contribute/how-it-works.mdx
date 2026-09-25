@@ -264,8 +264,38 @@ already covers each half:
      from the PR head with that same elevated token; this workflow never
      does — no checkout step at all, just two `gh` API calls — and should
      stay that way.
-3. Both the pin check and the merge can also be triggered on demand:
-   `dependabot.yml`'s check via "Dependabot" → "Check for updates" on the
-   repo's Insights → Dependency graph page, or the auto-merge workflow
-   re-runs automatically on its own `pull_request_target` trigger for any
-   Dependabot PR.
+3. Both can also be triggered on demand: `dependabot.yml`'s check via
+   "Dependabot" → "Check for updates" on the repo's Insights →
+   Dependency graph page, or the auto-merge workflow re-runs automatically
+   on its own `pull_request_target` trigger for any Dependabot PR.
+
+## Manually refreshing the deployed site
+
+The site updates itself once a day: Dependabot checks every tool repo at
+around 00:45 UTC, and any bump it opens is auto-merged and deployed (see
+[Refreshing submodule pins automatically](#refreshing-submodule-pins-automatically)).
+A change pushed to a tool repo after that check only reaches the site at
+the next one, up to a day later.
+
+Dependabot's default 3-day cooldown is switched off in
+`.github/dependabot.yml` (`cooldown.exclude: ["*"]`). With the default,
+any tool-repo commit younger than 3 days is ignored, even by **Check for
+updates** below, so a docs change took 3 to 4 days to go live.
+
+To run that same daily update right away from the GitHub web interface:
+
+1. Open the repository on GitHub and go to **Insights → Dependency graph →
+   Dependabot**
+   ([direct link](https://github.com/robotiq/robotiq.github.io/network/updates)).
+2. On the `gitsubmodule` entry, click **Check for updates**.
+
+Dependabot opens one bump PR per submodule that is behind its repo's
+default branch. Each one auto-merges once `build-and-test` passes, and
+each merge deploys the site, usually within 10 minutes. You can follow
+the PRs in the **Pull requests** tab and the deploys in the **Actions**
+tab. If no PR appears, every pin was already up to date.
+
+Re-running **Deploy to GitHub Pages** from the **Actions** tab doesn't
+pick up new tool-repo content: it rebuilds from the pins already on
+`main`. It's only useful for republishing the current state, for example
+after a failed deploy.

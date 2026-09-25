@@ -13,3 +13,14 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    # Without this, Dependabot applies a default 3-day cooldown to version
+    # updates and ignores any tool-repo commit younger than that, so a docs
+    # change took 3-4 days to reach the site and "Check for updates" didn't
+    # help. The cooldown guards against freshly published third-party
+    # releases; every submodule here is a first-party Robotiq repo, so it's
+    # switched off for all of them. `default-days` can't be 0 (minimum 1),
+    # hence excluding every dependency instead.
+    cooldown:
+      default-days: 1
+      exclude:
+        - "*"
