@@ -131,6 +131,20 @@ in `src/css/custom.css`'s `.alert--*` rules) during the sync, for every
 synced doc from any submodule — nothing to do upstream or here, a source
 repo's README/guides can keep writing plain GitHub-style callouts.
 
+The same applies to a video link: a guide embeds one as a YouTube
+thumbnail image wrapped in a link to that same video —
+`[![Title](https://img.youtube.com/vi/<id>/...)](https://youtu.be/<id>)`
+— rather than a raw `<iframe>`, because GitHub strips `<iframe>` tags from
+rendered markdown, which would leave nothing clickable there at all.
+`src/remark/youtubeEmbed.mjs` (a remark plugin, wired into
+`docusaurus.config.js`'s `remarkPlugins`) matches that exact
+thumbnail-wrapped-in-a-matching-video-link pattern and swaps it for a real,
+responsive embedded player (`.video-wrapper` in `src/css/custom.css`) at
+build time — on any page this site renders, synced or hand-authored, since
+it runs on plain Markdown as well as MDX. The thumbnail/link markup stays
+the single source of truth, playable here and still a clickable thumbnail
+on GitHub.
+
 ## Splitting a tool page into overview, API reference, and guides
 
 A tool's `_readme.md` partial is meant to stay a short overview. Once a

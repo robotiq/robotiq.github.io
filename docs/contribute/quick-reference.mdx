@@ -37,6 +37,7 @@ displayed_sidebar: contributeSidebar
 | Sub-section display order | `SUBPAGE_ORDER` in `generate-tools-table.js` |
 | `Robotiq` rendered as the brand wordmark (bold, uppercase, blue) | wrap it in backticks — `` `Robotiq` `` — anywhere in a `.mdx`/`.md` page; handled by `src/remark/robotiqWordmark.mjs` |
 | External links (`http(s)://...`) open in a new tab | automatic site-wide, including hand-written JSX `<a href="...">` — `src/remark/externalLinksNewTab.mjs`; no `target="_blank"` needed by hand |
+| A YouTube video embed | write a thumbnail image wrapped in a link to the same video (`[![Title](https://img.youtube.com/vi/<id>/...)](https://youtu.be/<id>)`) — GitHub-safe, and auto-upgraded to a real player by `src/remark/youtubeEmbed.mjs`; no raw `<iframe>` by hand |
 | A page's primary call-to-action button style | `.cta-button` in `src/css/custom.css` (e.g. "Get the software tool" on the C++ library page) — distinct from `.subpage-link`'s solid box, meant for the one main action on a page |
 | Sidebar config | `sidebars.js` |
 | Doc ID format | `drivers/Tactile Sensor/Libraries/C++/index` |
