@@ -6,6 +6,7 @@
 
 import {themes as prismThemes} from 'prism-react-renderer';
 import remarkRobotiqWordmark from './src/remark/robotiqWordmark.mjs';
+import remarkYoutubeEmbed from './src/remark/youtubeEmbed.mjs';
 import rehypeExternalLinksNewTab from './src/remark/externalLinksNewTab.mjs';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
@@ -89,12 +90,120 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           // editUrl: 'https://github.com/robotiq/robotiq.github.io/tree/main/',
-          remarkPlugins: [remarkRobotiqWordmark],
+          remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
           rehypePlugins: [rehypeExternalLinksNewTab],
         },
         blog: false,
 theme: {
           customCss: './src/css/custom.css',
+        },
+      }),
+    ],
+  ],
+
+  // Per-tool documentation versioning (Latest / Stable / Previous versions)
+  // — see draft/documentation-versioning.md. Only Robotiq-maintained,
+  // submodule-synced tools get their own instance like this (one per
+  // instance below); product/ROS/third-party pages stay on the single
+  // instance above, which has nothing to version against (no submodule,
+  // no tags). The C++ API reference (2f85_cpp) has its own separate,
+  // larger instance further down — its absolute-slug generation needed
+  // reworking first; see runDoxygen2Docusaurus's `apiBaseUrl`/`docsBaseUrl`
+  // handling in sync-external-docs.js.
+  //
+  // `path` deliberately lives under versioned-tools/, not docs/ — nesting
+  // this instance's files inside the default instance's own docs/ tree
+  // (even with `exclude` covering them there) reproducibly broke MDX
+  // compilation with a bogus "Unexpected FunctionDeclaration ... non-esm"
+  // error; moving the exact same files outside docs/ fixed it. See the
+  // matching comment on `destRoot` in sync-external-docs.js.
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      ({
+        id: 'tactile-python',
+        path: 'versioned-tools/Tactile Sensor/Libraries/Python',
+        routeBasePath: 'docs/drivers/Tactile Sensor/Libraries/Python',
+        sidebarPath: './sidebars.tactile-python.js',
+        remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
+        rehypePlugins: [rehypeExternalLinksNewTab],
+        includeCurrentVersion: true,
+        lastVersion: 'stable',
+        versions: {
+          current: { label: 'Latest', path: '' },
+          // Labeled with its tag: without this, the tag Stable actually
+          // tracks isn't visible anywhere on the site, which reads as
+          // "only 1 of tactile_sensors' 2 releases is on this site" even
+          // though Stable IS the newer one — see
+          // versioned-tools' version-previous-versions/index.mdx for the
+          // matching explanation. Update this by hand whenever Stable is
+          // re-cut to a newer tag (see scripts/list-submodule-tags.js).
+          stable: { label: 'Stable (v2.0.0)', path: 'stable' },
+          'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
+        },
+      }),
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      ({
+        id: 'tactile-cpp',
+        path: 'versioned-tools/Tactile Sensor/Libraries/C++',
+        routeBasePath: 'docs/drivers/Tactile Sensor/Libraries/C++',
+        sidebarPath: './sidebars.tactile-cpp.js',
+        remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
+        rehypePlugins: [rehypeExternalLinksNewTab],
+        includeCurrentVersion: true,
+        lastVersion: 'stable',
+        versions: {
+          current: { label: 'Latest', path: '' },
+          // See the matching comment on 'tactile-python' above.
+          stable: { label: 'Stable (v2.0.0)', path: 'stable' },
+          'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
+        },
+      }),
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      ({
+        id: 'isaac-sim',
+        path: 'versioned-tools/Adaptive grippers/Simulation/Isaac Sim',
+        routeBasePath: 'docs/drivers/Adaptive grippers/Simulation/Isaac Sim',
+        sidebarPath: './sidebars.isaac-sim.js',
+        remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
+        rehypePlugins: [rehypeExternalLinksNewTab],
+        // No lastVersion/versions config yet — isaacsim_assets has no tags,
+        // so there's nothing to cut a 'stable'/'previous-versions' version
+        // from. Only 'Latest' exists for now. Deliberately no matching
+        // navbar item below either: with only one version, Docusaurus
+        // renders it as a plain "Current" button rather than hiding it —
+        // clutter with no payoff until this submodule gets its first real
+        // tag. Add a `custom-scopedVersionDropdown` item for 'isaac-sim'
+        // (matching 'tactile-python'/'tactile-cpp' below) once it does.
+        includeCurrentVersion: true,
+      }),
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      ({
+        id: 'adaptive-grippers-cpp',
+        path: 'versioned-tools/Adaptive grippers/Libraries/C++',
+        routeBasePath: 'docs/drivers/Adaptive grippers/Libraries/C++',
+        sidebarPath: './sidebars.adaptive-grippers-cpp.js',
+        remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
+        rehypePlugins: [rehypeExternalLinksNewTab],
+        includeCurrentVersion: true,
+        lastVersion: 'stable',
+        versions: {
+          current: { label: 'Latest', path: '' },
+          // See the matching comment on 'tactile-python' above. 2f85_cpp
+          // only has one tag so far (v1.0.0) — Previous versions has
+          // nothing older to list yet, see that version's own index.mdx.
+          stable: { label: 'Stable (v1.0.0)', path: 'stable' },
+          'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
         },
       }),
     ],
@@ -132,6 +241,30 @@ theme: {
           //   position: 'left',
           //   label: 'Examples',
           // },
+          // The stock 'docsVersionDropdown' navbar item always renders,
+          // site-wide — outside its own instance it just falls back to a
+          // link instead of disappearing, which isn't the scoping this
+          // needs (see "Scope" in draft/documentation-versioning.md: each
+          // of these must only appear on its own instance's own pages).
+          // src/theme/NavbarItem/ScopedDocsVersionDropdown.jsx wraps it
+          // with that visibility check; ComponentTypes.js registers it
+          // under this custom type. One item per versioned instance — each
+          // hides itself unless active, so only ever one shows at a time.
+          {
+            type: 'custom-scopedVersionDropdown',
+            docsPluginId: 'tactile-python',
+            position: 'right',
+          },
+          {
+            type: 'custom-scopedVersionDropdown',
+            docsPluginId: 'tactile-cpp',
+            position: 'right',
+          },
+          {
+            type: 'custom-scopedVersionDropdown',
+            docsPluginId: 'adaptive-grippers-cpp',
+            position: 'right',
+          },
 {
             href: 'https://github.com/robotiq',
             label: 'GitHub',

@@ -11,8 +11,14 @@ function submoduleJobs(submodule, { repoUrl, branch }, jobs) {
 
 const JOBS = [
   ...submoduleJobs('2f85_cpp', { repoUrl: 'https://github.com/robotiq/grippers', branch: 'main' }, [
+    // Every job below has its own versioned plugin instance (see
+    // draft/documentation-versioning.md, and docusaurus.config.js's
+    // 'adaptive-grippers-cpp' entry) — destRoot per the comment on it in
+    // sync-external-docs.js's job loop, so `to` here is relative to
+    // versioned-tools/ instead of docs/.
+
     // 2F 85 CPP driver README
-    { from: 'README.md', to: 'drivers/Adaptive grippers/Libraries/C++/_readme.md' },
+    { from: 'README.md', to: 'Adaptive grippers/Libraries/C++/_readme.md', destRoot: 'versioned-tools' },
 
     // 2F 85 CPP driver docs/ folder. No sidebarPositions needed: the repo
     // itself now names these guides with a numeric prefix (1-introduction.md,
@@ -31,7 +37,8 @@ const JOBS = [
     // too, not just in grippers' own CI.
     {
       from: 'docs',
-      to: 'drivers/Adaptive grippers/Libraries/C++/docs',
+      to: 'Adaptive grippers/Libraries/C++/docs',
+      destRoot: 'versioned-tools',
       docSnippetsCheck: {
         script: 'sdk_cpp/tools/check_doc_snippets.py',
         markdownGlob: 'docs/*.md',
@@ -79,7 +86,14 @@ const JOBS = [
     // never hand-authors or curates content on top.
     {
       doxygen2docusaurus: { doxyfileDir: 'sdk_cpp' },
-      to: 'drivers/Adaptive grippers/Libraries/C++/API',
+      to: 'Adaptive grippers/Libraries/C++/API',
+      destRoot: 'versioned-tools',
+      // Full public URL prefix for this instance — see the big comment on
+      // apiFolderPath/currentDocsRoot/currentRoutePrefix above
+      // DOXYGEN2DOCUSAURUS_STAGING_DIR in sync-external-docs.js for why a
+      // destRoot doxygen2docusaurus job needs this explicitly (its own
+      // absolute-slug generation can't derive it from destRoot alone).
+      routeBasePath: '/docs/drivers/Adaptive grippers/Libraries/C++',
       exclude: [
         'files', 'folders', 'indices/files',
         'namespaces', 'indices/namespaces',
@@ -106,10 +120,14 @@ const JOBS = [
   ]),
 
   ...submoduleJobs('tactile_sensors', { repoUrl: 'https://github.com/robotiq/tactile_sensors', branch: 'main' }, [
-    // TSF 85 CPP driver README
-    { from: 'sdk_cpp/README.md', to: 'drivers/Tactile Sensor/Libraries/C++/_readme.md' },
-    // TSF 85 Python driver README
-    { from: 'sensor_quickstart/README.md', to: 'drivers/Tactile Sensor/Libraries/Python/_readme.md' },
+    // TSF 85 CPP and Python driver READMEs — both under per-tool
+    // documentation versioning (see draft/documentation-versioning.md), so
+    // both live outside docs/ in their own destRoot: nesting a second,
+    // separately versioned Docusaurus plugin instance's files inside the
+    // main docs/ tree (even excluded from it) breaks MDX compilation — see
+    // the comment on destRoot in sync-external-docs.js's job loop.
+    { from: 'sdk_cpp/README.md', to: 'Tactile Sensor/Libraries/C++/_readme.md', destRoot: 'versioned-tools' },
+    { from: 'sensor_quickstart/README.md', to: 'Tactile Sensor/Libraries/Python/_readme.md', destRoot: 'versioned-tools' },
     // Folder example — uncomment when a repo has a docs/ folder:
     // { from: 'docs', to: 'drivers/tsf-85' },
   ]),
@@ -117,7 +135,14 @@ const JOBS = [
   ...submoduleJobs('isaacsim_assets', { repoUrl: 'https://github.com/robotiq/isaacsim_assets', branch: 'main' }, [
     // Robotiq's own 2F gripper Isaac Sim assets/guide — no README, just this
     // one guide file (no separate docs/ split yet: nothing else to put there).
-    { from: 'grippers/GRIPPER_SIMULATION_GUIDE.md', to: 'drivers/Adaptive grippers/Simulation/Isaac Sim/_readme.md' },
+    // Under per-tool documentation versioning (see
+    // draft/documentation-versioning.md) like every other Robotiq-
+    // maintained, submodule-synced tool — destRoot per the comment on it in
+    // sync-external-docs.js. isaacsim_assets has no tags yet, so its
+    // plugin instance currently only has a 'Latest' version (no Stable/
+    // Previous versions cut) — becomes a real 3-way switcher automatically
+    // once it gets its first tag, no restructuring needed then.
+    { from: 'grippers/GRIPPER_SIMULATION_GUIDE.md', to: 'Adaptive grippers/Simulation/Isaac Sim/_readme.md', destRoot: 'versioned-tools' },
   ]),
 ];
 

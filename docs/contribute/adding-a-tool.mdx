@@ -7,7 +7,18 @@ displayed_sidebar: contributeSidebar
 # Step-by-step: adding a new software tool
 
 The steps below add a Python tool for the **Adaptive grippers** family hosted
-at `https://github.com/robotiq/2f85-python-driver`.
+at `https://github.com/robotiq/2f85-python-driver`, living under `docs/`
+like every non-versioned tool.
+
+**If the new tool is Robotiq-maintained and submodule-synced** (as opposed
+to a third-party or not-yet-available tool), it should usually also get its
+own **Latest / Stable / Previous versions** switcher, matching every other
+Robotiq-maintained tool on this site — see
+[Per-tool documentation versioning](./versioning) once the steps below are
+done. That changes *where* the tool's files live (`versioned-tools/`
+instead of `docs/`) and adds a few extra pieces (its own Docusaurus plugin
+instance, its own `sidebars.<tool>.js`); everything below — the sync job,
+the wrapper page, the badges — stays exactly the same either way.
 
 ## 1. Add the submodule
 
@@ -284,3 +295,9 @@ sub-category matching where they live on disk:
 Only include the sub-categories that actually have pages — e.g. Force
 Torque Sensor has no Simulation or Other tools yet, so its sidebar
 entry skips those two groups entirely.
+
+**Adding versioning to this tool afterward** replaces its doc-id string
+above (e.g. `'drivers/Adaptive grippers/Libraries/Python/index'`) with a
+plain link into its own new plugin instance — see
+[Per-tool documentation versioning](./versioning#checklist-adding-versioning-to-a-new-tool)
+for the full checklist.

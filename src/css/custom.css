@@ -267,6 +267,27 @@ table thead tr {
   color: var(--ifm-color-primary);
 }
 
+/* Embedded YouTube player — see src/remark/youtubeEmbed.mjs, which swaps a
+   markdown thumbnail-link for this wrapper + a real <iframe> at build time.
+   Classic 16:9 intrinsic-ratio trick: the iframe is absolutely positioned
+   inside a box whose height is driven by the wrapper's own padding-bottom
+   percentage (relative to its width), so the player scales responsively
+   without JS and without knowing the container's width up front. */
+.video-wrapper {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  margin-bottom: var(--ifm-leading);
+}
+.video-wrapper iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
    C++ library generated API reference (doxygen2docusaurus)
 

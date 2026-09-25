@@ -30,7 +30,12 @@ which runs automatically on `npm start` / `npm run build` (same as
 The script walks each `docs/drivers/<Product>/` folder tree looking for
 tool leaf pages — an `index.mdx` carrying a `Category` badge — regardless
 of how deeply it's nested (`Libraries/`, `ROS/`, `Simulation/`, `Other/`, or
-no container folder at all). For each leaf page found:
+no container folder at all). **It also walks a matching
+`versioned-tools/<Product>/` mirror folder, if one exists** — a tool under
+[per-tool documentation versioning](./versioning) lives there instead of
+under `docs/drivers/<Product>/`, and would otherwise silently vanish from
+every table the moment it moved. Both trees feed the same tables; a tool
+doesn't care which one it's found in. For each leaf page found:
 
 - **Row** — the product's own `title` frontmatter (from
   `docs/drivers/<Product>/index.mdx`).
