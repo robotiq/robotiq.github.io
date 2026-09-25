@@ -1227,6 +1227,8 @@ function runDoxygen2Docusaurus(job, written, folderDestPaths) {
   // which pruneStale itself always exempts) sidesteps this regardless of
   // what casing a previous pipeline left behind.
   const destPath = path.join(ROOT, job.destRoot || 'docs', job.to);
+  const removedLegacyPath = cleanupLegacyDestRoot(ROOT, job);
+  if (removedLegacyPath) console.log(`[sync-external-docs] Removed legacy pre-destRoot output: ${removedLegacyPath}`);
   if (fs.existsSync(destPath)) {
     for (const entry of fs.readdirSync(destPath, { withFileTypes: true })) {
       const base = entry.name.replace(/\.[^.]+$/, '');
@@ -1488,7 +1490,10 @@ function collectClassGroupLabels(node, matchedNodes, out) {
 }
 
 const MARKDOWN_EXTS = new Set(['.md', '.mdx']);
-const COPY_EXTS = new Set(['.md', '.mdx', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.pdf']);
+// pruneStale/pruneLegacyFolder/cleanupLegacyDestRoot moved to
+// scripts/lib/prune.js so they can be unit tested (see test/prune.test.js)
+// without running this whole file's top-level sync pipeline.
+const { COPY_EXTS, pruneStale, cleanupLegacyDestRoot } = require('./lib/prune');
 
 function isAbsoluteHref(href) {
   return /^(https?:\/\/|mailto:|#|\/)/.test(href);
@@ -1712,37 +1717,6 @@ function processFolder(srcDir, destDir, opts, rootSrcDir = srcDir, written = new
   return written;
 }
 
-// A folder job only ever adds/overwrites — if the source repo renames or
-// removes a file, the old copy would otherwise linger in docs/ forever and
-// get picked up as a stale, duplicate sidebar entry (see
-// scripts/folder-sidebar.mjs, which lists every file actually present on
-// disk). Called once per folder job's destDir after all JOBS have run, so
-// files written by an unrelated job into the same tree (e.g. the register-
-// map file job writing into a folder job's API/Modules/) are already in
-// `written` and don't get flagged as stale.
-// `index`/`README` are exempt — those are this site's own hand-authored
-// landing pages for the folder, never synced from source (see "Splitting a
-// tool page into overview, API reference, and guides" in
-// docs/contribute/how-it-works.mdx).
-function pruneStale(destDir, written) {
-  if (!fs.existsSync(destDir)) return;
-  for (const entry of fs.readdirSync(destDir, { withFileTypes: true })) {
-    const child = path.join(destDir, entry.name);
-    if (entry.isDirectory()) {
-      pruneStale(child, written);
-      if (fs.readdirSync(child).length === 0) fs.rmdirSync(child);
-      continue;
-    }
-    if (!COPY_EXTS.has(path.extname(entry.name).toLowerCase())) continue;
-    const base = entry.name.replace(/\.[^.]+$/, '');
-    if (base === 'index' || base === 'README') continue;
-    if (!written.has(child)) {
-      console.log(`[sync-external-docs] Removing stale: ${path.relative(ROOT, child)}`);
-      fs.unlinkSync(child);
-    }
-  }
-}
-
 const written = new Set();
 const folderDestPaths = new Set();
 
@@ -1765,6 +1739,8 @@ for (const job of JOBS) {
   // bisecting content (irrelevant) and path (moving the exact same files
   // outside docs/ fixed it) while building the tactile-python pilot.
   const destPath = path.join(ROOT, job.destRoot || 'docs', job.to);
+  const removedLegacyPath = cleanupLegacyDestRoot(ROOT, job);
+  if (removedLegacyPath) console.log(`[sync-external-docs] Removed legacy pre-destRoot output: ${removedLegacyPath}`);
 
   if (!fs.existsSync(srcPath)) {
     console.warn(`[sync-external-docs] Missing: external/${job.submodule}/${job.from} — run: git submodule update --init`);
@@ -1795,5 +1771,7 @@ for (const job of JOBS) {
 }
 
 for (const destPath of folderDestPaths) {
-  pruneStale(destPath, written);
+  for (const removedPath of pruneStale(destPath, written)) {
+    console.log(`[sync-external-docs] Removing stale: ${path.relative(ROOT, removedPath)}`);
+  }
 }

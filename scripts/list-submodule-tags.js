@@ -34,23 +34,42 @@ function compareSemver(a, b) {
   return 0;
 }
 
-// Returns [{ name, commit }], newest first. Skips non-semver tags and the
-// '^{}' dereference lines `git ls-remote` emits for annotated tags (those
-// point at the tag object itself, not the commit — 2f85_cpp's v1.0.0 is
-// one, confirmed against its actual ls-remote output).
-function listTags(repoUrl) {
-  const output = execFileSync('git', ['ls-remote', '--tags', repoUrl], { encoding: 'utf8' });
-  const tags = [];
+// Parses raw `git ls-remote --tags` output into [{ name, commit }], newest
+// first. Pure/side-effect-free (no shelling out) so it can be unit tested
+// directly against captured output — see test/list-submodule-tags.test.js.
+//
+// For an ANNOTATED tag, `git ls-remote` prints two lines: `refs/tags/vX`
+// holds the tag OBJECT's own SHA, and `refs/tags/vX^{}` holds the SHA of
+// the commit it peels to — the one a Stable pin or source link actually
+// needs. A lightweight tag has only the first line, and that line's SHA
+// already is the commit. Confirmed against a real annotated tag
+// (robotiq/grippers' v1.0.0): the plain line's SHA is a `tag` object per
+// `git cat-file -t`, the `^{}` line's SHA is the `commit` it points at.
+// Bug found and fixed after review (see PR #14): an earlier version kept
+// whichever line came first and dropped the `^{}` line outright — for an
+// annotated tag that silently pinned Stable to the wrong object.
+function parseLsRemote(output) {
+  const byName = new Map();
   for (const line of output.split('\n')) {
     const match = line.match(/^(\S+)\s+refs\/tags\/(\S+)$/);
     if (!match) continue;
-    const [, commit, name] = match;
-    if (name.endsWith('^{}')) continue;
+    const [, commit, ref] = match;
+    const peeled = ref.endsWith('^{}');
+    const name = peeled ? ref.slice(0, -3) : ref;
     if (!SEMVER_TAG_RE.test(name)) continue;
-    tags.push({ name, commit });
+    // A peeled line always wins (it's the commit); a lightweight tag's
+    // single line is only kept if nothing has claimed this name yet.
+    if (peeled || !byName.has(name)) byName.set(name, commit);
   }
+  const tags = [...byName].map(([name, commit]) => ({ name, commit }));
   tags.sort((a, b) => compareSemver(a.name, b.name));
   return tags;
+}
+
+// Returns [{ name, commit }], newest first, for a submodule's real remote.
+function listTags(repoUrl) {
+  const output = execFileSync('git', ['ls-remote', '--tags', repoUrl], { encoding: 'utf8' });
+  return parseLsRemote(output);
 }
 
 function reposFromJobs() {
@@ -78,4 +97,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { listTags, compareSemver, SEMVER_TAG_RE };
+module.exports = { listTags, parseLsRemote, compareSemver, SEMVER_TAG_RE };

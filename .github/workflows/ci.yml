@@ -55,6 +55,16 @@ jobs:
       - name: Install Doxygen and Graphviz
         run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
 
+      # Pure logic, no build/network/submodule checkout needed — runs before
+      # Build so a failure here is fast and doesn't waste a Doxygen run.
+      # See test/ for what's covered: list-submodule-tags.js's tag parsing,
+      # sync-external-docs.js's stale-file pruning (scripts/lib/prune.js),
+      # the YouTube-embed remark plugin (both .md and .mdx compilation —
+      # regression coverage for the bug in PR #14's review), and
+      # site-nav-tree.mjs's versioned-sidebar drift guard (below).
+      - name: Unit tests
+        run: npm run test:unit
+
       # Fails on broken internal links / anchors (onBrokenLinks: 'throw')
       # and runs the sync + tools-table generators via the prebuild hook.
       - name: Build
@@ -69,6 +79,12 @@ jobs:
       # a per-tool-versioned tool's own wrapper page (see
       # docs/contribute/versioning.mdx) — same gitignore split there
       # (versioned-tools/**/*.md), so this check covers both directories.
+      # regenerate-versioned-sidebars.mjs (also run via the prebuild hook,
+      # as part of `npm run generate`) does the same for every
+      # `*_versioned_sidebars/*.json` snapshot — the unit-test drift guard
+      # above already covers this statically, but a real build regenerating
+      # something the static check couldn't see (e.g. a doc's frontmatter
+      # label actually changing) still needs this line to catch it.
       # Nothing else regenerates and commits these after a merge, so a PR
       # that changes something the generator depends on (e.g. a Dependabot
       # submodule bump) without also re-running it locally would otherwise
@@ -76,7 +92,7 @@ jobs:
       # This catches that here, generically — no file list to keep in sync
       # as the generator's own output grows.
       - name: Verify generated content is committed
-        run: git diff --exit-code -- docs/ versioned-tools/
+        run: git diff --exit-code -- docs/ versioned-tools/ '*_versioned_sidebars/'
 
       # Smoke-tests the generated output (key pages + tools table present).
       - name: Test
