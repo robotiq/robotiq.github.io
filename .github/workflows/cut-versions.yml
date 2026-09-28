@@ -2,10 +2,13 @@ name: Auto-cut Stable versions
 
 # Checks every versioned tool for a newer tag upstream (see
 # scripts/auto-cut-versions.js) and, if one exists, cuts Stable and
-# re-cuts Previous versions via scripts/cut-version.js, opening (or
-# updating) a PR with the result — see "Cutting Stable or Previous
-# versions" in docs/contribute/versioning.mdx. Runs on a schedule so
-# nobody has to remember to run that script by hand after a release.
+# re-cuts Previous versions via scripts/cut-version.js, then merges the
+# result straight to main — see "Cutting Stable or Previous versions" in
+# docs/contribute/versioning.mdx. Fully automatic end to end: a newer tag
+# existing upstream is itself the only signal this waits for, and the
+# build + test run below is the gate, not a human. Runs on a schedule so
+# nobody has to remember to run that script by hand after a release, and
+# nobody has to click merge either.
 
 on:
   schedule:
@@ -62,9 +65,13 @@ jobs:
 
       # One fixed branch, force-pushed each run — a run the next day with
       # no further upstream changes has nothing new to add, and a run
-      # while an earlier auto-cut PR is still open updates that same PR in
-      # place instead of opening a duplicate.
-      - name: Open or update the PR
+      # while an earlier auto-cut PR somehow still exists updates that
+      # same PR in place instead of opening a duplicate (normally there
+      # is none: the merge below closes it out the same run it's opened).
+      # Still goes through a PR (not a direct push to main) so the cut
+      # has a normal commit/PR record — merging it is what's automatic
+      # here, not the record-keeping.
+      - name: Open, then merge, the PR
         if: steps.check.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,3 +88,10 @@ jobs:
           else
             gh pr edit "$BRANCH" --body-file cut-version-summary.md
           fi
+          # Build + Test above already validated this exact commit, so
+          # merge immediately rather than waiting on anything further —
+          # if branch protection on main blocks this (e.g. it requires
+          # its own separate status checks or reviews), this fails loudly
+          # here and the PR is left open for a human, rather than merging
+          # partway or silently doing nothing.
+          gh pr merge "$BRANCH" --merge --delete-branch

@@ -207,10 +207,13 @@ just bundled into the same theme-swizzling work.
 ## Cutting Stable or Previous versions
 
 `.github/workflows/cut-versions.yml` runs this daily for every tool
-already tracking a Stable tag: it checks each one's submodule for a
-newer tag (`scripts/auto-cut-versions.js`), and if there is one, cuts it
-and opens (or updates) a PR with the result — nobody needs to remember to
-do this by hand after a release. There's no filtering on tag name yet
+already tracking a Stable tag, fully automatically — end to end, not
+just the cut itself: it checks each one's submodule for a newer tag
+(`scripts/auto-cut-versions.js`), and if there is one, that's the only
+signal it waits for; it cuts it, validates the result with a full build
+and test run, and merges straight to `main` through a PR it opens and
+merges itself. Nobody needs to remember to run this after a release, and
+nobody needs to click merge either. There's no filtering on tag name yet
 (e.g. skipping a pre-release/beta tag) — every tool currently opted into
 versioning only ever tags real releases, so "newest tag" already means
 "newest release" for all of them; a name-based filter is a deliberate,
