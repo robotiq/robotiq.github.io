@@ -1,4 +1,4 @@
-// Regenerates the software-tools tables by scanning docs/drivers/:
+// Regenerates the software-tools tables by scanning versioned-tools/:
 //  - one table per category (Libraries, ROS2, ROS1, Simulation, Other) in
 //    docs/intro.mdx, all products x tools in that category
 //  - the same Libraries / Simulation / Other tables, single-row versions
@@ -6,13 +6,13 @@
 //  - the same ROS2 / ROS1 tables, single-row versions scoped to just that
 //    product, on each product's ROS/index.mdx
 //
-// Each product (hardware) is a folder under docs/drivers/ with its own
+// Each product (hardware) is a folder under versioned-tools/ with its own
 // index.mdx (frontmatter title = row label). Underneath, tool pages are
 // found by walking the folder tree until an index.mdx with a
 // `Category-<Name>` shields.io badge is found — that page is a leaf ("tool")
 // classified into that category, regardless of how deep it's nested (e.g.
-// docs/drivers/<product>/Libraries/Python/index.mdx or
-// docs/drivers/<product>/ROS/ROS2-Humble/index.mdx). Plain folders in
+// versioned-tools/<product>/Libraries/Python/index.mdx or
+// versioned-tools/<product>/ROS/ROS2-Humble/index.mdx). Plain folders in
 // between (Libraries/, ROS/, Simulation/) are just containers — except ROS/
 // itself, which also carries its own index.mdx (no Category badge, so it's
 // still treated as a container), the landing page that receives the ROS2 /
@@ -24,23 +24,24 @@
 // product supporting several distros gets one leaf folder per distro (e.g.
 // `ROS/ROS2-Humble/`, `ROS/ROS2-Iron/`) instead of one page listing many.
 //
-// Add a new hardware folder, tool page, or distro page under docs/drivers/
-// and every table picks it up automatically on the next `npm start` / `npm run build`.
-
+// Add a new hardware folder, tool page, or distro page under
+// versioned-tools/ and every table picks it up automatically on the next
+// `npm start` / `npm run build`. Every product lives here — not just
+// submodule-synced tools — because the shared 'versioned-tools' Docusaurus
+// instance (see docs/contribute/versioning.mdx) owns the entire
+// `/docs/drivers/*` URL space; a plugin instance can only build its own
+// routes from its own content root, and two instances can't split
+// ownership of one URL prefix (client-side route matching picks whichever
+// instance's own top-level route registers first, for every path under
+// that prefix, with no fallback to the other — confirmed by hitting this
+// directly: a page that used to live in docs/drivers/ 404'd once
+// 'versioned-tools' claimed /docs/drivers as its own routeBasePath).
 const fs = require('fs');
 const path = require('path');
 const matter = require('gray-matter');
 
 const ROOT = path.resolve(__dirname, '..');
-const DRIVERS_DIR = path.join(ROOT, 'docs', 'drivers');
-// A tool piloting per-tool documentation versioning (see
-// docs/contribute/versioning.mdx) lives here instead of under
-// DRIVERS_DIR — its own Docusaurus plugin instance can't be nested inside
-// the main docs/ tree (see the destRoot comment in sync-external-docs.js).
-// Mirrors DRIVERS_DIR's own <Product>/<...> structure underneath each
-// product folder, so a tool moving here needs no href-computation changes,
-// just an extra folder to also walk.
-const VERSIONED_TOOLS_DIR = path.join(ROOT, 'versioned-tools');
+const DRIVERS_DIR = path.join(ROOT, 'versioned-tools');
 const INTRO_FILE = path.join(ROOT, 'docs', 'intro.mdx');
 
 // Categories, in the order their tables appear on docs/intro.mdx. Every
@@ -413,15 +414,6 @@ for (const hardwareName of fs.readdirSync(DRIVERS_DIR).sort()) {
   };
 
   for (const tool of collectToolPages(hardwareDir, hardwareDir)) addTool(tool);
-
-  // Same walk, over this product's mirror folder under VERSIONED_TOOLS_DIR
-  // (if it has one) — relSegments come out identical either way since the
-  // structure underneath mirrors DRIVERS_DIR/<hardwareName>, so href
-  // computation above needs no branching on where a tool actually lives.
-  const versionedHardwareDir = path.join(VERSIONED_TOOLS_DIR, hardwareName);
-  if (fs.existsSync(versionedHardwareDir) && isDirectory(versionedHardwareDir)) {
-    for (const tool of collectToolPages(versionedHardwareDir, versionedHardwareDir)) addTool(tool);
-  }
 
   products.push(product);
 }

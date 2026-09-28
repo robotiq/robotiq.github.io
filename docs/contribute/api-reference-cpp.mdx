@@ -461,19 +461,18 @@ publish the reference automatically.
   Doxybook2-based pipeline).
 
 Add a job with a `doxygen2docusaurus` field (instead of `from`) to that
-submodule's list in `scripts/external-jobs.js`. If the tool is under
-[per-tool documentation versioning](./versioning) (every current
-doxygen2docusaurus consumer on this site is — see the real `2f85_cpp` job),
-it also needs `destRoot: 'versioned-tools'` and `routeBasePath` — see the
-comment on both, and on `apiFolderPath`/`docsBaseUrl` below, for why a
-`destRoot` job needs `routeBasePath` spelled out explicitly:
+submodule's list in `scripts/external-jobs.js`. It needs `destRoot:
+'versioned-tools'` and `routeBasePath` — every product/tool's own job
+does, versioned or not (see [Documentation versioning](./versioning)) —
+see the comment on both, and on `apiFolderPath`/`docsBaseUrl` below, for
+why a `destRoot` job needs `routeBasePath` spelled out explicitly:
 
 ```js
 {
   doxygen2docusaurus: { doxyfileDir: 'sdk_cpp' },
   to: 'Adaptive grippers/Libraries/C++/API',
   destRoot: 'versioned-tools',
-  routeBasePath: '/docs/drivers/Adaptive grippers/Libraries/C++',
+  routeBasePath: '/docs/drivers',
   exclude: [
     'files', 'folders', 'indices/files',
     'namespaces', 'indices/namespaces',
@@ -482,9 +481,11 @@ comment on both, and on `apiFolderPath`/`docsBaseUrl` below, for why a
 },
 ```
 
-A non-versioned tool's job (no `destRoot`) skips `routeBasePath` entirely
-and uses `to: 'drivers/Adaptive grippers/Libraries/C++/API'` instead —
-site-relative from `docs/`, the same as any other job's `to`.
+`routeBasePath` is the *shared* `versioned-tools` instance's own
+routeBasePath (`/docs/drivers`), not this tool's own sub-path — every
+tool's job uses the exact same value. If the tool is also versioned (see
+[Documentation versioning](./versioning)), also set `currentVersionPath:
+'next'`, matching that instance's `versions.current.path` exactly.
 
 `sync-external-docs.js`'s handling of a `doxygen2docusaurus` job first
 deletes that submodule's `doxygen-xml/` output folder, then runs `doxygen`.
@@ -654,12 +655,12 @@ the **tool repo**, then adding one job entry **here** — nothing in
 8. If the repo also has its own README and/or `docs/` guides, add those as
    plain `{ from, to }` jobs in the same `submoduleJobs(...)` call — see
    [Splitting a tool page into overview, API reference, and guides](./how-it-works#splitting-a-tool-page-into-overview-api-reference-and-guides)
-   in "How it works".
-   If the tool is also getting [per-tool documentation versioning](./versioning)
-   (the common case — see that page's checklist for the rest of the setup),
-   `destRoot`/`routeBasePath` go on this job too, per
+   in "How it works". Same `destRoot`/`routeBasePath` as
    [Wiring it into this site's build](#wiring-it-into-this-sites-build)
-   above.
+   above. If the tool is also joining the sitewide Stable/Development
+   switcher (see [Documentation versioning](./versioning)'s checklist for
+   the rest of that setup), also set `currentVersionPath` on the
+   `doxygen2docusaurus` job specifically.
 9. Add the new section's sidebar entries — the tool's `index.mdx`, the
    generated API reference's doc id, and the `docs/` guides' doc id, if
    present — per the same "Splitting a tool page..." section.

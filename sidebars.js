@@ -2,23 +2,16 @@
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
-// generateFolderSidebarItems/doxygenApiCategory (and its own
-// doxygenSidebarJsonPath/loadDoxygenSidebarItems helpers) used to live here
-// for the Adaptive grippers C++ tool's "Introduction guides"/"API
-// Reference" nesting — that tool (and every other submodule-synced tool)
-// now lives in the shared 'versioned-tools' plugin instance (see
-// docusaurus.config.js, docs/contribute/versioning.mdx), taking that
-// nesting with it into sidebars.versioned-tools.js. Nothing left in this
-// file needs them; re-add if a future non-versioned tool grows the same
-// guides+API shape.
-//
-// driverSidebar's tree (which products/tools/versions exist, in what
-// order) is defined once in scripts/site-nav-tree.mjs and shared with the
-// versioned-tools instance's own sidebar file, so the full site navigation
-// stays visible when browsing a versioned tool's pages too — see that
-// file's own header comment for why.
+// Every product/tool now lives in the shared 'versioned-tools' plugin
+// instance (see docusaurus.config.js, docs/contribute/versioning.mdx) —
+// two plugin instances can't split ownership of one URL prefix, so the
+// whole "Software Tools" tree (scripts/site-nav-tree.mjs's SITE_TREE) had
+// to move there together, not stay split across this default instance and
+// that one. This file now only covers docs/intro.mdx (which deliberately
+// stayed here so its URL, /docs/intro, doesn't change) and the contributor
+// docs.
 
-import { buildMainSidebar } from './scripts/site-nav-tree.mjs';
+import { buildOverviewSidebar } from './scripts/site-nav-tree.mjs';
 
 /**
  * Creating a sidebar enables you to:
@@ -33,12 +26,17 @@ import { buildMainSidebar } from './scripts/site-nav-tree.mjs';
  @type {import('@docusaurus/plugin-content-docs').SidebarsConfig}
  */
 const sidebars = {
-  // 'api-stability' is appended directly rather than folded into
-  // SITE_TREE: it's a general policy page linked contextually from the
-  // Development (main) version banner and docs/intro.mdx, not a
-  // product/tool — it doesn't need to appear on every versioned tool's own
-  // sidebar the way SITE_TREE's shared shape does.
-  driverSidebar: [...buildMainSidebar(), 'api-stability'],
+  // Not shown in the navbar (the "Software Tools" navbar item points at
+  // the versioned-tools instance's own sidebar directly) — this is only
+  // what renders on docs/intro.mdx's own left nav when landed on
+  // directly (e.g. by clicking "Overview" from the tools sidebar). It has
+  // to be the SAME full tree, as plain links, or that navigation
+  // disappears entirely on this one page — see buildOverviewSidebar's own
+  // comment for why a doc can't just display another instance's sidebar
+  // directly. docs/api-stability.mdx deliberately has no sidebar entry
+  // anywhere — it's reachable contextually (the Development banner,
+  // docs/intro.mdx's own text), not as a tree item.
+  overviewSidebar: ['intro', ...buildOverviewSidebar()],
 
   // Contributor docs — deliberately not shown in the site's main navbar
   // (Docusaurus still uses this sidebar whenever someone lands on a

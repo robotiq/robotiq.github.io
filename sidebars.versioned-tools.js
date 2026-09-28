@@ -1,11 +1,12 @@
 // @ts-check
 
 // Sidebar for the shared 'versioned-tools' plugin instance (see
-// docusaurus.config.js and docs/contribute/versioning.mdx) — every
-// submodule-synced tool's own real content, spliced into the same shared
-// tree scripts/site-nav-tree.mjs uses for the main sidebar, so the rest of
-// the site's navigation stays visible here too instead of disappearing
-// behind just these tools' own branches.
+// docusaurus.config.js and docs/contribute/versioning.mdx) — the whole
+// site's Software Tools tree lives here now (scripts/site-nav-tree.mjs's
+// SITE_TREE); this file supplies real content only for the handful of
+// `versioned` nodes (submodule-backed tools whose content shape can
+// differ per Docusaurus version), everything else is a plain doc id
+// SITE_TREE already resolves on its own.
 //
 // Doc ids below are relative to this instance's own `path`
 // (versioned-tools/), not the main site's docs/.
@@ -15,7 +16,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { generateFolderSidebarItems } from './scripts/folder-sidebar.mjs';
-import { buildVersionedInstanceSidebar } from './scripts/site-nav-tree.mjs';
+import { buildSidebar } from './scripts/site-nav-tree.mjs';
 import { VERSIONED_TOOLS } from './scripts/versioned-tools.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -92,7 +93,13 @@ const activeItems = {
 
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
-  versionedToolsSidebar: buildVersionedInstanceSidebar(activeItems),
+  versionedToolsSidebar: [
+    // Plain links, not SITE_TREE nodes — these two pages deliberately
+    // stayed on the default instance (see sidebars.js), so they're not
+    // real doc ids this instance owns.
+    { type: 'link', label: 'Overview', href: '/docs/intro' },
+    ...buildSidebar(activeItems),
+  ],
 };
 
 export default sidebars;

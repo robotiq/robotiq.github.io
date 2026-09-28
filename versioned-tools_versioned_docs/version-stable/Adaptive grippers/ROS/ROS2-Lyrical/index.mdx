@@ -1,0 +1,46 @@
+---
+title: Lyrical
+sidebar_label: ROS2 · Lyrical
+---
+
+![Category](https://img.shields.io/badge/Category-ROS2-lightgrey)
+![Supported by Robotiq](https://img.shields.io/badge/Supported_by-Robotiq-blue)
+
+Robotiq provides an official ROS 2 `ros2_control` driver for the 2F-85 and
+2F-140 adaptive grippers. Grippers are controlled by writing their registers
+using the Modbus RTU protocol — see the gripper manual on the Robotiq
+support page for details: https://robotiq.com/support
+
+- **Reference:** [robotiq/ros](https://github.com/robotiq/ros/tree/main/grippers)
+
+The gripper action type is `control_msgs/action/ParallelGripperCommand`,
+driven by `parallel_gripper_action_controller/GripperActionController`
+(Humble predates that controller, so it uses
+`position_controllers/GripperActionController` with
+`control_msgs/action/GripperCommand` instead). Package names, launch files,
+controller names, topics, and xacro macro arguments are otherwise identical
+across distros.
+
+## Build
+
+```bash
+cd ~/ros2_ws/src
+git clone https://github.com/robotiq/ros.git
+cd ~/ros2_ws
+colcon build --packages-up-to robotiq_description
+source install/setup.bash
+```
+
+## Run
+
+```bash
+ros2 launch robotiq_description robotiq_control.launch.py
+```
+
+Defaults to the 2F-85; pass `gripper_model:=2f_140` for a 2F-140. If the
+gripper isn't plugged in at bringup, `ros2_control_node` stays up with the
+hardware component `unconfigured` and the launch prints the recovery
+commands once it's connected — no relaunch needed
+(`shutdown_on_failure:=false` also keeps the launch running, for launch
+files that include this one alongside nodes that should outlive the
+gripper).

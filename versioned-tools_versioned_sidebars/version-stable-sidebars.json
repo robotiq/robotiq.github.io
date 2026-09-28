@@ -32,48 +32,24 @@
                 }
               ]
             },
-            {
-              "type": "link",
-              "label": "Python",
-              "href": "/docs/drivers/Adaptive%20grippers/Libraries/Python"
-            }
+            "Adaptive grippers/Libraries/Python/index"
           ]
         },
         {
           "type": "category",
           "label": "ROS",
           "items": [
-            {
-              "type": "link",
-              "label": "ROS2 · Lyrical",
-              "href": "/docs/drivers/Adaptive%20grippers/ROS/ROS2-Lyrical"
-            },
-            {
-              "type": "link",
-              "label": "ROS2 · Jazzy",
-              "href": "/docs/drivers/Adaptive%20grippers/ROS/ROS2-Jazzy"
-            },
-            {
-              "type": "link",
-              "label": "ROS2 · Humble",
-              "href": "/docs/drivers/Adaptive%20grippers/ROS/ROS2-Humble"
-            },
-            {
-              "type": "link",
-              "label": "ROS1 · Melodic",
-              "href": "/docs/drivers/Adaptive%20grippers/ROS/ROS1-Melodic"
-            },
-            {
-              "type": "link",
-              "label": "ROS1 · Kinetic",
-              "href": "/docs/drivers/Adaptive%20grippers/ROS/ROS1-Kinetic"
-            },
-            {
-              "type": "link",
-              "label": "ROS1 · Indigo",
-              "href": "/docs/drivers/Adaptive%20grippers/ROS/ROS1-Indigo"
-            }
-          ]
+            "Adaptive grippers/ROS/ROS2-Lyrical/index",
+            "Adaptive grippers/ROS/ROS2-Jazzy/index",
+            "Adaptive grippers/ROS/ROS2-Humble/index",
+            "Adaptive grippers/ROS/ROS1-Melodic/index",
+            "Adaptive grippers/ROS/ROS1-Kinetic/index",
+            "Adaptive grippers/ROS/ROS1-Indigo/index"
+          ],
+          "link": {
+            "type": "doc",
+            "id": "Adaptive grippers/ROS/index"
+          }
         },
         {
           "type": "category",
@@ -84,30 +60,22 @@
               "id": "Adaptive grippers/Simulation/Isaac Sim/index",
               "label": "Isaac Sim"
             },
-            {
-              "type": "link",
-              "label": "PyBullet",
-              "href": "/docs/drivers/Adaptive%20grippers/Simulation/PyBullet"
-            },
-            {
-              "type": "link",
-              "label": "MuJoCo",
-              "href": "/docs/drivers/Adaptive%20grippers/Simulation/MuJoCo"
-            }
+            "Adaptive grippers/Simulation/PyBullet/index",
+            "Adaptive grippers/Simulation/MuJoCo/index"
           ]
         },
         {
           "type": "category",
           "label": "Other",
           "items": [
-            {
-              "type": "link",
-              "label": "GraspGen",
-              "href": "/docs/drivers/Adaptive%20grippers/Other/GraspGen"
-            }
+            "Adaptive grippers/Other/GraspGen/index"
           ]
         }
-      ]
+      ],
+      "link": {
+        "type": "doc",
+        "id": "Adaptive grippers/index"
+      }
     },
     {
       "type": "category",
@@ -133,40 +101,28 @@
           "type": "category",
           "label": "ROS",
           "items": [
-            {
-              "type": "link",
-              "label": "ROS2 · Lyrical",
-              "href": "/docs/drivers/Tactile%20Sensor/ROS/ROS2-Lyrical"
-            },
-            {
-              "type": "link",
-              "label": "ROS2 · Jazzy",
-              "href": "/docs/drivers/Tactile%20Sensor/ROS/ROS2-Jazzy"
-            },
-            {
-              "type": "link",
-              "label": "ROS2 · Humble",
-              "href": "/docs/drivers/Tactile%20Sensor/ROS/ROS2-Humble"
-            },
-            {
-              "type": "link",
-              "label": "ROS1 · Noetic",
-              "href": "/docs/drivers/Tactile%20Sensor/ROS/ROS1-Noetic"
-            }
-          ]
+            "Tactile Sensor/ROS/ROS2-Lyrical/index",
+            "Tactile Sensor/ROS/ROS2-Jazzy/index",
+            "Tactile Sensor/ROS/ROS2-Humble/index",
+            "Tactile Sensor/ROS/ROS1-Noetic/index"
+          ],
+          "link": {
+            "type": "doc",
+            "id": "Tactile Sensor/ROS/index"
+          }
         },
         {
           "type": "category",
           "label": "Simulation",
           "items": [
-            {
-              "type": "link",
-              "label": "Isaac Sim",
-              "href": "/docs/drivers/Tactile%20Sensor/Simulation/Isaac%20Sim"
-            }
+            "Tactile Sensor/Simulation/Isaac Sim/index"
           ]
         }
-      ]
+      ],
+      "link": {
+        "type": "doc",
+        "id": "Tactile Sensor/index"
+      }
     },
     {
       "type": "category",
@@ -176,30 +132,26 @@
           "type": "category",
           "label": "Libraries",
           "items": [
-            {
-              "type": "link",
-              "label": "C",
-              "href": "/docs/drivers/Force%20Torque%20Sensor/Libraries/C"
-            },
-            {
-              "type": "link",
-              "label": "Python",
-              "href": "/docs/drivers/Force%20Torque%20Sensor/Libraries/Python"
-            }
+            "Force Torque Sensor/Libraries/C/index",
+            "Force Torque Sensor/Libraries/Python/index"
           ]
         },
         {
           "type": "category",
           "label": "ROS",
           "items": [
-            {
-              "type": "link",
-              "label": "ROS2 · Humble",
-              "href": "/docs/drivers/Force%20Torque%20Sensor/ROS/ROS2-Humble"
-            }
-          ]
+            "Force Torque Sensor/ROS/ROS2-Humble/index"
+          ],
+          "link": {
+            "type": "doc",
+            "id": "Force Torque Sensor/ROS/index"
+          }
         }
-      ]
+      ],
+      "link": {
+        "type": "doc",
+        "id": "Force Torque Sensor/index"
+      }
     },
     {
       "type": "category",
@@ -209,14 +161,18 @@
           "type": "category",
           "label": "ROS",
           "items": [
-            {
-              "type": "link",
-              "label": "ROS2 · Humble",
-              "href": "/docs/drivers/EPick/ROS/ROS2-Humble"
-            }
-          ]
+            "EPick/ROS/ROS2-Humble/index"
+          ],
+          "link": {
+            "type": "doc",
+            "id": "EPick/ROS/index"
+          }
         }
-      ]
+      ],
+      "link": {
+        "type": "doc",
+        "id": "EPick/index"
+      }
     }
   ]
 }

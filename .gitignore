@@ -13,34 +13,32 @@
 # *are* committed and checked for drift in ci.yml's "Verify generated
 # content is committed" step.
 #
-# Every page scripts/sync-external-docs.js produces under docs/drivers/ — a
-# synced README partial, a synced docs/ guide, or the whole doxygen2docusaurus
-# API tree — is plain CommonMark (.md); every hand-authored wrapper/landing
-# page (including a folder's own index.mdx sitting next to synced siblings,
-# e.g. docs/drivers/<Product>/<Tool>/docs/index.mdx) is MDX (.mdx) — see the
+# Every page scripts/sync-external-docs.js produces under versioned-tools/
+# — a synced README partial, a synced docs/ guide, or the whole
+# doxygen2docusaurus API tree — is plain CommonMark (.md); every
+# hand-authored wrapper/landing page (including a folder's own index.mdx
+# sitting next to synced siblings, e.g.
+# versioned-tools/<Product>/<Tool>/docs/index.mdx) is MDX (.mdx) — see the
 # `markdown.format: 'detect'` comment in docusaurus.config.js, which relies on
 # that same split. One generic pattern by extension, not a per-product path
-# list: covers every current product (Adaptive grippers, Force Torque Sensor,
-# Tactile Sensor) and any future
-# one with no edit needed here when a new tool repo is onboarded — see
-# "Checklist: onboarding a new C++ tool repo" in
-# docs/contribute/api-reference-cpp.mdx.
-docs/drivers/**/*.md
-# Exception: Force Torque Sensor's C driver has no submodule/sync job in
-# external-jobs.js yet (unlike every other _readme.md under drivers/) — this
-# one is a plain static file its wrapper index.mdx imports directly, so it
-# must stay tracked despite the extension. Confirmed the only one: `find
-# docs/drivers -iname '*.md' -not -iname '*.mdx'` cross-checked against every
-# job's actual output before adding the blanket rule above.
-!docs/drivers/Force Torque Sensor/Libraries/C/_readme.md
-
-# Same rule, same reasoning, for a per-tool-versioned tool's live content —
-# see docs/contribute/versioning.mdx. This is the *live*, always-regenerated
-# 'Latest' content; it is NOT the same thing as a cut version's own frozen
-# snapshot (<tool>_versioned_docs/, <tool>_versioned_sidebars/,
-# <tool>_versions.json), which IS committed — a version cut is a deliberate,
-# permanent record, not build output.
+# list: covers every current product (Adaptive grippers, EPick, Force
+# Torque Sensor, Tactile Sensor) and any future one with no edit needed
+# here when a new tool repo is onboarded — see "Checklist: onboarding a
+# new C++ tool repo" in docs/contribute/api-reference-cpp.mdx. This is the
+# *live*, always-regenerated Development content; it is NOT the same thing
+# as a cut version's own frozen snapshot
+# (versioned-tools_versioned_docs/, versioned-tools_versioned_sidebars/,
+# versioned-tools_versions.json), which IS committed — a version cut is a
+# deliberate, permanent record, not build output.
 versioned-tools/**/*.md
+# Exception: Force Torque Sensor's C driver has no submodule/sync job in
+# external-jobs.js yet (unlike every other _readme.md under
+# versioned-tools/) — this one is a plain static file its wrapper
+# index.mdx imports directly, so it must stay tracked despite the
+# extension. Confirmed the only one: `find versioned-tools -iname '*.md'
+# -not -iname '*.mdx'` cross-checked against every job's actual output
+# before adding the blanket rule above.
+!versioned-tools/Force Torque Sensor/Libraries/C/_readme.md
 
 # doxygen2docusaurus scratch output (scripts/sync-external-docs.js stages
 # here, then copies the filtered result into docs/ — see external-jobs.js)

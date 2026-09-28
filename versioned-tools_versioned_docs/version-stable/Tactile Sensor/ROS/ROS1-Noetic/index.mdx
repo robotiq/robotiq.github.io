@@ -1,0 +1,35 @@
+---
+title: Noetic
+sidebar_label: ROS1 · Noetic
+---
+
+![Category](https://img.shields.io/badge/Category-ROS1-lightgrey)
+![Supported by Robotiq](https://img.shields.io/badge/Supported_by-Robotiq-blue)
+
+Robotiq maintains an official `robotiq_tsf` ROS 1 package for Noetic,
+on a dedicated branch of the same repository as the ROS 2 driver:
+
+- **Reference:** [robotiq/ros (`noetic` branch)](https://github.com/robotiq/ros/tree/noetic/robotiq_tsf)
+
+This is a separate, catkin-based package predating the ROS 2 rewrite — its
+message types and node name differ from the ROS 2 driver's; see the
+repository for the full topic and message reference.
+
+## Build
+
+Clone the `noetic` branch into your catkin workspace's `src/` folder and
+build with `catkin_make` (or `catkin build`):
+
+```bash
+cd ~/catkin_ws/src
+git clone --branch noetic https://github.com/robotiq/ros.git
+cd ~/catkin_ws
+catkin_make
+source devel/setup.bash
+```
+
+## Run
+
+```bash
+rosrun robotiq_tsf PollData
+```

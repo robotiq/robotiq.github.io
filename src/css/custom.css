@@ -295,7 +295,7 @@ table thead tr {
    (node_modules/@xpack/doxygen2docusaurus/templates/css/custom.css) for
    the `doxyPage`/`doxyMembersIndex`/`doxyMemberLabel`/`doxyProgramListing`/
    `doxyHighlight`/etc. classes its generated Markdown uses under
-   docs/drivers/Adaptive grippers/Libraries/C++/API/ — see scripts/sync-external-docs.js's
+   versioned-tools/Adaptive grippers/Libraries/C++/API/ — see scripts/sync-external-docs.js's
    `runDoxygen2Docusaurus` and external-jobs.js's `doxygen2docusaurus` job.
    Left mostly as shipped: it already themes itself through this site's own
    Infima variables above (--ifm-color-primary drives member-label pills and

@@ -5,10 +5,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {
-  buildMainSidebar,
-  buildVersionedInstanceSidebar,
+  buildSidebar,
   regenerateInstanceSidebar,
-  VERSIONED_TOOL_PATHS,
 } from '../scripts/site-nav-tree.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -23,20 +21,9 @@ function activeItemsFixture() {
   };
 }
 
-function collectVersionedLinks(items, found = []) {
-  for (const item of items) {
-    if (item.type === 'link') found.push(item);
-    if (item.type === 'category') {
-      assert.equal(item.link, undefined, `category "${item.label}" should not have a link in an instance sidebar`);
-      collectVersionedLinks(item.items, found);
-    }
-  }
-  return found;
-}
-
-test('buildVersionedInstanceSidebar: every versioned tool node is exactly its own activeItems entry', () => {
+test('buildSidebar: every versioned tool node is exactly its own activeItems entry', () => {
   const activeItems = activeItemsFixture();
-  const sidebar = buildVersionedInstanceSidebar(activeItems);
+  const sidebar = buildSidebar(activeItems);
 
   const tactile = sidebar.find((n) => n.label === 'Tactile Sensor');
   const tactileLibraries = tactile.items.find((n) => n.label === 'Libraries');
@@ -50,35 +37,17 @@ test('buildVersionedInstanceSidebar: every versioned tool node is exactly its ow
   assert.deepEqual(simulation.items.find((n) => n.label === 'Isaac Sim'), activeItems['isaac-sim']);
 });
 
-test('buildVersionedInstanceSidebar: a product with no versioned tool at all is entirely plain links', () => {
-  const sidebar = buildVersionedInstanceSidebar(activeItemsFixture());
+test('buildSidebar: every non-versioned leaf is a plain doc id string', () => {
+  const sidebar = buildSidebar(activeItemsFixture());
   const forceTorque = sidebar.find((n) => n.label === 'Force Torque Sensor');
-  const links = collectVersionedLinks(forceTorque.items);
-  assert.ok(links.length > 0);
-  assert.ok(links.every((l) => l.type === 'link'));
+  const libraries = forceTorque.items.find((n) => n.label === 'Libraries');
+  assert.deepEqual(libraries.items, ['Force Torque Sensor/Libraries/C/index', 'Force Torque Sensor/Libraries/Python/index']);
 });
 
-test('buildVersionedInstanceSidebar: href encoding — spaces become %20, + is left alone', () => {
-  const sidebar = buildVersionedInstanceSidebar(activeItemsFixture());
-  const links = collectVersionedLinks(sidebar);
-  const python = links.find((l) => l.href.includes('Adaptive%20grippers/Libraries/Python'));
-  assert.ok(python, 'expected an encoded link to the non-versioned Python leaf');
-});
-
-test('buildVersionedInstanceSidebar: no category in the instance sidebar has its own link', () => {
-  const sidebar = buildVersionedInstanceSidebar(activeItemsFixture());
-  collectVersionedLinks(sidebar); // asserts internally on every category
-});
-
-test('buildMainSidebar: versioned-tool leaves are links, main-owned leaves are doc ids', () => {
-  const sidebar = buildMainSidebar();
-  const adaptive = sidebar.find((n) => n.label === 'Adaptive grippers');
-  const libraries = adaptive.items.find((n) => n.label === 'Libraries');
-  const cpp = libraries.items.find((n) => n.label === 'C++');
-  assert.equal(cpp.type, 'link');
-  assert.equal(cpp.href, encodeURI(VERSIONED_TOOL_PATHS['adaptive-grippers-cpp']));
-  // Python isn't versioned — plain doc id string, not a link object.
-  assert.ok(libraries.items.includes('drivers/Adaptive grippers/Libraries/Python/index'));
+test('buildSidebar: a category with a landing page carries a real doc link', () => {
+  const sidebar = buildSidebar(activeItemsFixture());
+  const epick = sidebar.find((n) => n.label === 'EPick');
+  assert.deepEqual(epick.link, {type: 'doc', id: 'EPick/index'});
 });
 
 // The main regression test this file exists for: every already-cut

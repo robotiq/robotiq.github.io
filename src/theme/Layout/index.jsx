@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react';
+import OriginalLayout from '@theme-original/Layout';
 import {useHistory} from '@docusaurus/router';
-import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
 import {useActiveDocContext, useDocsPreferredVersion} from '@docusaurus/plugin-content-docs/client';
 
 const PLUGIN_ID = 'versioned-tools';
@@ -17,11 +17,13 @@ const PLUGIN_ID = 'versioned-tools';
 // "stay on whichever version I last picked" holds across visits, not just
 // within one.
 //
-// useActiveDocContext/useDocsPreferredVersion are both purely
-// pathname/global-data driven (no DocProvider/DocsVersionProvider needed),
-// so this is safe to mount unconditionally from Root, on every page —
-// both return an empty/undefined result on a page that doesn't belong to
-// this instance, rather than throwing.
+// Swizzled into Layout (wrap), not Root: useDocsPreferredVersion needs
+// <DocsPreferredVersionContextProvider>, which @theme/Layout/Provider only
+// mounts INSIDE Layout's own children tree — Root wraps the whole app
+// from further out, before that provider exists yet. Confirmed the hard
+// way: mounting this in Root crashed every page in dev with "Hook
+// useDocsPreferredVersionContext is called outside the
+// <DocsPreferredVersionContextProvider>."
 function StickyVersionRedirect() {
   const history = useHistory();
   const {activeVersion, alternateDocVersions} = useActiveDocContext(PLUGIN_ID);
@@ -38,11 +40,11 @@ function StickyVersionRedirect() {
   return null;
 }
 
-export default function Root({children}) {
+export default function Layout(props) {
   return (
-    <>
-      {ExecutionEnvironment.canUseDOM && <StickyVersionRedirect />}
-      {children}
-    </>
+    <OriginalLayout {...props}>
+      <StickyVersionRedirect />
+      {props.children}
+    </OriginalLayout>
   );
 }

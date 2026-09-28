@@ -126,10 +126,12 @@ theme: {
 
   // One shared instance for every Robotiq-maintained, submodule-synced
   // tool's Stable/Development (main) content — see
-  // docs/contribute/versioning.mdx. Product/ROS/third-party pages with no
-  // submodule to version against stay on the single default instance above.
-  // A tool gets versioned content here by having an entry in
-  // scripts/versioned-tools.js and a matching leaf in
+  // docs/contribute/versioning.mdx. EVERY product/tool page lives here,
+  // versioned or not (Force Torque Sensor, EPick, every product's own ROS
+  // pages, ...), not just the submodule-backed ones — see the
+  // `routeBasePath` comment below for why that's required, not just
+  // convenient. A tool gets *versioned* content specifically by having an
+  // entry in scripts/versioned-tools.js and a matching leaf in
   // scripts/site-nav-tree.mjs's SITE_TREE / sidebars.versioned-tools.js's
   // active-items map — nothing here in docusaurus.config.js itself changes
   // per tool.
@@ -141,15 +143,27 @@ theme: {
   // error; moving the exact same files outside docs/ fixed it. See the
   // matching comment on `destRoot` in sync-external-docs.js.
   //
-  // `routeBasePath: 'docs/drivers'` overlaps, textually, with the default
-  // instance's own 'docs' routeBasePath and its own docs/drivers/ content
-  // (Force Torque Sensor, EPick, every product's ROS pages, ...) — that's
-  // fine: Docusaurus doesn't require exclusive prefix ownership, only that
-  // two instances never generate the *same* literal route, and the
-  // underlying file sets are disjoint (this instance's own
-  // versioned-tools/ tree only ever contains the handful of
-  // submodule-backed tool subfolders; the default instance's docs/drivers/
-  // never contains those same subpaths — confirmed empty there today).
+  // `routeBasePath: 'docs/drivers'` has to be this instance's ONLY, and
+  // this instance's own content root has to be the ONLY thing under it —
+  // two plugin instances can NOT split ownership of one URL prefix,
+  // even for genuinely disjoint underlying content. Docusaurus generates
+  // one non-exact, prefix-matching top-level React Router route per
+  // instance's own routeBasePath; React Router's `<Switch>` commits to
+  // whichever one matches FIRST (registration order) for the ENTIRE
+  // prefix and never falls through to try another route if nothing
+  // matches deeper — confirmed by hitting exactly that: with product
+  // pages (Force Torque Sensor, EPick, every product's own ROS pages)
+  // left on the default instance's own docs/drivers/ and only the
+  // submodule-backed tool pages moved here, this instance's own
+  // `/docs/drivers` wrapper route intercepted EVERY path under that
+  // prefix client-side — including ones that were still real pages on
+  // the default instance — and 404'd them, even though the initial
+  // server-rendered HTML for that exact URL was completely fine (a hard
+  // load never goes through React Router's own matching at all, so the
+  // break only showed up navigating there via a client-side link click).
+  // Moving every product/tool page here, so nothing else claims any part
+  // of `/docs/drivers/*`, is what actually fixes that, not a
+  // workaround.
   plugins: [
     [
       '@docusaurus/plugin-content-docs',
@@ -210,7 +224,8 @@ theme: {
         items: [
           {
             type: 'docSidebar',
-            sidebarId: 'driverSidebar',
+            sidebarId: 'versionedToolsSidebar',
+            docsPluginId: 'versioned-tools',
             position: 'left',
             label: 'Software Tools',
           },

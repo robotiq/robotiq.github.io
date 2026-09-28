@@ -249,40 +249,26 @@ pure helpers live in `test/cut-version.test.js`.
 ## Checklist: adding versioning to a new tool
 
 Assuming the tool already has its own wrapper page and a
-`sync-external-docs.js` job (see [Adding a new software tool](./adding-a-tool)):
+`sync-external-docs.js` job under `versioned-tools/` (see
+[Adding a new software tool](./adding-a-tool) — every tool lives there
+from the start now, versioned or not, so nothing needs to move):
 
-1. Add `destRoot: 'versioned-tools'` to that tool's job(s) in
-   `scripts/external-jobs.js`, and change `to` to be relative to
-   `versioned-tools/` instead of `docs/`. For a `doxygen2docusaurus` job,
-   also set `routeBasePath: '/docs/drivers'` (the *shared instance's* own
-   routeBasePath, not this tool's own sub-path — see
-   [One shared instance, not one per tool](#one-shared-instance-not-one-per-tool)
-   above) and `currentVersionPath: 'next'` (must match
-   `versions.current.path` exactly).
-2. Move the tool's existing content (its wrapper `index.mdx`, and any
-   other hand-authored files) from `docs/drivers/<Product>/<Category>/<Tool>/`
-   to `versioned-tools/<Product>/<Category>/<Tool>/`.
-3. Add a `:::tip Use a released version` admonition to that wrapper
+1. Add a `:::tip Use a released version` admonition to the tool's wrapper
    `index.mdx` — see any existing versioned tool's wrapper page for the
    exact text, and [API Stability Policy](/docs/api-stability). This page
-   is what becomes Development's own content once it's part of the shared
-   instance, so it needs the same "this documents unreleased `main`"
-   nudge every other versioned tool's wrapper page already has. If the
-   tool also gets a generated API reference (a `doxygen2docusaurus` job),
-   nothing extra is needed there — `injectExperimentalNotice` in
+   is what becomes Development's own content once the tool is versioned,
+   so it needs the same "this documents unreleased `main`" nudge every
+   other versioned tool's wrapper page already has. If the tool also gets
+   a generated API reference (a `doxygen2docusaurus` job), nothing extra
+   is needed there — `injectExperimentalNotice` in
    `sync-external-docs.js` already adds the matching notice to every page
    that pipeline produces, for any tool.
-4. Register the tool in `scripts/versioned-tools.js` (submodule, repo URL,
+2. Register the tool in `scripts/versioned-tools.js` (submodule, repo URL,
    `toolPath`) — `scripts/cut-version.js` needs this entry to cut Stable
    for it.
-5. In `sidebars.js`, replace the tool's doc-id sidebar entry with a
-   `{ type: 'link', href: encodeURI('/docs/drivers/<Product>/<Category>/<Tool>') }`
-   item (see any existing versioned tool's entry there for the exact
-   shape) — it no longer belongs to the default instance.
-6. Add the tool's `versioned` node (`{ label, tool: '<plugin-id>' }`) to
-   `scripts/site-nav-tree.mjs`'s `SITE_TREE`, replacing whatever `leaf(...)`
-   entry described it before, and add its path to `VERSIONED_TOOL_PATHS`.
-7. In `sidebars.versioned-tools.js`, add this tool's own entry to the
+3. In `scripts/site-nav-tree.mjs`'s `SITE_TREE`, replace the tool's
+   `leaf(...)` entry with `versioned(label, '<plugin-id>')`.
+4. In `sidebars.versioned-tools.js`, add this tool's own entry to the
    `activeItems` map — a simple `{type: 'doc', id: '<toolPath>/index',
    label: '<Tool>'}` for a one-page tool, or a nested category for a tool
    split into guides/API (see the existing `adaptive-grippers-cpp` entry
@@ -295,16 +281,22 @@ Assuming the tool already has its own wrapper page and a
    id that doesn't exist in that version at all, which only Docusaurus's
    own build-time `checkSidebarsDocIds` catches — not the cut itself,
    which reports success.
-8. If the tool already has a tag, cut Stable following
+5. If the tool also gets a generated API reference (a
+   `doxygen2docusaurus` job in `external-jobs.js`), set
+   `currentVersionPath: 'next'` on that job (must match
+   `versions.current.path` exactly — see
+   [Which version the root URL serves](#which-version-the-root-url-serves)).
+   `routeBasePath` should already be `/docs/drivers` (the shared
+   instance's own, set once for the tool's job regardless of whether it's
+   versioned — see [One shared instance, not one per tool](#one-shared-instance-not-one-per-tool)).
+6. If the tool already has a tag, cut Stable following
    [Cutting Stable](#cutting-stable) above. If it has no tags yet, skip
    this step entirely — the tool's content just tracks `main` on both
    versions until it does.
-9. Run a full clean rebuild (`rm -rf .doxygen2docusaurus-staging build
+7. Run a full clean rebuild (`rm -rf .doxygen2docusaurus-staging build
    .docusaurus scripts/generated node_modules/.cache && npm run build`)
    and check: the tool's `<nav aria-label="Docs sidebar">` output contains
    the full site tree, not just its own branch, on every version; Stable
    (once cut) serves at the instance's own root URL and Development at
    `/next`; and, if the tool has a generated API reference, its
-   cross-reference links resolve correctly under `/next` (see
-   [Which version the root URL serves](#which-version-the-root-url-serves)
-   for the `currentVersionPath` piece this needs).
+   cross-reference links resolve correctly under `/next`.

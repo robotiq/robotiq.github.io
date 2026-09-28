@@ -7,20 +7,23 @@ displayed_sidebar: contributeSidebar
 # Step-by-step: adding a new software tool
 
 The steps below add a Python tool for the **Adaptive grippers** family hosted
-at `https://github.com/robotiq/2f85-python-driver`, living under `docs/`
-like every non-versioned tool.
+at `https://github.com/robotiq/2f85-python-driver`. Every product/tool page
+(versioned or not) lives under `versioned-tools/` and is served by the
+shared `versioned-tools` Docusaurus instance — see
+[Documentation versioning](./versioning) for why: two plugin instances
+can't split ownership of one URL prefix, and every tool's page lives under
+`/docs/drivers/*`.
 
 **If the new tool is Robotiq-maintained and submodule-synced** (as opposed
 to a third-party or not-yet-available tool), it should usually also join
 the sitewide **Stable / Development (main)** switcher, matching every
 other Robotiq-maintained tool on this site — see
 [Documentation versioning](./versioning) once the steps below are done.
-That changes *where* the tool's files live (`versioned-tools/` instead of
-`docs/`) and adds a few extra pieces (an entry in the shared
-`versioned-tools` instance's own sidebar and tool registry — no new
-Docusaurus plugin instance needed, there's only ever the one shared
-instance); everything below — the sync job, the wrapper page, the badges
-— stays exactly the same either way.
+That's just an extra registration (an entry in `scripts/versioned-tools.js`
+and in the shared instance's own sidebar's active-items map) — it doesn't
+change where the tool's files live or how the sync job is declared, both
+already the same either way; only whether that tool participates in
+Stable/Development cuts.
 
 ## 1. Add the submodule
 
@@ -46,9 +49,14 @@ them on each entry. Start a new call for a new submodule:
 
 ```js
 ...submoduleJobs('2f85_python', { repoUrl: 'https://github.com/robotiq/2f85-python-driver', branch: 'main' }, [
-  { from: 'README.md', to: 'drivers/Adaptive grippers/Libraries/Python/_readme.md' },
+  { from: 'README.md', to: 'Adaptive grippers/Libraries/Python/_readme.md', destRoot: 'versioned-tools' },
 ]),
 ```
+
+`destRoot: 'versioned-tools'` is what every driver job needs (see
+[Documentation versioning](./versioning)) — content outside `versioned-tools/`
+lands in the default `docs` instance's own tree instead, which doesn't
+serve anything under `/docs/drivers/*`.
 
 For a repo that contains multiple tools, add one job per tool inside the
 same call:
@@ -56,9 +64,9 @@ same call:
 ```js
 ...submoduleJobs('2f85_drivers', { repoUrl: '...', branch: 'main' }, [
   // C++ tool
-  { from: 'sdk_cpp/README.md', to: 'drivers/Adaptive grippers/Libraries/C++/_readme.md' },
+  { from: 'sdk_cpp/README.md', to: 'Adaptive grippers/Libraries/C++/_readme.md', destRoot: 'versioned-tools' },
   // Python tool
-  { from: 'python/README.md', to: 'drivers/Adaptive grippers/Libraries/Python/_readme.md' },
+  { from: 'python/README.md', to: 'Adaptive grippers/Libraries/Python/_readme.md', destRoot: 'versioned-tools' },
 ]),
 ```
 
@@ -75,7 +83,7 @@ node scripts/sync-external-docs.js
 
 ## 3. Create the wrapper page
 
-Create `docs/drivers/Adaptive grippers/Libraries/Python/index.mdx`. This file
+Create `versioned-tools/Adaptive grippers/Libraries/Python/index.mdx`. This file
 is tracked in git and controls the page title, sidebar label, and
 any introductory text above the synced README:
 
@@ -137,10 +145,10 @@ script) — prefixing it there would duplicate the table's own ROS2/ROS1
 section heading and break the legend lookup.
 
 Create this page under `ROS/<Generation><Distro>/index.mdx` — e.g.
-`docs/drivers/Tactile Sensor/ROS/ROS2-Jazzy/index.mdx` (see that file for a full
+`versioned-tools/Tactile Sensor/ROS/ROS2-Jazzy/index.mdx` (see that file for a full
 example with build/run instructions). A product supporting several distros
 gets one such folder per distro (see
-`docs/drivers/Adaptive grippers/ROS/` for a six-distro example) — each with its own
+`versioned-tools/Adaptive grippers/ROS/` for a six-distro example) — each with its own
 page, and its own link in the compatibility table, rather than one page
 listing every distro. List them in `sidebars.js` newest to oldest per
 generation (see [step 5](#5-register-in-sidebarsjs) below), and see
@@ -174,7 +182,7 @@ a synced README later, once the tool or its documentation exists.
 ## 4. Create the product landing page
 
 If the product folder has no `index.mdx` yet, create
-`docs/drivers/Adaptive grippers/index.mdx`:
+`versioned-tools/Adaptive grippers/index.mdx`:
 
 ```mdx
 ---
@@ -217,7 +225,7 @@ empty table, so it's safe to keep all four headings even before every
 category has content.
 
 **If the product has any ROS tool pages**, also create
-`docs/drivers/Adaptive grippers/ROS/index.mdx` — this is where the ROS2/ROS1 tables
+`versioned-tools/Adaptive grippers/ROS/index.mdx` — this is where the ROS2/ROS1 tables
 live instead, since a product's ROS distros usually outnumber its other
 tools:
 

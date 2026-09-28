@@ -1782,16 +1782,16 @@ for (const job of JOBS) {
 
   const submoduleRoot = path.join(ROOT, 'external', job.submodule);
   const srcPath = path.join(submoduleRoot, job.from);
-  // Defaults to 'docs' for every existing job. A job whose content needs to
-  // live outside the main Docusaurus docs instance's own tree — e.g. a tool
-  // piloting per-tool documentation versioning (see
-  // docs/contribute/versioning.mdx) as its own separate plugin instance
-  // — sets destRoot explicitly instead. Physically nesting that instance's
-  // files inside docs/ (even with the default instance's own `exclude`
-  // covering them) reproducibly breaks MDX compilation with a bogus
-  // "Unexpected FunctionDeclaration ... non-esm" error — confirmed by
-  // bisecting content (irrelevant) and path (moving the exact same files
-  // outside docs/ fixed it) while building the tactile-python pilot.
+  // Defaults to 'docs' for every existing job. Every driver/tool job (see
+  // docs/contribute/versioning.mdx) sets destRoot: 'versioned-tools'
+  // instead, since that whole shared plugin instance's content has to
+  // live outside the main Docusaurus docs instance's own tree. Physically
+  // nesting that instance's files inside docs/ (even with the default
+  // instance's own `exclude` covering them) reproducibly breaks MDX
+  // compilation with a bogus "Unexpected FunctionDeclaration ... non-esm"
+  // error — confirmed by bisecting content (irrelevant) and path (moving
+  // the exact same files outside docs/ fixed it) while building the
+  // tactile-python pilot.
   const destPath = path.join(ROOT, job.destRoot || 'docs', job.to);
   const removedLegacyPath = cleanupLegacyDestRoot(ROOT, job);
   if (removedLegacyPath) console.log(`[sync-external-docs] Removed legacy pre-destRoot output: ${removedLegacyPath}`);
