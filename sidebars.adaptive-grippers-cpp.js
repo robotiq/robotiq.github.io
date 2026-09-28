@@ -50,17 +50,30 @@ function doxygenApiCategory(apiFolderPath, docId, label) {
   }];
 }
 
+// Guarded the same way as doxygenApiCategory above, and for the same
+// reason: a version this sidebar gets frozen for (Previous versions is a
+// pure signpost; a Stable tag can predate the guides folder) may have no
+// `docs/` content at all. Without this guard the category's own `link`
+// still points at `docs/index` unconditionally, freezing a doc id that
+// doesn't exist into that version's sidebar snapshot — caught by
+// Docusaurus's checkSidebarsDocIds only at build time, not at cut time.
+function guidesCategory(docPrefix, label) {
+  const indexPath = ['index.mdx', 'index.md'].map((f) => path.join(FS_ROOT, docPrefix, f)).find((p) => fs.existsSync(p));
+  if (!indexPath) return [];
+  return [{
+    type: 'category',
+    label,
+    link: { type: 'doc', id: `${docPrefix}/index` },
+    items: generateFolderSidebarItems(docPrefix, FS_ROOT),
+  }];
+}
+
 const cppItem = {
   type: 'category',
   label: 'C++',
   link: { type: 'doc', id: 'index' },
   items: [
-    {
-      type: 'category',
-      label: 'Introduction guides',
-      link: { type: 'doc', id: 'docs/index' },
-      items: generateFolderSidebarItems('docs', FS_ROOT),
-    },
+    ...guidesCategory('docs', 'Introduction guides'),
     ...doxygenApiCategory('API', 'API/index', 'API Reference'),
   ],
 };

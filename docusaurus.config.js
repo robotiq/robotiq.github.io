@@ -4,12 +4,27 @@
 // There are various equivalent ways to declare your Docusaurus config.
 // See: https://docusaurus.io/docs/api/docusaurus-config
 
+import fs from 'node:fs';
 import {themes as prismThemes} from 'prism-react-renderer';
 import remarkRobotiqWordmark from './src/remark/robotiqWordmark.mjs';
 import remarkYoutubeEmbed from './src/remark/youtubeEmbed.mjs';
 import rehypeExternalLinksNewTab from './src/remark/externalLinksNewTab.mjs';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
+
+// Each versioned tool's Stable dropdown label needs its actual tag in it
+// (see "Make the Stable tag visible" in docs/contribute/versioning.mdx) —
+// read from versioned-tools-stable.json instead of hand-typed here, so
+// `scripts/cut-version.js` re-cutting Stable to a newer tag updates this
+// site's label as a side effect of that one command, not a second manual
+// edit here that's easy to forget.
+const stableTags = JSON.parse(
+  fs.readFileSync(new URL('./versioned-tools-stable.json', import.meta.url), 'utf8')
+);
+/** @param {string} toolId */
+function stableLabel(toolId) {
+  return `Stable (${stableTags[toolId]})`;
+}
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -139,14 +154,15 @@ theme: {
         // URL serves" in docs/contribute/versioning.mdx.
         versions: {
           current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true },
-          // Labeled with its tag: without this, the tag Stable actually
+          // Label carries its tag: without this, the tag Stable actually
           // tracks isn't visible anywhere on the site, which reads as
           // "only 1 of tactile_sensors' 2 releases is on this site" even
           // though Stable IS the newer one — see
           // versioned-tools' version-previous-versions/index.mdx for the
-          // matching explanation. Update this by hand whenever Stable is
-          // re-cut to a newer tag (see scripts/list-submodule-tags.js).
-          stable: { label: 'Stable (v2.0.0)', path: '' },
+          // matching explanation. Read from versioned-tools-stable.json
+          // (see the comment on `stableTags` above) — kept in sync by
+          // `scripts/cut-version.js`, never hand-typed.
+          stable: { label: stableLabel('tactile-python'), path: '' },
           'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
         },
       }),
@@ -166,7 +182,7 @@ theme: {
         // See the matching comment on 'tactile-python' above.
         versions: {
           current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true },
-          stable: { label: 'Stable (v2.0.0)', path: '' },
+          stable: { label: stableLabel('tactile-cpp'), path: '' },
           'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
         },
       }),
@@ -211,7 +227,7 @@ theme: {
         // nothing older to list yet, see that version's own index.mdx.
         versions: {
           current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true },
-          stable: { label: 'Stable (v1.0.0)', path: '' },
+          stable: { label: stableLabel('adaptive-grippers-cpp'), path: '' },
           'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
         },
       }),

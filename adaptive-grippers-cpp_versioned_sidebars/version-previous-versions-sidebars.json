@@ -14,9 +14,13 @@
           "label": "Libraries",
           "items": [
             {
-              "type": "doc",
-              "id": "index",
-              "label": "C++"
+              "type": "category",
+              "label": "C++",
+              "link": {
+                "type": "doc",
+                "id": "index"
+              },
+              "items": []
             },
             {
               "type": "link",

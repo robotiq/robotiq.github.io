@@ -204,106 +204,68 @@ also swizzled shorter, to one line
 (`src/theme/DocVersionBanner/index.jsx`) — unrelated to any of the above,
 just bundled into the same theme-swizzling work.
 
-## Cutting Stable or Previous versions by hand
+## Cutting Stable or Previous versions
 
-There's no CI automation for this yet — every version cut is a manual,
-local operation, run once and committed. `scripts/list-submodule-tags.js`
-finds the current tags directly off each submodule's remote (`git
-ls-remote --tags`, not the local checkout, which can go stale):
+One command each, via `scripts/cut-version.js`:
 
 ```bash
-node scripts/list-submodule-tags.js
+node scripts/cut-version.js <plugin-id> stable [<tag>]   # <tag> defaults to the newest
+node scripts/cut-version.js <plugin-id> previous-versions
 ```
 
-**To cut (or re-cut) Stable at the newest tag:**
+`<plugin-id>` is one of the ids registered in `scripts/versioned-tools.js`
+(`tactile-cpp`, `tactile-python`, `adaptive-grippers-cpp`, ...). Cut
+`stable` before `previous-versions` for a tool that needs both — the
+`previous-versions` signpost excludes whichever tag `stable` currently
+tracks, so that has to already be current.
 
-```bash
-cd external/<submodule>
-git checkout <tag>
-cd ../..
-SKIP_SUBMODULE_RESET=1 node scripts/sync-external-docs.js
-npm run docusaurus -- docs:version:<plugin-id> stable
-cd external/<submodule> && git checkout main && cd ../..
-SKIP_SUBMODULE_RESET=1 node scripts/sync-external-docs.js   # restore Development (main)'s own content
-```
+The script runs the whole procedure that used to be done by hand, in
+order, and undoes every step's own side effects even if a later step
+fails:
 
-`SKIP_SUBMODULE_RESET=1` is required — `sync-external-docs.js` runs `git
-submodule update --init --force` on every normal invocation, which would
-silently revert the manual `git checkout <tag>` right back to the pinned
-commit before the sync even ran.
+- Finds the target tag off the submodule's remote
+  (`scripts/list-submodule-tags.js`, `git ls-remote --tags` — not the
+  local checkout, which can go stale) and checks it out.
+- Re-syncs the tool's docs at that tag (`sync-external-docs.js`, with
+  `SKIP_SUBMODULE_RESET` so the checkout isn't immediately reverted).
+- Clears any content and generated-sidebar cache left over from a
+  *different* checkout before syncing, so a tag that predates a guide
+  folder or a Doxyfile ends up genuinely sparse rather than inheriting
+  another checkout's leftovers (`scripts/lib/prune.js`'s
+  `pruneLegacyFolder`, plus wiping `scripts/generated/`).
+- Prunes any `AUTO-GENERATED-*-TABLE` sub-page link that wouldn't
+  actually exist in this cut (`pruneDanglingSubpageLinks`).
+- Rewrites the synced content's `tree/main/...` / `blob/main/...`
+  GitHub links (READMEs, guides, the wrapper page's own "Source Code"
+  button) to point at the tag instead (`rewriteMainLinksToTag`) — the
+  file at `main` can already differ from what shipped in the tag Stable
+  represents.
+- Strips the "Use a released version" admonition that's real content on
+  Development but wrong once frozen into Stable itself
+  (`stripDevelopmentOnlyAdmonition`).
+- For `previous-versions`, replaces the wrapper page with a generated
+  signpost (`buildSignpost`) listing every tag older than the one Stable
+  tracks, or saying so explicitly when there aren't any — the live
+  sub-pages are backed up first and restored after, since this cut must
+  hold only that one page.
+- Runs `docs:version:` into a scratch version name first, then renames it
+  into place — `docusaurus.config.js`'s `lastVersion`/`versions` config
+  has to keep resolving to an existing version for the entire duration of
+  *any* `docusaurus` CLI invocation, including the cut itself, so
+  deleting-then-recutting the real name directly trips
+  `lastVersion: ... is invalid`.
+- Restores the submodule's actual pinned commit and Development's own
+  synced content, regardless of whether the cut itself succeeded.
+- Records the cut tag in `versioned-tools-stable.json` (for `stable`),
+  which `docusaurus.config.js` reads to build the `Stable (vX.Y.Z)`
+  switcher label — no by-hand label edit needed.
+- Regenerates every versioned sidebar snapshot against the current live
+  site nav tree (`regenerate-versioned-sidebars.mjs`), so this cut (and
+  any earlier one) reflects the site's current navigation shape.
 
-**Rewrite any `main`-branch source links to the tag, before cutting.**
-Content synced from the submodule (its README, guides) routinely links
-back to its own source on GitHub — `tree/main/...`, `blob/main/...` — which
-is correct for Development but wrong once that same text is frozen into a
-Stable snapshot: the file at `main` can already differ from what shipped
-in the tag Stable is supposed to represent. Rewrite every such link to
-`tree/<tag>/...` / `blob/<tag>/...` in the checked-out content *before*
-running `docs:version:`, and do the same for any hand-authored "Source
-Code" button/CTA on the tool's own wrapper page
-(`https://github.com/<org>/<repo>` → `https://github.com/<org>/<repo>/tree/<tag>`).
-There's no automation for this yet — grep the synced content for
-`/main/` under `github.com/robotiq/` before cutting, and check by hand.
-
-**Watch for stale-content contamination.** `sync-external-docs.js` never
-deletes a previously-written folder (e.g. a tool's `docs/` guides or
-generated `API/`) just because the currently-checked-out tag's job skips
-(no `Doxyfile` yet at that tag, no `docs/` folder yet, ...) — it only
-writes what the current job list produces. If `versioned-tools/<Product>/<Tool>/`
-already has content left over from a *different* (usually newer) checkout
-when you cut a version, that stale content gets captured into the
-snapshot too. Before cutting a version that should be sparse (an early
-tag that predates a guide folder, or a `previous-versions` signpost that
-should hold only its own hand-written `index.mdx`), move anything the
-current tag's own sync wouldn't produce out of the way first, cut, then
-restore it afterward for Development's own benefit. Verify with a plain
-`find <tool>_versioned_docs/version-<name> -type f` before trusting the
-cut — skipping this step is an easy way to leak a stale `docs`/`API` tree
-into what should have been a two-file signpost.
-
-**Writing the `Previous versions` signpost.** It's a hand-authored
-`index.mdx`, temporarily written over the live wrapper page (back it up
-first), cut with `docs:version:<plugin-id> previous-versions`, then
-restored:
-
-```mdx
----
-title: C++
-sidebar_label: C++
----
-
-**Stable** currently tracks `<submodule>`'s newest release, **vX.Y.Z**.
-
-We only host **Development (main)** and **Stable** here — older releases
-aren't archived on this site. Browse their own tag in the source
-repository instead:
-
-- **vA.B.C** — [browse source](https://github.com/robotiq/<repo>/tree/vA.B.C)
-```
-
-**List only tags OLDER than the one Stable tracks — never re-list Stable's
-own tag.** A tool with only one tag total has *nothing* to list here yet;
-say so explicitly ("there are no older releases archived here yet") rather
-than reusing another tool's list shape unchanged. "Exclude whatever Stable
-tracks" is the actual rule, not "list every tag that isn't literally the
-newest" — those only coincide once a tool has 2+ tags, so copying a
-multi-tag tool's signpost as a template for a single-tag one silently
-re-lists Stable's own tag as if it were archived separately. Check each
-tool's actual tag count before authoring its signpost; don't assume the
-same shape applies.
-
-**Make the Stable tag visible.** Nothing on a Stable page itself ever
-prints which tag it is — without a visible marker, the only tag a visitor
-ever sees named anywhere is whatever the `Previous versions` page lists,
-which reads as "only 1 of N releases is on this site" even when Stable
-silently *is* the newest one. Label it in `docusaurus.config.js`'s
-`versions` config:
-
-```js
-stable: { label: 'Stable (v2.0.0)', path: '' },
-```
-
-Update this by hand every time Stable is re-cut to a newer tag.
+Review the resulting diff and run a full `npm run build` before
+committing — the script prints this reminder itself. Unit tests for its
+pure helpers live in `test/cut-version.test.js`.
 
 ## Checklist: adding versioning to a new tool
 
@@ -316,33 +278,60 @@ Assuming the tool already has its own wrapper page and a
 2. Move the tool's existing content (its wrapper `index.mdx`, and any other
    hand-authored files) from `docs/drivers/<Product>/<Category>/<Tool>/` to
    `versioned-tools/<Product>/<Category>/<Tool>/`.
-3. Add a new `@docusaurus/plugin-content-docs` entry to
+3. Add a `:::tip Use a released version` admonition to that wrapper
+   `index.mdx` — see any existing versioned tool's wrapper page for the
+   exact text, and [API Stability Policy](/docs/api-stability). This page
+   is what becomes Development's own content once the plugin instance
+   below exists, so it needs the same "this documents unreleased `main`"
+   nudge every other versioned tool's wrapper page already has. If the
+   tool also gets a generated API reference (a `doxygen2docusaurus` job),
+   nothing extra is needed there — `injectExperimentalNotice` in
+   `sync-external-docs.js` already adds the matching notice to every page
+   that pipeline produces, for any tool.
+4. Add a new `@docusaurus/plugin-content-docs` entry to
    `docusaurus.config.js`'s `plugins` array — copy `tactile-cpp`'s or
    `adaptive-grippers-cpp`'s as a starting point depending on whether the
-   tool is a single page or split into guides/API.
-4. In `sidebars.js`, replace the tool's doc-id sidebar entry with a
+   tool is a single page or split into guides/API. See
+   [Which version the root URL serves](#which-version-the-root-url-serves)
+   above for the `versions` config shape once the tool has a tag (skip
+   `versions`/`lastVersion` entirely until then, matching `isaac-sim`).
+5. In `sidebars.js`, replace the tool's doc-id sidebar entry with a
    `{ type: 'link', href: encodeURI('/docs/drivers/<Product>/<Category>/<Tool>') }`
    item (see any existing versioned tool's entry there for the exact
    shape) — it no longer belongs to the default instance.
-5. Create `sidebars.<tool>.js`, calling
+6. Create `sidebars.<tool>.js`, calling
    `buildInstanceSidebar('<plugin-id>', activeItem)` from
    `scripts/site-nav-tree.mjs` — `activeItem` is a single `{type: 'doc',
    id: 'index', label: '<Tool>'}` for a one-page tool, or a nested category
    for a tool split into guides/API (see
-   `sidebars.adaptive-grippers-cpp.js`).
-6. Add the tool's `versioned` node (`{ label, tool: '<plugin-id>' }`) to
+   `sidebars.adaptive-grippers-cpp.js`). For a split tool, guard *every*
+   category whose `link` targets content that might not exist yet (a
+   `previous-versions` cut is a pure signpost with no `docs/`, and an
+   early tag can predate a guide folder or a Doxyfile) — check the real
+   file exists on disk before including that category at all, the same
+   way `sidebars.adaptive-grippers-cpp.js`'s `doxygenApiCategory` and
+   `guidesCategory` both do. Skipping this leaves a category whose `link`
+   points at a doc id that doesn't exist in that version at all, which
+   only Docusaurus's own build-time `checkSidebarsDocIds` catches — not
+   the cut itself, which reports success.
+7. Add the tool's `versioned` node (`{ label, tool: '<plugin-id>' }`) to
    `scripts/site-nav-tree.mjs`'s `SITE_TREE`, replacing whatever `leaf(...)`
    entry described it before, and add its path to
    `VERSIONED_TOOL_PATHS`.
-7. If the tool already has a tag, cut `stable` (and `previous-versions`,
-   if it has 2+ tags) following [Cutting Stable or Previous versions by
-   hand](#cutting-stable-or-previous-versions-by-hand) above, and add the
-   matching `versions`/`lastVersion` config plus a
+8. Register the tool in `scripts/versioned-tools.js` (submodule, repo URL,
+   sidebar key, `toolPath`) — `scripts/cut-version.js` needs this entry to
+   cut `stable`/`previous-versions` for it.
+9. If the tool already has a tag, cut `stable` (and `previous-versions`,
+   if it has 2+ tags) following [Cutting Stable or Previous
+   versions](#cutting-stable-or-previous-versions) above, and add a
    `custom-scopedVersionDropdown` navbar item. If it has no tags yet, skip
-   this step entirely — leave `includeCurrentVersion: true` with no
-   `versions` config, matching `isaac-sim`, and come back to it once a tag
-   exists.
-8. Run a full clean rebuild (`rm -rf .doxygen2docusaurus-staging build
+   this step entirely and come back to it once a tag exists.
+10. Run a full clean rebuild (`rm -rf .doxygen2docusaurus-staging build
    .docusaurus scripts/generated node_modules/.cache && npm run build`)
-   and check the tool's `<nav aria-label="Docs sidebar">` output contains
-   the full site tree, not just its own branch, on every version it has.
+   and check: the tool's `<nav aria-label="Docs sidebar">` output contains
+   the full site tree, not just its own branch, on every version it has;
+   Stable (once cut) serves at the instance's own root URL and Development
+   at `/next`; and, if the tool has a generated API reference, its
+   cross-reference links resolve correctly under `/next` (see
+   [Which version the root URL serves](#which-version-the-root-url-serves)
+   for the `currentVersionPath` piece this needs).
