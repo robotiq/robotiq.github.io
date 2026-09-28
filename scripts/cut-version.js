@@ -498,4 +498,7 @@ module.exports = {
   pruneDanglingSubpageLinks,
   buildSignpost,
   readFrontmatter,
+  readStableTags,
+  cutStable,
+  cutPreviousVersions,
 };

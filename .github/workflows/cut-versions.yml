@@ -1,0 +1,83 @@
+name: Auto-cut Stable versions
+
+# Checks every versioned tool for a newer tag upstream (see
+# scripts/auto-cut-versions.js) and, if one exists, cuts Stable and
+# re-cuts Previous versions via scripts/cut-version.js, opening (or
+# updating) a PR with the result — see "Cutting Stable or Previous
+# versions" in docs/contribute/versioning.mdx. Runs on a schedule so
+# nobody has to remember to run that script by hand after a release.
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # daily, 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: auto-cut-versions
+  cancel-in-progress: false
+
+jobs:
+  auto-cut:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # See the matching comment in ci.yml for why both are needed.
+      - name: Install Doxygen and Graphviz
+        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+
+      - name: Check for new tags and cut Stable
+        run: node scripts/auto-cut-versions.js
+
+      - name: Determine whether anything was cut
+        id: check
+        run: |
+          if [ -f cut-version-summary.md ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # A cut is never pushed unverified — build/test have to pass on the
+      # actual result before a PR is opened or updated with it.
+      - name: Build
+        if: steps.check.outputs.changed == 'true'
+        run: npm run build
+
+      - name: Test
+        if: steps.check.outputs.changed == 'true'
+        run: npm test
+
+      # One fixed branch, force-pushed each run — a run the next day with
+      # no further upstream changes has nothing new to add, and a run
+      # while an earlier auto-cut PR is still open updates that same PR in
+      # place instead of opening a duplicate.
+      - name: Open or update the PR
+        if: steps.check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="automated/cut-versions"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add -A -- '*_versioned_docs' '*_versioned_sidebars' '*_versions.json' versioned-tools-stable.json
+          git commit -m "$(printf 'Auto-cut Stable version(s)\n\n%s' "$(cat cut-version-summary.md)")"
+          git push --force origin "$BRANCH"
+          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')" ]; then
+            gh pr create --title "Auto-cut Stable version(s)" --body-file cut-version-summary.md --head "$BRANCH" --base main
+          else
+            gh pr edit "$BRANCH" --body-file cut-version-summary.md
+          fi

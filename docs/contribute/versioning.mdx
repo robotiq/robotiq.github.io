@@ -206,7 +206,20 @@ just bundled into the same theme-swizzling work.
 
 ## Cutting Stable or Previous versions
 
-One command each, via `scripts/cut-version.js`:
+`.github/workflows/cut-versions.yml` runs this daily for every tool
+already tracking a Stable tag: it checks each one's submodule for a
+newer tag (`scripts/auto-cut-versions.js`), and if there is one, cuts it
+and opens (or updates) a PR with the result — nobody needs to remember to
+do this by hand after a release. There's no filtering on tag name yet
+(e.g. skipping a pre-release/beta tag) — every tool currently opted into
+versioning only ever tags real releases, so "newest tag" already means
+"newest release" for all of them; a name-based filter is a deliberate,
+not-yet-needed follow-up for the day that stops being true.
+
+Cutting by hand (a new tool's first cut, before it's in
+`versioned-tools-stable.json` for the automation to find; re-cutting a
+specific non-newest tag; or just running it locally instead of waiting
+for the schedule) is one command each, via `scripts/cut-version.js`:
 
 ```bash
 node scripts/cut-version.js <plugin-id> stable [<tag>]   # <tag> defaults to the newest

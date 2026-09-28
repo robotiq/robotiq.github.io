@@ -48,6 +48,10 @@ versioned-tools/**/*.md
 /doxygen2docusaurus.json
 /scripts/generated/
 
+# scripts/auto-cut-versions.js's own scratch output — read by
+# .github/workflows/cut-versions.yml, never committed itself.
+/cut-version-summary.md
+
 # Editor / machine-specific
 .vscode/
 
