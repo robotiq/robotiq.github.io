@@ -10,7 +10,7 @@
     "start": "cross-env NODE_OPTIONS=--max-old-space-size=8192 docusaurus start",
     "prebuild": "npm run generate",
     "build": "docusaurus build",
-    "test:unit": "node --test \"test/**/*.test.js\" \"test/**/*.test.mjs\"",
+    "test:unit": "node scripts/run-unit-tests.js",
     "test": "node scripts/check-build.js",
     "swizzle": "docusaurus swizzle",
     "clear": "docusaurus clear",
