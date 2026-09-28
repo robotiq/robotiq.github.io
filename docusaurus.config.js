@@ -12,19 +12,27 @@ import rehypeExternalLinksNewTab from './src/remark/externalLinksNewTab.mjs';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
-// Each versioned tool's Stable dropdown label needs its actual tag in it
-// (see "Make the Stable tag visible" in docs/contribute/versioning.mdx) —
-// read from versioned-tools-stable.json instead of hand-typed here, so
-// `scripts/cut-version.js` re-cutting Stable to a newer tag updates this
-// site's label as a side effect of that one command, not a second manual
-// edit here that's easy to forget.
-const stableTags = JSON.parse(
-  fs.readFileSync(new URL('./versioned-tools-stable.json', import.meta.url), 'utf8')
-);
-/** @param {string} toolId */
-function stableLabel(toolId) {
-  return `Stable (${stableTags[toolId]})`;
-}
+// Bootstrapping-only self-check: every `docusaurus`/`docs:version:` CLI
+// invocation validates `lastVersion` against whatever versions actually
+// exist in versioned-tools_versions.json RIGHT NOW — including
+// scripts/cut-version.js's own `docs:version:` call that's about to CREATE
+// 'stable' for the very first time, when it doesn't exist yet anywhere.
+// Hardcoding `lastVersion: 'stable'` unconditionally would make that very
+// first cut impossible (a chicken-and-egg: cutting 'stable' requires
+// 'stable' to already be a valid lastVersion) — confirmed by hitting
+// exactly that: "Docs option lastVersion: stable is invalid. Available
+// version names are: current". Falling back to `undefined` (Docusaurus's
+// own default — resolves to `current`) until 'stable' genuinely exists
+// makes that first cut self-bootstrapping, no one-time manual config edit
+// needed; every invocation after that first successful cut sees 'stable'
+// in the file and behaves exactly as before.
+const stableVersionExists = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(new URL('./versioned-tools_versions.json', import.meta.url), 'utf8')).includes('stable');
+  } catch {
+    return false;
+  }
+})();
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -116,15 +124,15 @@ theme: {
     ],
   ],
 
-  // Per-tool documentation versioning (Stable / Development (main) /
-  // Previous versions) — see docs/contribute/versioning.mdx. Only Robotiq-maintained,
-  // submodule-synced tools get their own instance like this (one per
-  // instance below); product/ROS/third-party pages stay on the single
-  // instance above, which has nothing to version against (no submodule,
-  // no tags). The C++ API reference (2f85_cpp) has its own separate,
-  // larger instance further down — its absolute-slug generation needed
-  // reworking first; see runDoxygen2Docusaurus's `apiBaseUrl`/`docsBaseUrl`
-  // handling in sync-external-docs.js.
+  // One shared instance for every Robotiq-maintained, submodule-synced
+  // tool's Stable/Development (main) content — see
+  // docs/contribute/versioning.mdx. Product/ROS/third-party pages with no
+  // submodule to version against stay on the single default instance above.
+  // A tool gets versioned content here by having an entry in
+  // scripts/versioned-tools.js and a matching leaf in
+  // scripts/site-nav-tree.mjs's SITE_TREE / sidebars.versioned-tools.js's
+  // active-items map — nothing here in docusaurus.config.js itself changes
+  // per tool.
   //
   // `path` deliberately lives under versioned-tools/, not docs/ — nesting
   // this instance's files inside the default instance's own docs/ tree
@@ -132,103 +140,50 @@ theme: {
   // compilation with a bogus "Unexpected FunctionDeclaration ... non-esm"
   // error; moving the exact same files outside docs/ fixed it. See the
   // matching comment on `destRoot` in sync-external-docs.js.
+  //
+  // `routeBasePath: 'docs/drivers'` overlaps, textually, with the default
+  // instance's own 'docs' routeBasePath and its own docs/drivers/ content
+  // (Force Torque Sensor, EPick, every product's ROS pages, ...) — that's
+  // fine: Docusaurus doesn't require exclusive prefix ownership, only that
+  // two instances never generate the *same* literal route, and the
+  // underlying file sets are disjoint (this instance's own
+  // versioned-tools/ tree only ever contains the handful of
+  // submodule-backed tool subfolders; the default instance's docs/drivers/
+  // never contains those same subpaths — confirmed empty there today).
   plugins: [
     [
       '@docusaurus/plugin-content-docs',
       /** @type {import('@docusaurus/plugin-content-docs').Options} */
       ({
-        id: 'tactile-python',
-        path: 'versioned-tools/Tactile Sensor/Libraries/Python',
-        routeBasePath: 'docs/drivers/Tactile Sensor/Libraries/Python',
-        sidebarPath: './sidebars.tactile-python.js',
+        id: 'versioned-tools',
+        path: 'versioned-tools',
+        routeBasePath: 'docs/drivers',
+        sidebarPath: './sidebars.versioned-tools.js',
         remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
         rehypePlugins: [rehypeExternalLinksNewTab],
         includeCurrentVersion: true,
-        lastVersion: 'stable',
+        lastVersion: stableVersionExists ? 'stable' : undefined,
         // Stable owns the root path (''), not `current` — a first-time
         // visitor (or an external link, or a search result) should land on
-        // a released version, not on whatever `main` happens to be at that
+        // released content, not on whatever `main` happens to be at that
         // moment. `current` moves to `next` instead, banner-tagged
         // 'unreleased' and excluded from search/sitemap (`noIndex`) so it's
         // never what search sends someone to. See "Which version the root
-        // URL serves" in docs/contribute/versioning.mdx.
+        // URL serves" in docs/contribute/versioning.mdx. No per-tool tag in
+        // either label — every submodule can be at a different tag, so
+        // there's no single sitewide version number to print here; each
+        // page's own banner (src/theme/DocVersionBanner) names its own
+        // submodule's actual tag instead.
+        // Docusaurus validates every key here against the versions that
+        // already exist in versioned-tools_versions.json too, not just
+        // `lastVersion` above (confirmed by hitting "Invalid docs option
+        // versions: unknown versions (stable) found" while bootstrapping
+        // the very first cut ever) — `stable`'s whole entry has to stay
+        // out until it's a real version, same bootstrapping reason as
+        // `lastVersion` above.
         versions: {
           current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true },
-          // Label carries its tag: without this, the tag Stable actually
-          // tracks isn't visible anywhere on the site, which reads as
-          // "only 1 of tactile_sensors' 2 releases is on this site" even
-          // though Stable IS the newer one — see
-          // versioned-tools' version-previous-versions/index.mdx for the
-          // matching explanation. Read from versioned-tools-stable.json
-          // (see the comment on `stableTags` above) — kept in sync by
-          // `scripts/cut-version.js`, never hand-typed.
-          stable: { label: stableLabel('tactile-python'), path: '' },
-          'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
-        },
-      }),
-    ],
-    [
-      '@docusaurus/plugin-content-docs',
-      /** @type {import('@docusaurus/plugin-content-docs').Options} */
-      ({
-        id: 'tactile-cpp',
-        path: 'versioned-tools/Tactile Sensor/Libraries/C++',
-        routeBasePath: 'docs/drivers/Tactile Sensor/Libraries/C++',
-        sidebarPath: './sidebars.tactile-cpp.js',
-        remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
-        rehypePlugins: [rehypeExternalLinksNewTab],
-        includeCurrentVersion: true,
-        lastVersion: 'stable',
-        // See the matching comment on 'tactile-python' above.
-        versions: {
-          current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true },
-          stable: { label: stableLabel('tactile-cpp'), path: '' },
-          'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
-        },
-      }),
-    ],
-    [
-      '@docusaurus/plugin-content-docs',
-      /** @type {import('@docusaurus/plugin-content-docs').Options} */
-      ({
-        id: 'isaac-sim',
-        path: 'versioned-tools/Adaptive grippers/Simulation/Isaac Sim',
-        routeBasePath: 'docs/drivers/Adaptive grippers/Simulation/Isaac Sim',
-        sidebarPath: './sidebars.isaac-sim.js',
-        remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
-        rehypePlugins: [rehypeExternalLinksNewTab],
-        // No lastVersion/versions config yet — isaacsim_assets has no tags,
-        // so there's nothing to cut a 'stable'/'previous-versions' version
-        // from. Only the current (Development/main) content exists for now,
-        // still at this instance's own root path (no 'next' split needed
-        // until there's an actual Stable to make room for). Deliberately no matching
-        // navbar item below either: with only one version, Docusaurus
-        // renders it as a plain "Current" button rather than hiding it —
-        // clutter with no payoff until this submodule gets its first real
-        // tag. Add a `custom-scopedVersionDropdown` item for 'isaac-sim'
-        // (matching 'tactile-python'/'tactile-cpp' below) once it does.
-        includeCurrentVersion: true,
-      }),
-    ],
-    [
-      '@docusaurus/plugin-content-docs',
-      /** @type {import('@docusaurus/plugin-content-docs').Options} */
-      ({
-        id: 'adaptive-grippers-cpp',
-        path: 'versioned-tools/Adaptive grippers/Libraries/C++',
-        routeBasePath: 'docs/drivers/Adaptive grippers/Libraries/C++',
-        sidebarPath: './sidebars.adaptive-grippers-cpp.js',
-        remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
-        rehypePlugins: [rehypeExternalLinksNewTab],
-        includeCurrentVersion: true,
-        lastVersion: 'stable',
-        // See the matching comment on 'tactile-python' above. 2f85_cpp
-        // only has one tag so far (v1.0.0) — Previous versions has
-        // nothing older to list yet, see that version's own index.mdx.
-        versions: {
-          current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true },
-          stable: { label: stableLabel('adaptive-grippers-cpp'), path: '' },
-          'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
+          ...(stableVersionExists ? {stable: { label: 'Stable', path: '' }} : {}),
         },
       }),
     ],
@@ -266,28 +221,19 @@ theme: {
           //   position: 'left',
           //   label: 'Examples',
           // },
-          // The stock 'docsVersionDropdown' navbar item always renders,
-          // site-wide — outside its own instance it just falls back to a
-          // link instead of disappearing, which isn't the scoping this
-          // needs (see "Scope" in docs/contribute/versioning.mdx: each
-          // of these must only appear on its own instance's own pages).
-          // src/theme/NavbarItem/ScopedDocsVersionDropdown.jsx wraps it
-          // with that visibility check; ComponentTypes.js registers it
-          // under this custom type. One item per versioned instance — each
-          // hides itself unless active, so only ever one shows at a time.
+          // Renders site-wide (every page, not just versioned-tools' own
+          // pages) — the stock behavior for this navbar item type: outside
+          // its own instance it falls back to a plain link to that
+          // instance's lastVersion instead of disappearing, which is
+          // exactly "always on top of the site" (explicit requirement —
+          // previously this used a custom-scoped wrapper to HIDE it
+          // outside its own instance, back when there were 4 separate
+          // per-tool instances and showing all 4 dropdowns at once would
+          // have been wrong; with exactly one shared instance now, that
+          // scoping is no longer needed).
           {
-            type: 'custom-scopedVersionDropdown',
-            docsPluginId: 'tactile-python',
-            position: 'right',
-          },
-          {
-            type: 'custom-scopedVersionDropdown',
-            docsPluginId: 'tactile-cpp',
-            position: 'right',
-          },
-          {
-            type: 'custom-scopedVersionDropdown',
-            docsPluginId: 'adaptive-grippers-cpp',
+            type: 'docsVersionDropdown',
+            docsPluginId: 'versioned-tools',
             position: 'right',
           },
 {

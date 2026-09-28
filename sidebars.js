@@ -5,17 +5,18 @@
 // generateFolderSidebarItems/doxygenApiCategory (and its own
 // doxygenSidebarJsonPath/loadDoxygenSidebarItems helpers) used to live here
 // for the Adaptive grippers C++ tool's "Introduction guides"/"API
-// Reference" nesting — that tool moved to its own versioned plugin instance
-// (see docusaurus.config.js, 'adaptive-grippers-cpp', and
-// docs/contribute/versioning.mdx), taking that nesting with it into
-// sidebars.adaptive-grippers-cpp.js. Nothing left in this file needs them;
-// re-add if a future non-versioned tool grows the same guides+API shape.
+// Reference" nesting — that tool (and every other submodule-synced tool)
+// now lives in the shared 'versioned-tools' plugin instance (see
+// docusaurus.config.js, docs/contribute/versioning.mdx), taking that
+// nesting with it into sidebars.versioned-tools.js. Nothing left in this
+// file needs them; re-add if a future non-versioned tool grows the same
+// guides+API shape.
 //
 // driverSidebar's tree (which products/tools/versions exist, in what
-// order) is defined once in scripts/site-nav-tree.mjs and shared with each
-// versioned tool's own sidebar file, so the full site navigation stays
-// visible when browsing a versioned tool's pages too — see that file's own
-// header comment for why.
+// order) is defined once in scripts/site-nav-tree.mjs and shared with the
+// versioned-tools instance's own sidebar file, so the full site navigation
+// stays visible when browsing a versioned tool's pages too — see that
+// file's own header comment for why.
 
 import { buildMainSidebar } from './scripts/site-nav-tree.mjs';
 

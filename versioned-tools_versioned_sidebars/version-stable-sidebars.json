@@ -1,5 +1,5 @@
 {
-  "tactileCppSidebar": [
+  "versionedToolsSidebar": [
     {
       "type": "link",
       "label": "Overview",
@@ -14,9 +14,23 @@
           "label": "Libraries",
           "items": [
             {
-              "type": "link",
+              "type": "category",
               "label": "C++",
-              "href": "/docs/drivers/Adaptive%20grippers/Libraries/C++"
+              "link": {
+                "type": "doc",
+                "id": "Adaptive grippers/Libraries/C++/index"
+              },
+              "items": [
+                {
+                  "type": "category",
+                  "label": "Introduction guides",
+                  "link": {
+                    "type": "doc",
+                    "id": "Adaptive grippers/Libraries/C++/docs/index"
+                  },
+                  "items": []
+                }
+              ]
             },
             {
               "type": "link",
@@ -66,9 +80,9 @@
           "label": "Simulation",
           "items": [
             {
-              "type": "link",
-              "label": "Isaac Sim",
-              "href": "/docs/drivers/Adaptive%20grippers/Simulation/Isaac%20Sim"
+              "type": "doc",
+              "id": "Adaptive grippers/Simulation/Isaac Sim/index",
+              "label": "Isaac Sim"
             },
             {
               "type": "link",
@@ -105,13 +119,13 @@
           "items": [
             {
               "type": "doc",
-              "id": "index",
+              "id": "Tactile Sensor/Libraries/C++/index",
               "label": "C++"
             },
             {
-              "type": "link",
-              "label": "Python",
-              "href": "/docs/drivers/Tactile%20Sensor/Libraries/Python"
+              "type": "doc",
+              "id": "Tactile Sensor/Libraries/Python/index",
+              "label": "Python"
             }
           ]
         },

@@ -18,25 +18,21 @@ const VERSIONED_TOOLS = {
   'tactile-cpp': {
     submodule: 'tactile_sensors',
     repoUrl: 'https://github.com/robotiq/tactile_sensors',
-    sidebarKey: 'tactileCppSidebar',
     toolPath: 'Tactile Sensor/Libraries/C++',
   },
   'tactile-python': {
     submodule: 'tactile_sensors',
     repoUrl: 'https://github.com/robotiq/tactile_sensors',
-    sidebarKey: 'tactilePythonSidebar',
     toolPath: 'Tactile Sensor/Libraries/Python',
   },
   'adaptive-grippers-cpp': {
     submodule: '2f85_cpp',
     repoUrl: 'https://github.com/robotiq/grippers',
-    sidebarKey: 'adaptiveGrippersCppSidebar',
     toolPath: 'Adaptive grippers/Libraries/C++',
   },
   'isaac-sim': {
     submodule: 'isaacsim_assets',
     repoUrl: 'https://github.com/robotiq/isaacsim_assets',
-    sidebarKey: 'isaacSimSidebar',
     toolPath: 'Adaptive grippers/Simulation/Isaac Sim',
   },
 };

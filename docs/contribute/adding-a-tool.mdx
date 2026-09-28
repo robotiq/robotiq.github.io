@@ -11,14 +11,16 @@ at `https://github.com/robotiq/2f85-python-driver`, living under `docs/`
 like every non-versioned tool.
 
 **If the new tool is Robotiq-maintained and submodule-synced** (as opposed
-to a third-party or not-yet-available tool), it should usually also get its
-own **Stable / Development (main) / Previous versions** switcher, matching every other
-Robotiq-maintained tool on this site — see
-[Per-tool documentation versioning](./versioning) once the steps below are
-done. That changes *where* the tool's files live (`versioned-tools/`
-instead of `docs/`) and adds a few extra pieces (its own Docusaurus plugin
-instance, its own `sidebars.<tool>.js`); everything below — the sync job,
-the wrapper page, the badges — stays exactly the same either way.
+to a third-party or not-yet-available tool), it should usually also join
+the sitewide **Stable / Development (main)** switcher, matching every
+other Robotiq-maintained tool on this site — see
+[Documentation versioning](./versioning) once the steps below are done.
+That changes *where* the tool's files live (`versioned-tools/` instead of
+`docs/`) and adds a few extra pieces (an entry in the shared
+`versioned-tools` instance's own sidebar and tool registry — no new
+Docusaurus plugin instance needed, there's only ever the one shared
+instance); everything below — the sync job, the wrapper page, the badges
+— stays exactly the same either way.
 
 ## 1. Add the submodule
 
@@ -299,5 +301,5 @@ entry skips those two groups entirely.
 **Adding versioning to this tool afterward** replaces its doc-id string
 above (e.g. `'drivers/Adaptive grippers/Libraries/Python/index'`) with a
 plain link into its own new plugin instance — see
-[Per-tool documentation versioning](./versioning#checklist-adding-versioning-to-a-new-tool)
+[Documentation versioning](./versioning#checklist-adding-versioning-to-a-new-tool)
 for the full checklist.

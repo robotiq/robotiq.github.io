@@ -1,31 +1,28 @@
 // @ts-check
 
 // Single source of truth for the full "Software Tools" navigation tree,
-// used to build BOTH the main sidebar (sidebars.js) AND each versioned
-// tool's own sidebar (sidebars.<tool>.js).
+// used to build BOTH the main sidebar (sidebars.js) AND the shared
+// versioned-tools instance's own sidebar (sidebars.versioned-tools.js).
 //
-// Why this exists: each versioned tool (Tactile Sensor C++/Python, Isaac
-// Sim, Adaptive grippers C++) lives in its own Docusaurus
-// plugin-content-docs instance for independent version cuts (see
-// docusaurus.config.js, docs/contribute/versioning.mdx). A plugin
-// instance can only build sidebar items out of doc ids it owns — every
-// other page has to be a plain link. Previously each per-tool sidebar file
-// listed ONLY that tool's own page(s), so clicking a versioned tool from
-// the main sidebar replaced the entire left nav with that tool's tiny
-// sidebar: the rest of the site (other products, ROS versions, etc.)
-// disappeared, making the page feel like a disconnected, separate site
-// (explicit user feedback — the whole-site navigation must stay visible
-// everywhere). Fixed by describing the tree once, here, and rendering it
-// two ways:
+// Why this exists: every submodule-synced tool (Tactile Sensor C++/Python,
+// Isaac Sim, Adaptive grippers C++) lives together in ONE shared Docusaurus
+// plugin-content-docs instance, `versioned-tools` (see docusaurus.config.js,
+// docs/contribute/versioning.mdx), separate from the default instance so it
+// can carry its own Development (main)/Stable versions. A plugin instance
+// can only build sidebar items out of doc ids it owns — every other page
+// has to be a plain link. Describing the tree once, here, lets both
+// instances render it two ways:
 //   - buildMainSidebar(): real doc ids for everything the main instance
 //     owns, plain links only for the versioned-tool leaves — this is what
 //     sidebars.js already did.
-//   - buildInstanceSidebar(activeTool, activeItem): plain links for EVERY
-//     node except the one matching `activeTool`, which is replaced by
-//     `activeItem` (that instance's own real, doc-id-based sidebar
-//     item/category) — used by each sidebars.<tool>.js. This keeps the
-//     full tree visible, in the same order, on every page; only the
-//     currently-open tool's branch expands into real content.
+//   - buildVersionedInstanceSidebar(activeItems): plain links for every
+//     node EXCEPT the versioned-tool leaves, which are all replaced by
+//     their own real, doc-id-based content (`activeItems`, a
+//     `{toolId: item}` map covering every versioned tool at once — used by
+//     sidebars.versioned-tools.js). This keeps the full site tree visible,
+//     in the same order, on every page; only the versioned tools' own
+//     branches expand into real content, all simultaneously (they all
+//     belong to this one shared instance).
 //
 // Cross-instance links are built as plain, `encodeURI()`-escaped absolute
 // paths (e.g. '/docs/drivers/Adaptive%20grippers/...'), NOT Docusaurus's
@@ -178,97 +175,99 @@ export function buildMainSidebar() {
   return SITE_TREE.map(renderMain);
 }
 
-function renderInstance(node, activeTool, activeItem) {
+function renderVersionedInstance(node, activeItems) {
   if (node.kind === 'versioned') {
-    if (node.tool === activeTool) return activeItem;
-    return { type: 'link', label: node.label, href: encodeURI(VERSIONED_TOOL_PATHS[node.tool]) };
+    // Every versioned tool belongs to this one shared instance now, so
+    // there's always real content here — no "is this the active one"
+    // branch, unlike the single-active-tool version this replaced.
+    return activeItems[node.tool];
   }
   if (node.kind === 'category') {
     // No `link` here: none of these doc ids belong to this plugin
     // instance, so there's nothing for the category header itself to
     // point at — it's still expandable/collapsible, just not clickable
     // (same as Docusaurus's own default for a category without a link).
-    return { type: 'category', label: node.label, items: node.items.map((n) => renderInstance(n, activeTool, activeItem)) };
+    return { type: 'category', label: node.label, items: node.items.map((n) => renderVersionedInstance(n, activeItems)) };
   }
   return { type: 'link', label: readDocLabel(node.docId), href: encodeURI(pathFromDocId(node.docId)) };
 }
 
 /**
- * Builds one versioned tool's own sidebar: the full site tree, with every
- * node a plain link except `activeTool`, which is replaced by `activeItem`
- * (a real sidebar item/category built from this instance's own doc ids).
+ * Builds the shared versioned-tools instance's own sidebar: the full site
+ * tree, with every versioned-tool node replaced by its own real content
+ * (`activeItems`, a `{toolId: item}` map) and everything else a plain link
+ * back to the default instance.
  */
-export function buildInstanceSidebar(activeTool, activeItem) {
-  return SITE_TREE.map((n) => renderInstance(n, activeTool, activeItem));
+export function buildVersionedInstanceSidebar(activeItems) {
+  return SITE_TREE.map((n) => renderVersionedInstance(n, activeItems));
 }
 
 // Docusaurus freezes a cut version's sidebar into
 // `<id>_versioned_sidebars/version-<name>-sidebars.json` at `docs:version:`
-// time — it never re-reads sidebars.<tool>.js for anything but the
-// *current* version. That snapshot is `buildInstanceSidebar`'s WHOLE
-// output (see docs/contribute/versioning.mdx), so it goes stale the same
-// way any other cached copy of SITE_TREE would: a renamed label, a moved
-// page, a new product added later, none of that reaches an already-cut
-// version until someone notices and hand-edits (or re-cuts) it.
+// time — it never re-reads sidebars.versioned-tools.js for anything but
+// the *current* version. That snapshot is `buildVersionedInstanceSidebar`'s
+// WHOLE output (see docs/contribute/versioning.mdx), so it goes stale the
+// same way any other cached copy of SITE_TREE would: a renamed label, a
+// moved page, a new product added later, none of that reaches an
+// already-cut version until someone notices and hand-edits (or re-cuts) it.
 //
-// `extractActiveItem` + `regenerateInstanceSidebar` below are how
+// `extractActiveItems` + `regenerateInstanceSidebar` below are how
 // scripts/regenerate-versioned-sidebars.mjs keeps every cut version's
 // snapshot in sync on every `npm run generate`, without needing to know
-// per-tool, per-version which real content shape `activeItem` should be
-// (a versioned tool's non-current versions can have a DIFFERENT shape
-// than its current one — e.g. adaptive-grippers-cpp's Stable is a single
-// page today, sparse content from before its source repo grew a docs/
-// folder, while its Development (main) has nested guides/API). Rather than guess that
-// shape, this walks SITE_TREE in lockstep with the version's OWN existing
-// snapshot and pulls out whatever's already sitting at `activeTool`'s
-// position — correct by construction, since that position held the real,
-// frozen content the moment the version was actually cut, and nothing
-// about a tool's own frozen content changes after the fact (only the
-// surrounding site tree does). This assumes the existing snapshot is
-// STRUCTURALLY parallel to the current SITE_TREE (same shape at every
-// other position) — true immediately after any regeneration, including
-// this one, so it self-heals on the very next run; it could only miss if
-// SITE_TREE's own shape changed AND a version was never regenerated since
-// (a one-time gap, not a standing risk, given this runs on every build).
-export function extractActiveItem(activeTool, existingItems) {
-  for (let i = 0; i < SITE_TREE.length; i += 1) {
-    const node = SITE_TREE[i];
-    const existing = existingItems[i];
-    if (!existing) continue;
-    if (node.kind === 'versioned' && node.tool === activeTool) return existing;
-    if (node.kind === 'category' && Array.isArray(existing.items)) {
-      const found = extractActiveItemFrom(node.items, existing.items, activeTool);
-      if (found !== undefined) return found;
-    }
-  }
-  return undefined;
+// per-tool, per-version which real content shape each tool's own item
+// should be (a tool's non-current versions can have a DIFFERENT shape than
+// its current one — e.g. adaptive-grippers-cpp's Stable can be sparser
+// than its Development (main), from before its source repo grew a docs/
+// folder). Rather than guess that shape, this walks SITE_TREE in lockstep
+// with the version's OWN existing snapshot and pulls out whatever's
+// already sitting at each versioned tool's own position — correct by
+// construction, since that position held the real, frozen content the
+// moment the version was actually cut, and nothing about a tool's own
+// frozen content changes after the fact (only the surrounding site tree
+// does). This assumes the existing snapshot is STRUCTURALLY parallel to
+// the current SITE_TREE (same shape at every other position) — true
+// immediately after any regeneration, including this one, so it
+// self-heals on the very next run; it could only miss if SITE_TREE's own
+// shape changed AND a version was never regenerated since (a one-time
+// gap, not a standing risk, given this runs on every build).
+export function extractActiveItems(existingItems) {
+  const found = {};
+  extractActiveItemsFrom(SITE_TREE, existingItems, found);
+  return found;
 }
 
-function extractActiveItemFrom(nodes, existingItems, activeTool) {
+function extractActiveItemsFrom(nodes, existingItems, found) {
   for (let i = 0; i < nodes.length; i += 1) {
     const node = nodes[i];
     const existing = existingItems[i];
     if (!existing) continue;
-    if (node.kind === 'versioned' && node.tool === activeTool) return existing;
-    if (node.kind === 'category' && Array.isArray(existing.items)) {
-      const found = extractActiveItemFrom(node.items, existing.items, activeTool);
-      if (found !== undefined) return found;
+    if (node.kind === 'versioned') {
+      found[node.tool] = existing;
+    } else if (node.kind === 'category' && Array.isArray(existing.items)) {
+      extractActiveItemsFrom(node.items, existing.items, found);
     }
   }
-  return undefined;
 }
 
 /**
- * Regenerates one cut version's frozen sidebar snapshot: extracts
- * `activeTool`'s real content out of its own existing snapshot
- * (`existingItems`, that version's current sidebar array), then rebuilds
- * the surrounding tree fresh from the live SITE_TREE. Returns the new
- * items array, or `undefined` if `activeTool`'s content couldn't be found
- * in `existingItems` (a genuinely new/reshaped tree — falls back to
- * leaving that snapshot alone rather than guessing).
+ * Regenerates the versioned-tools instance's frozen sidebar snapshot:
+ * extracts every versioned tool's own real content out of its existing
+ * snapshot (`existingItems`, that version's current sidebar array), then
+ * rebuilds the surrounding tree fresh from the live SITE_TREE. Returns the
+ * new items array, or `undefined` if fewer tools were found in
+ * `existingItems` than SITE_TREE currently declares (a genuinely
+ * new/reshaped tree — falls back to leaving that snapshot alone rather
+ * than guessing).
  */
-export function regenerateInstanceSidebar(activeTool, existingItems) {
-  const activeItem = extractActiveItem(activeTool, existingItems);
-  if (activeItem === undefined) return undefined;
-  return buildInstanceSidebar(activeTool, activeItem);
+export function regenerateInstanceSidebar(existingItems) {
+  const activeItems = extractActiveItems(existingItems);
+  const expectedTools = SITE_TREE.flatMap(collectVersionedTools);
+  if (expectedTools.some((tool) => activeItems[tool] === undefined)) return undefined;
+  return buildVersionedInstanceSidebar(activeItems);
+}
+
+function collectVersionedTools(node) {
+  if (node.kind === 'versioned') return [node.tool];
+  if (node.kind === 'category') return node.items.flatMap(collectVersionedTools);
+  return [];
 }

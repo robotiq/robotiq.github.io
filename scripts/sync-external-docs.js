@@ -48,25 +48,31 @@ const JOBS = require('./external-jobs');
 // there is no hand-authored content of this site's own to protect here.
 //
 // `apiFolderPath`/`apiBaseUrl` drive every generated slug, sidebar doc id,
-// and internal cross-reference link doxygen2docusaurus bakes in — for a job
-// on the single default docs instance, that's the job's own `to` (this
-// site's real mount point, e.g. 'drivers/Adaptive grippers/Libraries/C++/API'),
-// so nothing needs post-hoc rewriting: the file lands at exactly the path
-// its own baked-in links already assume. A job with `destRoot` (its own
-// versioned plugin instance — see docs/contribute/versioning.mdx) is
-// different: `apiBaseUrl` there is just the instance-relative tail (e.g.
-// 'API'), since the instance's own `routeBasePath` already supplies
-// everything before it — doxygen2docusaurus's own slug/id construction
-// doesn't know that, so runDoxygen2Docusaurus additionally sets
-// `docsBaseUrl` to the instance's full routeBasePath (for the *absolute*
-// `<a href="/docs/...">` backlinks doxygen2docusaurus bakes into raw HTML,
-// which — unlike a Docusaurus slug — never gets combined with routeBasePath
-// automatically) and this script's own downstream helpers (everything from
-// here down that reads or constructs a `/docs/...`-shaped path) read
-// `currentRoutePrefix`/`currentDocsRoot` instead of hardcoding `/docs` or
-// `docs/`. Module-level, not threaded as parameters, because this whole
-// pipeline only ever processes one job at a time, strictly sequentially —
-// see where runDoxygen2Docusaurus sets them, right before doing any work.
+// and internal cross-reference link doxygen2docusaurus bakes in — always
+// the job's own `to` (the doc id relative to whichever instance owns this
+// job, e.g. 'drivers/Adaptive grippers/Libraries/C++/API' on the single
+// default docs instance, or 'Adaptive grippers/Libraries/C++/API' on the
+// shared 'versioned-tools' instance, which several tools' own doxygen jobs
+// could in principle share — see the comment on `apiFolderPath` itself,
+// below, for why this can't be shortened to an instance-relative tail like
+// bare 'API'). For a job on the single default docs instance that's also
+// this site's real mount point, so nothing needs post-hoc rewriting: the
+// file lands at exactly the path its own baked-in links already assume. A
+// job with `destRoot` (a separate versioned plugin instance — see
+// docs/contribute/versioning.mdx) is different: doxygen2docusaurus's own
+// slug/id construction has no idea that instance's `routeBasePath` even
+// exists, so runDoxygen2Docusaurus additionally sets `docsBaseUrl` to that
+// instance's full routeBasePath (plus its current version's own path
+// segment, e.g. 'next' — see the comment on `currentRoutePrefix` below) for
+// the *absolute* `<a href="/docs/...">` backlinks doxygen2docusaurus bakes
+// into raw HTML, which — unlike a Docusaurus slug — never gets combined
+// with routeBasePath automatically. This script's own downstream helpers
+// (everything from here down that reads or constructs a `/docs/...`-shaped
+// path) read `currentRoutePrefix`/`currentDocsRoot` instead of hardcoding
+// `/docs` or `docs/`. Module-level, not threaded as parameters, because
+// this whole pipeline only ever processes one job at a time, strictly
+// sequentially — see where runDoxygen2Docusaurus sets them, right before
+// doing any work.
 const DOXYGEN2DOCUSAURUS_STAGING_DIR = path.join(ROOT, '.doxygen2docusaurus-staging');
 const DOXYGEN2DOCUSAURUS_CONFIG_PATH = path.join(ROOT, 'doxygen2docusaurus.json');
 const DOXYGEN2DOCUSAURUS_BIN = require.resolve('@xpack/doxygen2docusaurus/bin/doxygen2docusaurus.js');
@@ -1170,17 +1176,25 @@ function runDoxygen2Docusaurus(job, written, folderDestPaths) {
   fs.rmSync(doxygenXmlDirAbs, { recursive: true, force: true });
   execSync('doxygen', { cwd: doxyfileDir, stdio: 'inherit' });
 
-  // See the big comment above DOXYGEN2DOCUSAURUS_STAGING_DIR for the full
-  // reasoning. Short version: a job with `destRoot` gets its own versioned
-  // plugin instance, whose `routeBasePath` already supplies everything up
-  // to the tool's own root — so `apiFolderPath` (which drives every slug,
-  // sidebar doc id, and staging path doxygen2docusaurus produces) is
-  // reduced to just the tail past that root (its own basename, e.g.
-  // 'API'), and every downstream helper needs `currentDocsRoot`/
-  // `currentRoutePrefix` set to match before it runs.
-  const apiFolderPath = job.destRoot ? path.basename(job.to) : job.to;
+  // `apiFolderPath` (which drives every slug, sidebar doc id, and staging
+  // path doxygen2docusaurus produces, plus the sidebar cache file's own
+  // name — see doxygenSidebarOutputPath) is always `job.to` itself, i.e.
+  // the doc id relative to whichever instance owns this job — the default
+  // 'docs' instance, or (see the big comment above
+  // DOXYGEN2DOCUSAURUS_STAGING_DIR) a `destRoot` job's own shared
+  // 'versioned-tools' instance, whose several tools all share one content
+  // root. It must stay the FULL path, not just a tail/basename (e.g.
+  // 'API') — multiple tools under that one shared root could otherwise
+  // produce the exact same bare folder name and silently collide on the
+  // same generated doc ids and the same sidebar cache file.
+  const apiFolderPath = job.to;
+  // The plugin instance's own content ROOT — `versioned-tools/` itself for
+  // a destRoot job, not one of its tool subfolders — since doc ids (via
+  // `path.relative(currentDocsRoot, file)` below) must be relative to
+  // whatever Docusaurus actually treats as this instance's own root, to
+  // match `apiFolderPath` above staying the full per-tool-prefixed path.
   currentDocsRoot = job.destRoot
-    ? path.join(ROOT, job.destRoot, path.dirname(job.to))
+    ? path.join(ROOT, job.destRoot)
     : path.join(ROOT, 'docs');
   // This job always writes to the CURRENT (live, always-rebuilt) version's
   // own content — a cut version is a frozen copy taken later, never

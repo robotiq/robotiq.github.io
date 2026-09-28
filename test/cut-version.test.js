@@ -1,7 +1,7 @@
 // Unit tests for scripts/cut-version.js's pure/file-scoped helpers.
 // The full checkout/sync/docs:version orchestration isn't unit tested
-// here — it's exercised end to end by actually re-cutting a real tool's
-// Stable/Previous versions (see docs/contribute/versioning.mdx).
+// here — it's exercised end to end by actually re-cutting the shared
+// Stable version for real (see docs/contribute/versioning.mdx).
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -11,8 +11,6 @@ const {
   rewriteMainLinksToTag,
   stripDevelopmentOnlyAdmonition,
   pruneDanglingSubpageLinks,
-  buildSignpost,
-  readFrontmatter,
 } = require('../scripts/cut-version');
 
 function tempDir() {
@@ -137,36 +135,3 @@ test('pruneDanglingSubpageLinks: no-op on a page with no marker', () => {
   assert.equal(fs.readFileSync(wrapper, 'utf8'), original);
 });
 
-test('buildSignpost: lists older tags when there are any', () => {
-  const out = buildSignpost({
-    title: 'C++',
-    sidebarLabel: 'C++',
-    submodule: 'tactile_sensors',
-    repoUrl: 'https://github.com/Robotiq/tactile_sensors',
-    stableTag: 'v2.0.0',
-    olderTags: ['v1.0.0'],
-  });
-  assert.match(out, /Stable\*\* currently tracks `tactile_sensors`'s newest release, \*\*v2\.0\.0\*\*/);
-  assert.match(out, /- \*\*v1\.0\.0\*\* — \[browse source\]\(https:\/\/github\.com\/Robotiq\/tactile_sensors\/tree\/v1\.0\.0\)/);
-});
-
-test('buildSignpost: says nothing archived yet with no older tags', () => {
-  const out = buildSignpost({
-    title: 'C++',
-    sidebarLabel: 'C++',
-    submodule: '2f85_cpp',
-    repoUrl: 'https://github.com/robotiq/grippers',
-    stableTag: 'v1.0.0',
-    olderTags: [],
-  });
-  assert.match(out, /only tagged release so far/);
-  assert.match(out, /no older releases archived here yet/);
-  assert.doesNotMatch(out, /browse source/);
-});
-
-test('readFrontmatter: reads title and sidebar_label', () => {
-  const root = tempDir();
-  const file = path.join(root, 'index.mdx');
-  fs.writeFileSync(file, '---\ntitle: Python\nsidebar_label: Python\n---\n\nBody.');
-  assert.deepEqual(readFrontmatter(file), {title: 'Python', sidebarLabel: 'Python'});
-});

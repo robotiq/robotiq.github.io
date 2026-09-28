@@ -548,13 +548,14 @@ above. For a **non-versioned** tool that's a site-relative doc id in
 `sidebars.js`, e.g. `'drivers/Adaptive grippers/Libraries/C++/API/index'`,
 passed to `loadDoxygenSidebarItems('drivers/Adaptive grippers/Libraries/C++/API')`
 (the same site-relative path as the job's own `to`). For a **versioned**
-tool it's instance-relative instead, in that tool's own
-`sidebars.<tool>.js` — e.g. `'API/index'` passed to
-`loadDoxygenSidebarItems('API')` (the job's own `to` with `destRoot`
-stripped) — see `sidebars.adaptive-grippers-cpp.js`'s `doxygenApiCategory`
-call for the real, current example, and
-[Per-tool documentation versioning](./versioning) for the rest of what's
-different about a versioned tool's sidebar.
+tool it's relative to the shared `versioned-tools` instance's own root
+instead, in `sidebars.versioned-tools.js` — e.g.
+`'Adaptive grippers/Libraries/C++/API/index'` passed to
+`loadDoxygenSidebarItems('Adaptive grippers/Libraries/C++/API')` (the
+job's own `to`, unchanged by `destRoot` — see `doxygenApiCategory`'s call
+in `sidebars.versioned-tools.js` for the real, current example, and
+[Documentation versioning](./versioning) for the rest of what's different
+about a versioned tool's sidebar.
 
 ## Optional: full-fidelity preview on this site
 
