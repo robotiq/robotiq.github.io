@@ -7,7 +7,7 @@
 // for the Adaptive grippers C++ tool's "Introduction guides"/"API
 // Reference" nesting — that tool moved to its own versioned plugin instance
 // (see docusaurus.config.js, 'adaptive-grippers-cpp', and
-// draft/documentation-versioning.md), taking that nesting with it into
+// docs/contribute/versioning.mdx), taking that nesting with it into
 // sidebars.adaptive-grippers-cpp.js. Nothing left in this file needs them;
 // re-add if a future non-versioned tool grows the same guides+API shape.
 //
@@ -32,7 +32,12 @@ import { buildMainSidebar } from './scripts/site-nav-tree.mjs';
  @type {import('@docusaurus/plugin-content-docs').SidebarsConfig}
  */
 const sidebars = {
-  driverSidebar: buildMainSidebar(),
+  // 'api-stability' is appended directly rather than folded into
+  // SITE_TREE: it's a general policy page linked contextually from the
+  // Development (main) version banner and docs/intro.mdx, not a
+  // product/tool — it doesn't need to appear on every versioned tool's own
+  // sidebar the way SITE_TREE's shared shape does.
+  driverSidebar: [...buildMainSidebar(), 'api-stability'],
 
   // Contributor docs — deliberately not shown in the site's main navbar
   // (Docusaurus still uses this sidebar whenever someone lands on a

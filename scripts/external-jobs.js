@@ -12,7 +12,7 @@ function submoduleJobs(submodule, { repoUrl, branch }, jobs) {
 const JOBS = [
   ...submoduleJobs('2f85_cpp', { repoUrl: 'https://github.com/robotiq/grippers', branch: 'main' }, [
     // Every job below has its own versioned plugin instance (see
-    // draft/documentation-versioning.md, and docusaurus.config.js's
+    // docs/contribute/versioning.mdx, and docusaurus.config.js's
     // 'adaptive-grippers-cpp' entry) — destRoot per the comment on it in
     // sync-external-docs.js's job loop, so `to` here is relative to
     // versioned-tools/ instead of docs/.
@@ -94,6 +94,12 @@ const JOBS = [
       // destRoot doxygen2docusaurus job needs this explicitly (its own
       // absolute-slug generation can't derive it from destRoot alone).
       routeBasePath: '/docs/drivers/Adaptive grippers/Libraries/C++',
+      // Must match this tool's own `versions.current.path` in
+      // docusaurus.config.js exactly — this job always writes the
+      // *current* version's content, and Development (main) lives under
+      // '/next' now that Stable owns the instance root. See the comment on
+      // this field in sync-external-docs.js.
+      currentVersionPath: 'next',
       exclude: [
         'files', 'folders', 'indices/files',
         'namespaces', 'indices/namespaces',
@@ -121,7 +127,7 @@ const JOBS = [
 
   ...submoduleJobs('tactile_sensors', { repoUrl: 'https://github.com/robotiq/tactile_sensors', branch: 'main' }, [
     // TSF 85 CPP and Python driver READMEs — both under per-tool
-    // documentation versioning (see draft/documentation-versioning.md), so
+    // documentation versioning (see docs/contribute/versioning.mdx), so
     // both live outside docs/ in their own destRoot: nesting a second,
     // separately versioned Docusaurus plugin instance's files inside the
     // main docs/ tree (even excluded from it) breaks MDX compilation — see
@@ -136,12 +142,13 @@ const JOBS = [
     // Robotiq's own 2F gripper Isaac Sim assets/guide — no README, just this
     // one guide file (no separate docs/ split yet: nothing else to put there).
     // Under per-tool documentation versioning (see
-    // draft/documentation-versioning.md) like every other Robotiq-
+    // docs/contribute/versioning.mdx) like every other Robotiq-
     // maintained, submodule-synced tool — destRoot per the comment on it in
     // sync-external-docs.js. isaacsim_assets has no tags yet, so its
-    // plugin instance currently only has a 'Latest' version (no Stable/
-    // Previous versions cut) — becomes a real 3-way switcher automatically
-    // once it gets its first tag, no restructuring needed then.
+    // plugin instance currently only has its current (Development/main)
+    // content (no Stable/Previous versions cut) — becomes a real 3-way
+    // switcher automatically once it gets its first tag, no restructuring
+    // needed then.
     { from: 'grippers/GRIPPER_SIMULATION_GUIDE.md', to: 'Adaptive grippers/Simulation/Isaac Sim/_readme.md', destRoot: 'versioned-tools' },
   ]),
 ];

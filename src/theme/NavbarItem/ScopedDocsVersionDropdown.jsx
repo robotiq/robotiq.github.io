@@ -7,8 +7,8 @@ import DocsVersionDropdownNavbarItem from '@theme/NavbarItem/DocsVersionDropdown
 // renders, everywhere on the site — when the current page isn't part of its
 // own docsPluginId, it just falls back to a link at that instance's
 // `lastVersion`, rather than disappearing. That's the opposite of what's
-// needed here: per draft/documentation-versioning.md, the Latest/Stable/
-// Previous versions switcher must only appear on the pages that actually
+// needed here: per docs/contribute/versioning.mdx, the Stable/Development
+// (main)/Previous versions switcher must only appear on the pages that actually
 // belong to a Robotiq-maintained, submodule-synced tool's own versioned
 // instance (e.g. 'tactile-python'), not site-wide on every other page
 // (product pages, third-party tools, docs/contribute/...).

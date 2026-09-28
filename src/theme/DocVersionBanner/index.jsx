@@ -13,10 +13,25 @@ import {ThemeClassNames} from '@docusaurus/theme-common';
 // hardcodes two stacked paragraphs ("This is unreleased documentation for
 // ... version." then, on its own line, "For up-to-date documentation, see
 // the latest version (...).") — condensed to one line/one sentence here.
-const BANNER_TEXT = {
-  unreleased: 'Unreleased documentation — for the latest release, see',
-  unmaintained: 'No longer maintained — for the latest release, see',
-};
+//
+// The 'unreleased' text also states this site's actual API-stability
+// policy, not just "unreleased" — Development (main) documents
+// in-progress work, and a reader landing here (e.g. from a search result,
+// before `noIndex` on that version took effect everywhere it's indexed)
+// needs to know its APIs aren't a commitment, not just that it's "not the
+// latest" — see docs/api-stability.mdx for the full policy this links to.
+function BannerText({banner}) {
+  if (banner === 'unreleased') {
+    return (
+      <>
+        Experimental: documents unreleased <code>main</code>. APIs may
+        change or be removed without notice and aren't covered by our{' '}
+        <Link to="/docs/api-stability">compatibility commitment</Link>. Use
+      </>
+    );
+  }
+  return <>No longer maintained — for the latest release, see</>;
+}
 
 function DocVersionBannerEnabled({className, versionMetadata}) {
   const {pluginId} = useActivePlugin({failfast: true});
@@ -29,7 +44,7 @@ function DocVersionBannerEnabled({className, versionMetadata}) {
     <div
       className={clsx(className, ThemeClassNames.docs.docVersionBanner, 'alert alert--warning margin-bottom--md')}
       role="alert">
-      {BANNER_TEXT[versionMetadata.banner]}{' '}
+      <BannerText banner={versionMetadata.banner} />{' '}
       <b>
         <Link
           to={latestVersionSuggestedDoc.path}

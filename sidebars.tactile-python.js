@@ -2,7 +2,7 @@
 
 // Sidebar for the 'tactile-python' plugin instance only (see
 // docusaurus.config.js's `plugins` array and
-// draft/documentation-versioning.md). Built from the same shared tree as
+// docs/contribute/versioning.mdx). Built from the same shared tree as
 // the main sidebar (scripts/site-nav-tree.mjs) so the rest of the site's
 // navigation stays visible here too — only this tool's own node resolves
 // to real content (a single page, no guides/API sub-navigation); every

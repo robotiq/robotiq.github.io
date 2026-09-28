@@ -44,7 +44,7 @@ function stripNumberPrefix(filename) {
  *   folder that's the versioned-instance root of its own tool.
  * @param {string} [fsRoot] Filesystem root `docPrefix` is relative to —
  *   defaults to the default instance's own `docs/`. A tool with its own
- *   versioned plugin instance (see draft/documentation-versioning.md)
+ *   versioned plugin instance (see docs/contribute/versioning.mdx)
  *   passes its own `versioned-tools/<Product>/<Tool>` root instead, since
  *   its doc-id namespace starts there, not at the site's `docs/`.
  */

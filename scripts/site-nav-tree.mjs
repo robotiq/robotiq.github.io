@@ -7,7 +7,7 @@
 // Why this exists: each versioned tool (Tactile Sensor C++/Python, Isaac
 // Sim, Adaptive grippers C++) lives in its own Docusaurus
 // plugin-content-docs instance for independent version cuts (see
-// docusaurus.config.js, draft/documentation-versioning.md). A plugin
+// docusaurus.config.js, docs/contribute/versioning.mdx). A plugin
 // instance can only build sidebar items out of doc ids it owns — every
 // other page has to be a plain link. Previously each per-tool sidebar file
 // listed ONLY that tool's own page(s), so clicking a versioned tool from
@@ -218,7 +218,7 @@ export function buildInstanceSidebar(activeTool, activeItem) {
 // (a versioned tool's non-current versions can have a DIFFERENT shape
 // than its current one — e.g. adaptive-grippers-cpp's Stable is a single
 // page today, sparse content from before its source repo grew a docs/
-// folder, while its Latest has nested guides/API). Rather than guess that
+// folder, while its Development (main) has nested guides/API). Rather than guess that
 // shape, this walks SITE_TREE in lockstep with the version's OWN existing
 // snapshot and pulls out whatever's already sitting at `activeTool`'s
 // position — correct by construction, since that position held the real,

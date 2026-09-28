@@ -101,8 +101,8 @@ theme: {
     ],
   ],
 
-  // Per-tool documentation versioning (Latest / Stable / Previous versions)
-  // — see draft/documentation-versioning.md. Only Robotiq-maintained,
+  // Per-tool documentation versioning (Stable / Development (main) /
+  // Previous versions) — see docs/contribute/versioning.mdx. Only Robotiq-maintained,
   // submodule-synced tools get their own instance like this (one per
   // instance below); product/ROS/third-party pages stay on the single
   // instance above, which has nothing to version against (no submodule,
@@ -130,8 +130,15 @@ theme: {
         rehypePlugins: [rehypeExternalLinksNewTab],
         includeCurrentVersion: true,
         lastVersion: 'stable',
+        // Stable owns the root path (''), not `current` — a first-time
+        // visitor (or an external link, or a search result) should land on
+        // a released version, not on whatever `main` happens to be at that
+        // moment. `current` moves to `next` instead, banner-tagged
+        // 'unreleased' and excluded from search/sitemap (`noIndex`) so it's
+        // never what search sends someone to. See "Which version the root
+        // URL serves" in docs/contribute/versioning.mdx.
         versions: {
-          current: { label: 'Latest', path: '' },
+          current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true },
           // Labeled with its tag: without this, the tag Stable actually
           // tracks isn't visible anywhere on the site, which reads as
           // "only 1 of tactile_sensors' 2 releases is on this site" even
@@ -139,7 +146,7 @@ theme: {
           // versioned-tools' version-previous-versions/index.mdx for the
           // matching explanation. Update this by hand whenever Stable is
           // re-cut to a newer tag (see scripts/list-submodule-tags.js).
-          stable: { label: 'Stable (v2.0.0)', path: 'stable' },
+          stable: { label: 'Stable (v2.0.0)', path: '' },
           'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
         },
       }),
@@ -156,10 +163,10 @@ theme: {
         rehypePlugins: [rehypeExternalLinksNewTab],
         includeCurrentVersion: true,
         lastVersion: 'stable',
+        // See the matching comment on 'tactile-python' above.
         versions: {
-          current: { label: 'Latest', path: '' },
-          // See the matching comment on 'tactile-python' above.
-          stable: { label: 'Stable (v2.0.0)', path: 'stable' },
+          current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true },
+          stable: { label: 'Stable (v2.0.0)', path: '' },
           'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
         },
       }),
@@ -176,7 +183,9 @@ theme: {
         rehypePlugins: [rehypeExternalLinksNewTab],
         // No lastVersion/versions config yet — isaacsim_assets has no tags,
         // so there's nothing to cut a 'stable'/'previous-versions' version
-        // from. Only 'Latest' exists for now. Deliberately no matching
+        // from. Only the current (Development/main) content exists for now,
+        // still at this instance's own root path (no 'next' split needed
+        // until there's an actual Stable to make room for). Deliberately no matching
         // navbar item below either: with only one version, Docusaurus
         // renders it as a plain "Current" button rather than hiding it —
         // clutter with no payoff until this submodule gets its first real
@@ -197,12 +206,12 @@ theme: {
         rehypePlugins: [rehypeExternalLinksNewTab],
         includeCurrentVersion: true,
         lastVersion: 'stable',
+        // See the matching comment on 'tactile-python' above. 2f85_cpp
+        // only has one tag so far (v1.0.0) — Previous versions has
+        // nothing older to list yet, see that version's own index.mdx.
         versions: {
-          current: { label: 'Latest', path: '' },
-          // See the matching comment on 'tactile-python' above. 2f85_cpp
-          // only has one tag so far (v1.0.0) — Previous versions has
-          // nothing older to list yet, see that version's own index.mdx.
-          stable: { label: 'Stable (v1.0.0)', path: 'stable' },
+          current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true },
+          stable: { label: 'Stable (v1.0.0)', path: '' },
           'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
         },
       }),
@@ -244,7 +253,7 @@ theme: {
           // The stock 'docsVersionDropdown' navbar item always renders,
           // site-wide — outside its own instance it just falls back to a
           // link instead of disappearing, which isn't the scoping this
-          // needs (see "Scope" in draft/documentation-versioning.md: each
+          // needs (see "Scope" in docs/contribute/versioning.mdx: each
           // of these must only appear on its own instance's own pages).
           // src/theme/NavbarItem/ScopedDocsVersionDropdown.jsx wraps it
           // with that visibility check; ComponentTypes.js registers it

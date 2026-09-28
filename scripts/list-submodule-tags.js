@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Lists a submodule repo's tags, newest first — the building block for two
-// things described in draft/documentation-versioning.md:
+// things described in docs/contribute/versioning.mdx:
 //   - picking the *newest* tag to pin the "Stable" version to
 //   - listing the *older* tags on a tool's "Previous versions" signpost
 //     page, each linking straight to that tag's source
@@ -19,8 +19,8 @@ const JOBS = require('./external-jobs');
 
 // Only vN / vN.N / vN.N.N-style tags sort meaningfully against each other —
 // anything else (a stray 'latest', a pre-release branch tag, ...) is left
-// out rather than guessed at. Matches the semver-sort assumption already
-// flagged as an open question in draft/documentation-versioning.md.
+// out rather than guessed at. This assumes every submodule tags `vX.Y.Z`
+// consistently — true for every submodule this repo currently pins.
 const SEMVER_TAG_RE = /^v(\d+)(?:\.(\d+))?(?:\.(\d+))?$/;
 
 function compareSemver(a, b) {

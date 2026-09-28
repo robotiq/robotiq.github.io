@@ -280,7 +280,7 @@ Your callback() <-------           Call callback()
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-See [LICENSE](https://github.com/robotiq/tactile_sensors/tree/main/LICENSE) or [https://www.gnu.org/licenses/](https://www.gnu.org/licenses/) for details.
+See [LICENSE](https://github.com/robotiq/tactile_sensors/tree/v2.0.0/LICENSE) or [https://www.gnu.org/licenses/](https://www.gnu.org/licenses/) for details.
 
 ## Credits
 

@@ -34,7 +34,7 @@ const matter = require('gray-matter');
 const ROOT = path.resolve(__dirname, '..');
 const DRIVERS_DIR = path.join(ROOT, 'docs', 'drivers');
 // A tool piloting per-tool documentation versioning (see
-// draft/documentation-versioning.md) lives here instead of under
+// docs/contribute/versioning.mdx) lives here instead of under
 // DRIVERS_DIR — its own Docusaurus plugin instance can't be nested inside
 // the main docs/ tree (see the destRoot comment in sync-external-docs.js).
 // Mirrors DRIVERS_DIR's own <Product>/<...> structure underneath each

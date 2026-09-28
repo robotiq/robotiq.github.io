@@ -82,7 +82,7 @@ Visual Studio build would have to compile libserialport itself.
 A complete example — waiting for motion to settle, reading the
 position back, injecting a log sink — is built as described in the Building section
 and can be found here:
-[`sdk_cpp/examples/move_gripper.cpp`](https://github.com/robotiq/grippers/blob/main/sdk_cpp/examples/move_gripper.cpp)
+[`sdk_cpp/examples/move_gripper.cpp`](https://github.com/robotiq/grippers/blob/v1.0.0/sdk_cpp/examples/move_gripper.cpp)
 
 Run it by executing:
 ```sh

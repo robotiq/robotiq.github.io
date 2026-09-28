@@ -1,0 +1,43 @@
+---
+title: API Stability Policy
+sidebar_label: API stability policy
+---
+
+# API stability policy
+
+This page applies to every Robotiq-maintained software tool on this site
+that has its own **Stable / Development (main) / Previous versions**
+switcher (see
+[Per-tool documentation versioning](/docs/contribute/versioning) for how
+that switcher works).
+
+## Only a tagged release is a commitment
+
+**Stable** always tracks a tool's newest tagged release. That's the only
+version this site makes any compatibility commitment about — once a tag
+is cut, the API it documents doesn't change under you.
+
+**Development (main)** documents whatever is currently on the source
+repository's default branch, which can include work in progress: renamed
+methods, changed signatures, new required parameters, or symbols removed
+entirely, all without notice. Nothing on a Development page is a
+commitment, even if it looks finished. If you're integrating against one
+of these tools, build against **Stable**, not Development.
+
+## Versioning scheme
+
+Each tool tags its own releases independently — there's no single
+site-wide version number, since this site aggregates several
+independently-released repositories. A tool's tags follow `vMAJOR.MINOR.PATCH`
+(semantic versioning): a `MAJOR` bump can break compatibility, `MINOR`
+adds functionality without breaking existing callers, and `PATCH` is a
+fix with no API change.
+
+## Previous versions
+
+Older tagged releases aren't archived on this site — only **Stable** and
+**Development (main)** are real, rebuilt versions. A tool's **Previous
+versions** page
+lists its older tags with a link to that tag's own source, so you can
+still read matching documentation (and check out matching code), just not
+in place on this site.

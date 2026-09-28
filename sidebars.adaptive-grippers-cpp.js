@@ -2,7 +2,7 @@
 
 // Sidebar for the 'adaptive-grippers-cpp' plugin instance only (see
 // docusaurus.config.js's `plugins` array and
-// draft/documentation-versioning.md) — mirrors the "Introduction guides" +
+// docs/contribute/versioning.mdx) — mirrors the "Introduction guides" +
 // "API Reference" nesting the main sidebars.js used to carry for this tool
 // directly, before it moved to its own versioned instance. Doc ids here are
 // relative to this instance's own `path`
