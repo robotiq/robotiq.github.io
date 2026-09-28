@@ -461,12 +461,19 @@ publish the reference automatically.
   Doxybook2-based pipeline).
 
 Add a job with a `doxygen2docusaurus` field (instead of `from`) to that
-submodule's list in `scripts/external-jobs.js`:
+submodule's list in `scripts/external-jobs.js`. If the tool is under
+[per-tool documentation versioning](./versioning) (every current
+doxygen2docusaurus consumer on this site is — see the real `2f85_cpp` job),
+it also needs `destRoot: 'versioned-tools'` and `routeBasePath` — see the
+comment on both, and on `apiFolderPath`/`docsBaseUrl` below, for why a
+`destRoot` job needs `routeBasePath` spelled out explicitly:
 
 ```js
 {
   doxygen2docusaurus: { doxyfileDir: 'sdk_cpp' },
-  to: 'drivers/Adaptive grippers/Libraries/C++/API',
+  to: 'Adaptive grippers/Libraries/C++/API',
+  destRoot: 'versioned-tools',
+  routeBasePath: '/docs/drivers/Adaptive grippers/Libraries/C++',
   exclude: [
     'files', 'folders', 'indices/files',
     'namespaces', 'indices/namespaces',
@@ -474,6 +481,10 @@ submodule's list in `scripts/external-jobs.js`:
   ],
 },
 ```
+
+A non-versioned tool's job (no `destRoot`) skips `routeBasePath` entirely
+and uses `to: 'drivers/Adaptive grippers/Libraries/C++/API'` instead —
+site-relative from `docs/`, the same as any other job's `to`.
 
 `sync-external-docs.js`'s handling of a `doxygen2docusaurus` job first
 deletes that submodule's `doxygen-xml/` output folder, then runs `doxygen`.
@@ -489,18 +500,31 @@ exclusion just sat there, untouched, until something finally deleted the
 folder.
 
 It then writes a `doxygen2docusaurus.json` config next to the repo root
-(`apiFolderPath`/`apiBaseUrl` both set to the job's own `to`, so every
-generated slug and cross-reference is already correct for where the content
-ends up — no post-hoc link rewriting needed) and runs the tool against it,
-staged into a gitignored folder rather than straight into `docs/` (doxygen2docusaurus
-also wipes its own *output* folder on every run — staging keeps that
-separate from the post-processing pipeline below, and lets `pruneStale`
-compare "what should exist now" against what's actually in `docs/` before
-touching anything there). It then applies the transforms described in
+and runs the tool against it, staged into a gitignored folder rather than
+straight into `docs/`/`versioned-tools/` (doxygen2docusaurus also wipes its
+own *output* folder on every run — staging keeps that separate from the
+post-processing pipeline below, and lets `pruneStale` compare "what should
+exist now" against what's actually there before touching anything). For a
+**non-versioned** job, `apiFolderPath`/`apiBaseUrl` are both just the job's
+own `to` (this site's real mount point), so every generated slug and
+cross-reference is already correct for where the content ends up — no
+post-hoc link rewriting needed. For a **versioned** (`destRoot`) job,
+`apiFolderPath` is reduced to just the instance-relative tail (e.g. `'API'`,
+via `path.basename(job.to)`) since that's also what drives the sidebar
+JSON's own doc ids, which must be instance-relative to match
+`sidebars.<tool>.js`; `docsBaseUrl` is set from the job's own
+`routeBasePath` instead of the default `'docs'`, so the absolute
+`<a href="...">` backlinks doxygen2docusaurus bakes directly into the
+generated HTML still resolve to the versioned instance's real
+`routeBasePath`, not the default instance's `/docs`. See the big comment on
+`destRoot`/`currentDocsRoot`/`currentRoutePrefix` near the top of
+`sync-external-docs.js` for the full mechanics. Either way, it then applies
+the transforms described in
 [Matching Doxygen's own reference look](#matching-doxygens-own-reference-look)
-above, copies the result into `docs/${to}/`, builds the [Global
-Index](#global-index), and writes the pruned/merged sidebar JSON — all
-before `sidebars.js` ever reads it back.
+above, copies the result into place, builds the [Global
+Index](#global-index), and writes the pruned/merged sidebar JSON to
+`scripts/generated/doxygen-sidebar-<api-folder>-<hash>.json` — all before
+`sidebars.js`/`sidebars.<tool>.js` ever reads it back.
 
 **Every page under this job comes from the submodule alone — nothing here is
 hand-authored on this site**, including the section's own landing page:
@@ -515,12 +539,22 @@ to update it (this exact page went stale within days, listing a group that
 had already been renamed upstream), where the generated page is correct by
 construction on every run.
 
-Add `'drivers/Adaptive grippers/Libraries/C++/API/index'` (Docusaurus resolves a doc's `id`
-from its path, regardless of whether the underlying file is `.md` or `.mdx`)
-to the sidebar; everything under it comes from
-`loadDoxygenSidebarItems('drivers/Adaptive grippers/Libraries/C++/API')` as described in
+Add the API reference's `index` doc (Docusaurus resolves a doc's `id` from
+its path, regardless of whether the underlying file is `.md` or `.mdx`) to
+the sidebar; everything under it comes from `loadDoxygenSidebarItems(...)`
+as described in
 [The sidebar mirrors the Doxygen group hierarchy automatically](#the-sidebar-mirrors-the-doxygen-group-hierarchy-automatically)
-above.
+above. For a **non-versioned** tool that's a site-relative doc id in
+`sidebars.js`, e.g. `'drivers/Adaptive grippers/Libraries/C++/API/index'`,
+passed to `loadDoxygenSidebarItems('drivers/Adaptive grippers/Libraries/C++/API')`
+(the same site-relative path as the job's own `to`). For a **versioned**
+tool it's instance-relative instead, in that tool's own
+`sidebars.<tool>.js` — e.g. `'API/index'` passed to
+`loadDoxygenSidebarItems('API')` (the job's own `to` with `destRoot`
+stripped) — see `sidebars.adaptive-grippers-cpp.js`'s `doxygenApiCategory`
+call for the real, current example, and
+[Per-tool documentation versioning](./versioning) for the rest of what's
+different about a versioned tool's sidebar.
 
 ## Optional: full-fidelity preview on this site
 
@@ -620,6 +654,11 @@ the **tool repo**, then adding one job entry **here** — nothing in
    plain `{ from, to }` jobs in the same `submoduleJobs(...)` call — see
    [Splitting a tool page into overview, API reference, and guides](./how-it-works#splitting-a-tool-page-into-overview-api-reference-and-guides)
    in "How it works".
+   If the tool is also getting [per-tool documentation versioning](./versioning)
+   (the common case — see that page's checklist for the rest of the setup),
+   `destRoot`/`routeBasePath` go on this job too, per
+   [Wiring it into this site's build](#wiring-it-into-this-sites-build)
+   above.
 9. Add the new section's sidebar entries — the tool's `index.mdx`, the
    generated API reference's doc id, and the `docs/` guides' doc id, if
    present — per the same "Splitting a tool page..." section.

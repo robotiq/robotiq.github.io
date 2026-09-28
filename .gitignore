@@ -34,6 +34,14 @@ docs/drivers/**/*.md
 # job's actual output before adding the blanket rule above.
 !docs/drivers/Force Torque Sensor/Libraries/C/_readme.md
 
+# Same rule, same reasoning, for a per-tool-versioned tool's live content —
+# see docs/contribute/versioning.mdx. This is the *live*, always-regenerated
+# 'Latest' content; it is NOT the same thing as a cut version's own frozen
+# snapshot (<tool>_versioned_docs/, <tool>_versioned_sidebars/,
+# <tool>_versions.json), which IS committed — a version cut is a deliberate,
+# permanent record, not build output.
+versioned-tools/**/*.md
+
 # doxygen2docusaurus scratch output (scripts/sync-external-docs.js stages
 # here, then copies the filtered result into docs/ — see external-jobs.js)
 /.doxygen2docusaurus-staging
