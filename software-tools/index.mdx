@@ -1,0 +1,30 @@
+---
+title: Software Tools
+slug: /
+---
+
+import {useEffect} from 'react';
+import {useHistory} from '@docusaurus/router';
+
+export function OverviewRedirect() {
+  const history = useHistory();
+  useEffect(() => {
+    history.replace('/docs/intro');
+  }, [history]);
+  return null;
+}
+
+<OverviewRedirect />
+
+{/*
+This page has no real content of its own — it exists only so the shared
+'versioned-tools' instance has a genuine home doc (a doc with `slug: /`)
+at its own root, for BOTH Latest and Stable. Without it,
+Docusaurus's own getMainDocId falls back to "the first real doc in the
+first sidebar" whenever there's no current doc to carry across a version
+switch (e.g. picking a version from the site root or from docs/intro.mdx,
+both outside this instance) — which happened to be Adaptive grippers'
+own landing page, so switching versions from outside this instance
+dropped a visitor into gripper docs instead of staying somewhere neutral.
+See docs/contribute/versioning.mdx.
+*/}

@@ -45,7 +45,7 @@ function stripNumberPrefix(filename) {
  * @param {string} [fsRoot] Filesystem root `docPrefix` is relative to —
  *   defaults to the default instance's own `docs/`. A tool with its own
  *   versioned plugin instance (see docs/contribute/versioning.mdx)
- *   passes its own `versioned-tools/<Product>/<Tool>` root instead, since
+ *   passes its own `software-tools/<Product>/<Tool>` root instead, since
  *   its doc-id namespace starts there, not at the site's `docs/`.
  */
 export function generateFolderSidebarItems(docPrefix, fsRoot = path.join(ROOT, 'docs')) {

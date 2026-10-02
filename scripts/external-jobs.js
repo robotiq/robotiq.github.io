@@ -9,16 +9,37 @@ function submoduleJobs(submodule, { repoUrl, branch }, jobs) {
   return jobs.map((job) => ({ submodule, repoUrl, branch, ...job }));
 }
 
+// Marks one or more jobs as belonging to a single versioned tool — the
+// ONE place `toolId`/`toolPath` get stated, instead of a second
+// hand-written entry in scripts/versioned-tools.js. That file (and
+// sidebars.software-tools.js's activeItems map) now both derive
+// everything they need by scanning JOBS for this field: `submodule`/
+// `repoUrl` come along for free from the enclosing submoduleJobs() call,
+// and whether this tool needs a guides/API-reference category in the
+// sidebar (vs. a plain one-page link) is read off which KINDS of jobs
+// exist here (a `to: '<toolPath>/docs'` job, a `doxygen2docusaurus` job)
+// — see versioned-tools.js and sidebars.software-tools.js's own
+// activeItemFor. See "Checklist: adding versioning to a new tool" in
+// docs/contribute/versioning.mdx for the one remaining manual step this
+// doesn't cover (the tool's own position/label in
+// scripts/site-nav-tree.mjs's SITE_TREE — inherently not derivable, since
+// nothing else on this site says where in the nav a tool belongs or what
+// it's called there).
+function versionedTool(toolId, toolPath, jobs) {
+  return jobs.map((job) => ({ toolId, toolPath, ...job }));
+}
+
 const JOBS = [
   ...submoduleJobs('2f85_cpp', { repoUrl: 'https://github.com/robotiq/grippers', branch: 'main' }, [
-    // Every job below has its own versioned plugin instance (see
-    // docs/contribute/versioning.mdx, and docusaurus.config.js's
-    // 'adaptive-grippers-cpp' entry) — destRoot per the comment on it in
-    // sync-external-docs.js's job loop, so `to` here is relative to
-    // versioned-tools/ instead of docs/.
+    // Every job below is versioned, participating in the shared
+    // 'software-tools' Docusaurus instance's Stable/Development (main)
+    // cuts (see docs/contribute/versioning.mdx) — destRoot per the
+    // comment on it in sync-external-docs.js's job loop, so `to` here is
+    // relative to software-tools/ instead of docs/.
+    ...versionedTool('adaptive-grippers-cpp', 'Adaptive grippers/Libraries/C++', [
 
     // 2F 85 CPP driver README
-    { from: 'README.md', to: 'Adaptive grippers/Libraries/C++/_readme.md', destRoot: 'versioned-tools' },
+    { from: 'README.md', to: 'Adaptive grippers/Libraries/C++/_readme.md', destRoot: 'software-tools' },
 
     // 2F 85 CPP driver docs/ folder. No sidebarPositions needed: the repo
     // itself now names these guides with a numeric prefix (1-introduction.md,
@@ -38,7 +59,7 @@ const JOBS = [
     {
       from: 'docs',
       to: 'Adaptive grippers/Libraries/C++/docs',
-      destRoot: 'versioned-tools',
+      destRoot: 'software-tools',
       docSnippetsCheck: {
         script: 'sdk_cpp/tools/check_doc_snippets.py',
         markdownGlob: 'docs/*.md',
@@ -87,14 +108,17 @@ const JOBS = [
     {
       doxygen2docusaurus: { doxyfileDir: 'sdk_cpp' },
       to: 'Adaptive grippers/Libraries/C++/API',
-      destRoot: 'versioned-tools',
-      // Full public URL prefix for this instance — see the big comment on
+      destRoot: 'software-tools',
+      // The *shared* 'software-tools' instance's own routeBasePath — not
+      // this tool's own sub-path — because Docusaurus inserts a version's
+      // path segment (e.g. 'next') right after the owning instance's
+      // routeBasePath, before any doc id. See the big comment on
       // apiFolderPath/currentDocsRoot/currentRoutePrefix above
       // DOXYGEN2DOCUSAURUS_STAGING_DIR in sync-external-docs.js for why a
       // destRoot doxygen2docusaurus job needs this explicitly (its own
       // absolute-slug generation can't derive it from destRoot alone).
-      routeBasePath: '/docs/drivers/Adaptive grippers/Libraries/C++',
-      // Must match this tool's own `versions.current.path` in
+      routeBasePath: '/docs/drivers',
+      // Must match the shared instance's own `versions.current.path` in
       // docusaurus.config.js exactly — this job always writes the
       // *current* version's content, and Development (main) lives under
       // '/next' now that Stable owns the instance root. See the comment on
@@ -123,33 +147,55 @@ const JOBS = [
         'indices/classes/enumvalues.md',
       ],
     },
+    ]),
   ]),
 
   ...submoduleJobs('tactile_sensors', { repoUrl: 'https://github.com/robotiq/tactile_sensors', branch: 'main' }, [
-    // TSF 85 CPP and Python driver READMEs — both under per-tool
-    // documentation versioning (see docs/contribute/versioning.mdx), so
-    // both live outside docs/ in their own destRoot: nesting a second,
-    // separately versioned Docusaurus plugin instance's files inside the
-    // main docs/ tree (even excluded from it) breaks MDX compilation — see
-    // the comment on destRoot in sync-external-docs.js's job loop.
-    { from: 'sdk_cpp/README.md', to: 'Tactile Sensor/Libraries/C++/_readme.md', destRoot: 'versioned-tools' },
-    { from: 'sensor_quickstart/README.md', to: 'Tactile Sensor/Libraries/Python/_readme.md', destRoot: 'versioned-tools' },
-    // Folder example — uncomment when a repo has a docs/ folder:
-    // { from: 'docs', to: 'drivers/tsf-85' },
+    // TSF 85 CPP and Python driver READMEs — both versioned, participating
+    // in the shared 'software-tools' instance's Stable/Development (main)
+    // cuts (see docs/contribute/versioning.mdx), so both live outside
+    // docs/ in their own destRoot: nesting the versioned instance's files
+    // inside the main docs/ tree (even excluded from it) breaks MDX
+    // compilation — see the comment on destRoot in
+    // sync-external-docs.js's job loop.
+    ...versionedTool('tactile-cpp', 'Tactile Sensor/Libraries/C++', [
+      { from: 'sdk_cpp/README.md', to: 'Tactile Sensor/Libraries/C++/_readme.md', destRoot: 'software-tools' },
+      // Folder example — uncomment when a repo has a docs/ folder:
+      // { from: 'docs', to: 'Tactile Sensor/Libraries/C++/docs', destRoot: 'software-tools' },
+    ]),
+    ...versionedTool('tactile-python', 'Tactile Sensor/Libraries/Python', [
+      { from: 'sensor_quickstart/README.md', to: 'Tactile Sensor/Libraries/Python/_readme.md', destRoot: 'software-tools' },
+    ]),
+  ]),
+
+  ...submoduleJobs('robotiq_ros', { repoUrl: 'https://github.com/robotiq/ros', branch: 'main' }, [
+    // One monorepo, one root README (no per-package README) covering both
+    // packages it ships: grippers/ (Adaptive grippers) and robotiq_tsf/
+    // (Tactile Sensor) — synced to both products' ROS page. Both
+    // versioned, participating in the shared 'software-tools' instance's
+    // Stable/Development (main) cuts (see docs/contribute/versioning.mdx).
+    ...versionedTool('adaptive-grippers-ros', 'Adaptive grippers/ROS', [
+      { from: 'README.md', to: 'Adaptive grippers/ROS/_readme.md', destRoot: 'software-tools' },
+    ]),
+    ...versionedTool('tactile-ros', 'Tactile Sensor/ROS', [
+      { from: 'README.md', to: 'Tactile Sensor/ROS/_readme.md', destRoot: 'software-tools' },
+    ]),
   ]),
 
   ...submoduleJobs('isaacsim_assets', { repoUrl: 'https://github.com/robotiq/isaacsim_assets', branch: 'main' }, [
     // Robotiq's own 2F gripper Isaac Sim assets/guide — no README, just this
     // one guide file (no separate docs/ split yet: nothing else to put there).
-    // Under per-tool documentation versioning (see
+    // Under the shared software-tools instance (see
     // docs/contribute/versioning.mdx) like every other Robotiq-
     // maintained, submodule-synced tool — destRoot per the comment on it in
-    // sync-external-docs.js. isaacsim_assets has no tags yet, so its
-    // plugin instance currently only has its current (Development/main)
-    // content (no Stable/Previous versions cut) — becomes a real 3-way
-    // switcher automatically once it gets its first tag, no restructuring
-    // needed then.
-    { from: 'grippers/GRIPPER_SIMULATION_GUIDE.md', to: 'Adaptive grippers/Simulation/Isaac Sim/_readme.md', destRoot: 'versioned-tools' },
+    // sync-external-docs.js. isaacsim_assets has no tags yet, so
+    // scripts/cut-version.js's Stable cut just carries its live main
+    // content forward unchanged for this tool — becomes cut for real
+    // automatically once it gets its first tag, no restructuring needed
+    // then.
+    ...versionedTool('isaac-sim', 'Adaptive grippers/Simulation/Isaac Sim', [
+      { from: 'grippers/GRIPPER_SIMULATION_GUIDE.md', to: 'Adaptive grippers/Simulation/Isaac Sim/_readme.md', destRoot: 'software-tools' },
+    ]),
   ]),
 ];
 

@@ -4,12 +4,35 @@
 // There are various equivalent ways to declare your Docusaurus config.
 // See: https://docusaurus.io/docs/api/docusaurus-config
 
+import fs from 'node:fs';
 import {themes as prismThemes} from 'prism-react-renderer';
 import remarkRobotiqWordmark from './src/remark/robotiqWordmark.mjs';
 import remarkYoutubeEmbed from './src/remark/youtubeEmbed.mjs';
 import rehypeExternalLinksNewTab from './src/remark/externalLinksNewTab.mjs';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
+
+// Bootstrapping-only self-check: every `docusaurus`/`docs:version:` CLI
+// invocation validates `lastVersion` against whatever versions actually
+// exist in software-tools_versions.json RIGHT NOW — including
+// scripts/cut-version.js's own `docs:version:` call that's about to CREATE
+// 'stable' for the very first time, when it doesn't exist yet anywhere.
+// Hardcoding `lastVersion: 'stable'` unconditionally would make that very
+// first cut impossible (a chicken-and-egg: cutting 'stable' requires
+// 'stable' to already be a valid lastVersion) — confirmed by hitting
+// exactly that: "Docs option lastVersion: stable is invalid. Available
+// version names are: current". Falling back to `undefined` (Docusaurus's
+// own default — resolves to `current`) until 'stable' genuinely exists
+// makes that first cut self-bootstrapping, no one-time manual config edit
+// needed; every invocation after that first successful cut sees 'stable'
+// in the file and behaves exactly as before.
+const stableVersionExists = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(new URL('./software-tools_versions.json', import.meta.url), 'utf8')).includes('stable');
+  } catch {
+    return false;
+  }
+})();
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -19,7 +42,17 @@ const config = {
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
-    v4: true, // Improve compatibility with the upcoming Docusaurus v4
+    // Improve compatibility with the upcoming Docusaurus v4. One gotcha
+    // this turns off: MDX v1 compat's legacy admonition-title syntax
+    // (`:::tip Some Title`). With v4 on, that's silently accepted by the
+    // MDX parser but renders as a literal `:::tip Some Title ... :::`
+    // paragraph, with no build error — confirmed the hard way, twice
+    // (a generated notice in sync-external-docs.js, and every versioned
+    // tool wrapper page's own admonition, both went unnoticed for a while
+    // rendering as raw text). A custom admonition title needs the
+    // bracketed directive-label syntax instead: `:::tip[Some Title]`.
+    // Plain `:::tip`/`:::note`/... with no custom title is unaffected.
+    v4: true,
     faster: {
       // v4's fasterByDefault turns this on along with the rest of the
       // rspack/SWC "Faster" toolchain. On this machine it panics on nearly
@@ -101,119 +134,144 @@ theme: {
     ],
   ],
 
-  // Per-tool documentation versioning (Stable / Development (main) /
-  // Previous versions) — see docs/contribute/versioning.mdx. Only Robotiq-maintained,
-  // submodule-synced tools get their own instance like this (one per
-  // instance below); product/ROS/third-party pages stay on the single
-  // instance above, which has nothing to version against (no submodule,
-  // no tags). The C++ API reference (2f85_cpp) has its own separate,
-  // larger instance further down — its absolute-slug generation needed
-  // reworking first; see runDoxygen2Docusaurus's `apiBaseUrl`/`docsBaseUrl`
-  // handling in sync-external-docs.js.
+  // One shared instance for every Robotiq-maintained, submodule-synced
+  // tool's Stable/Latest content — see
+  // docs/contribute/versioning.mdx. EVERY product/tool page lives here,
+  // versioned or not (Force Torque Sensor, EPick, every product's own ROS
+  // pages, ...), not just the submodule-backed ones — see the
+  // `routeBasePath` comment below for why that's required, not just
+  // convenient. A tool gets *versioned* content specifically by having an
+  // entry in scripts/versioned-tools.js and a matching leaf in
+  // scripts/site-nav-tree.mjs's SITE_TREE / sidebars.software-tools.js's
+  // active-items map — nothing here in docusaurus.config.js itself changes
+  // per tool.
   //
-  // `path` deliberately lives under versioned-tools/, not docs/ — nesting
+  // `path` deliberately lives under software-tools/, not docs/ — nesting
   // this instance's files inside the default instance's own docs/ tree
   // (even with `exclude` covering them there) reproducibly broke MDX
   // compilation with a bogus "Unexpected FunctionDeclaration ... non-esm"
   // error; moving the exact same files outside docs/ fixed it. See the
   // matching comment on `destRoot` in sync-external-docs.js.
+  //
+  // `routeBasePath: 'docs/drivers'` has to be this instance's ONLY, and
+  // this instance's own content root has to be the ONLY thing under it —
+  // two plugin instances can NOT split ownership of one URL prefix,
+  // even for genuinely disjoint underlying content. Docusaurus generates
+  // one non-exact, prefix-matching top-level React Router route per
+  // instance's own routeBasePath; React Router's `<Switch>` commits to
+  // whichever one matches FIRST (registration order) for the ENTIRE
+  // prefix and never falls through to try another route if nothing
+  // matches deeper — confirmed by hitting exactly that: with product
+  // pages (Force Torque Sensor, EPick, every product's own ROS pages)
+  // left on the default instance's own docs/drivers/ and only the
+  // submodule-backed tool pages moved here, this instance's own
+  // `/docs/drivers` wrapper route intercepted EVERY path under that
+  // prefix client-side — including ones that were still real pages on
+  // the default instance — and 404'd them, even though the initial
+  // server-rendered HTML for that exact URL was completely fine (a hard
+  // load never goes through React Router's own matching at all, so the
+  // break only showed up navigating there via a client-side link click).
+  // Moving every product/tool page here, so nothing else claims any part
+  // of `/docs/drivers/*`, is what actually fixes that, not a
+  // workaround.
   plugins: [
     [
       '@docusaurus/plugin-content-docs',
       /** @type {import('@docusaurus/plugin-content-docs').Options} */
       ({
-        id: 'tactile-python',
-        path: 'versioned-tools/Tactile Sensor/Libraries/Python',
-        routeBasePath: 'docs/drivers/Tactile Sensor/Libraries/Python',
-        sidebarPath: './sidebars.tactile-python.js',
+        id: 'software-tools',
+        path: 'software-tools',
+        routeBasePath: 'docs/drivers',
+        sidebarPath: './sidebars.software-tools.js',
         remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
         rehypePlugins: [rehypeExternalLinksNewTab],
         includeCurrentVersion: true,
-        lastVersion: 'stable',
+        lastVersion: stableVersionExists ? 'stable' : undefined,
         // Stable owns the root path (''), not `current` — a first-time
         // visitor (or an external link, or a search result) should land on
-        // a released version, not on whatever `main` happens to be at that
+        // released content, not on whatever `main` happens to be at that
         // moment. `current` moves to `next` instead, banner-tagged
         // 'unreleased' and excluded from search/sitemap (`noIndex`) so it's
         // never what search sends someone to. See "Which version the root
-        // URL serves" in docs/contribute/versioning.mdx.
+        // URL serves" in docs/contribute/versioning.mdx. No per-tool tag in
+        // either label — every submodule can be at a different tag, so
+        // there's no single sitewide version number to print here; each
+        // page's own banner (src/theme/DocVersionBanner) names its own
+        // submodule's actual tag instead.
+        // Docusaurus validates every key here against the versions that
+        // already exist in software-tools_versions.json too, not just
+        // `lastVersion` above (confirmed by hitting "Invalid docs option
+        // versions: unknown versions (stable) found" while bootstrapping
+        // the very first cut ever) — `stable`'s whole entry has to stay
+        // out until it's a real version, same bootstrapping reason as
+        // `lastVersion` above.
         versions: {
-          current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true },
-          // Labeled with its tag: without this, the tag Stable actually
-          // tracks isn't visible anywhere on the site, which reads as
-          // "only 1 of tactile_sensors' 2 releases is on this site" even
-          // though Stable IS the newer one — see
-          // versioned-tools' version-previous-versions/index.mdx for the
-          // matching explanation. Update this by hand whenever Stable is
-          // re-cut to a newer tag (see scripts/list-submodule-tags.js).
-          stable: { label: 'Stable (v2.0.0)', path: '' },
-          'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
+          // `badge: false` on both — Docusaurus's own default "Version: X"
+          // pill duplicated src/theme/DocVersionBanner's own top-of-page
+          // banner, which already says the same thing with more context
+          // (why it's Latest/Stable, and what to do about it) — confirmed
+          // by hitting it directly, both stacked on the same page. There
+          // used to be a swizzled src/theme/DocVersionBadge just to
+          // suppress the pill on pages with no registered tool behind
+          // them; disabling it sitewide here instead makes that swizzle
+          // unnecessary — deleted.
+          current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true, badge: false },
+          ...(stableVersionExists ? {stable: { label: 'Stable', path: '', badge: false }} : {}),
         },
       }),
     ],
+
+    // Redirects every page this rework removed outright (not moved, not
+    // renamed — gone) to the nearest page that still covers the same
+    // ground, so an external link, bookmark, or search result pointing at
+    // the live site's current URLs doesn't just 404 once this ships.
     [
-      '@docusaurus/plugin-content-docs',
-      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      '@docusaurus/plugin-client-redirects',
+      /** @type {import('@docusaurus/plugin-client-redirects').Options} */
       ({
-        id: 'tactile-cpp',
-        path: 'versioned-tools/Tactile Sensor/Libraries/C++',
-        routeBasePath: 'docs/drivers/Tactile Sensor/Libraries/C++',
-        sidebarPath: './sidebars.tactile-cpp.js',
-        remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
-        rehypePlugins: [rehypeExternalLinksNewTab],
-        includeCurrentVersion: true,
-        lastVersion: 'stable',
-        // See the matching comment on 'tactile-python' above.
-        versions: {
-          current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true },
-          stable: { label: 'Stable (v2.0.0)', path: '' },
-          'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
-        },
-      }),
-    ],
-    [
-      '@docusaurus/plugin-content-docs',
-      /** @type {import('@docusaurus/plugin-content-docs').Options} */
-      ({
-        id: 'isaac-sim',
-        path: 'versioned-tools/Adaptive grippers/Simulation/Isaac Sim',
-        routeBasePath: 'docs/drivers/Adaptive grippers/Simulation/Isaac Sim',
-        sidebarPath: './sidebars.isaac-sim.js',
-        remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
-        rehypePlugins: [rehypeExternalLinksNewTab],
-        // No lastVersion/versions config yet — isaacsim_assets has no tags,
-        // so there's nothing to cut a 'stable'/'previous-versions' version
-        // from. Only the current (Development/main) content exists for now,
-        // still at this instance's own root path (no 'next' split needed
-        // until there's an actual Stable to make room for). Deliberately no matching
-        // navbar item below either: with only one version, Docusaurus
-        // renders it as a plain "Current" button rather than hiding it —
-        // clutter with no payoff until this submodule gets its first real
-        // tag. Add a `custom-scopedVersionDropdown` item for 'isaac-sim'
-        // (matching 'tactile-python'/'tactile-cpp' below) once it does.
-        includeCurrentVersion: true,
-      }),
-    ],
-    [
-      '@docusaurus/plugin-content-docs',
-      /** @type {import('@docusaurus/plugin-content-docs').Options} */
-      ({
-        id: 'adaptive-grippers-cpp',
-        path: 'versioned-tools/Adaptive grippers/Libraries/C++',
-        routeBasePath: 'docs/drivers/Adaptive grippers/Libraries/C++',
-        sidebarPath: './sidebars.adaptive-grippers-cpp.js',
-        remarkPlugins: [remarkRobotiqWordmark, remarkYoutubeEmbed],
-        rehypePlugins: [rehypeExternalLinksNewTab],
-        includeCurrentVersion: true,
-        lastVersion: 'stable',
-        // See the matching comment on 'tactile-python' above. 2f85_cpp
-        // only has one tag so far (v1.0.0) — Previous versions has
-        // nothing older to list yet, see that version's own index.mdx.
-        versions: {
-          current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true },
-          stable: { label: 'Stable (v1.0.0)', path: '' },
-          'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
-        },
+        redirects: [
+          // Collapsed from one page per ROS distro/generation into a
+          // single ROS page per product (see "ROS" in
+          // docs/contribute/how-it-works.mdx) — every removed distro page
+          // redirects to it.
+          {
+            to: '/docs/drivers/Adaptive grippers/ROS/',
+            from: [
+              '/docs/drivers/Adaptive grippers/ROS/ROS1-Indigo/',
+              '/docs/drivers/Adaptive grippers/ROS/ROS1-Kinetic/',
+              '/docs/drivers/Adaptive grippers/ROS/ROS1-Melodic/',
+              '/docs/drivers/Adaptive grippers/ROS/ROS2-Humble/',
+              '/docs/drivers/Adaptive grippers/ROS/ROS2-Jazzy/',
+              '/docs/drivers/Adaptive grippers/ROS/ROS2-Lyrical/',
+            ],
+          },
+          {
+            to: '/docs/drivers/Tactile Sensor/ROS/',
+            from: [
+              '/docs/drivers/Tactile Sensor/ROS/ROS1-Noetic/',
+              '/docs/drivers/Tactile Sensor/ROS/ROS2-Humble/',
+              '/docs/drivers/Tactile Sensor/ROS/ROS2-Jazzy/',
+              '/docs/drivers/Tactile Sensor/ROS/ROS2-Lyrical/',
+            ],
+          },
+          // Collapsing every versioned tool into one shared Stable/Latest
+          // switcher (see docs/contribute/versioning.mdx) replaced each
+          // tool's own multi-version history with just these two — there's
+          // no equivalent "previous versions" page any more, so this sends
+          // a visitor to the tool's own root instead.
+          {
+            to: '/docs/drivers/Tactile Sensor/Libraries/C++/',
+            from: '/docs/drivers/Tactile Sensor/Libraries/C++/previous-versions/',
+          },
+          {
+            to: '/docs/drivers/Tactile Sensor/Libraries/Python/',
+            from: '/docs/drivers/Tactile Sensor/Libraries/Python/previous-versions/',
+          },
+          {
+            to: '/docs/drivers/Adaptive grippers/Libraries/C++/',
+            from: '/docs/drivers/Adaptive grippers/Libraries/C++/previous-versions/',
+          },
+        ],
       }),
     ],
   ],
@@ -239,7 +297,8 @@ theme: {
         items: [
           {
             type: 'docSidebar',
-            sidebarId: 'driverSidebar',
+            sidebarId: 'softwareToolsSidebar',
+            docsPluginId: 'software-tools',
             position: 'left',
             label: 'Software Tools',
           },
@@ -250,28 +309,21 @@ theme: {
           //   position: 'left',
           //   label: 'Examples',
           // },
-          // The stock 'docsVersionDropdown' navbar item always renders,
-          // site-wide — outside its own instance it just falls back to a
-          // link instead of disappearing, which isn't the scoping this
-          // needs (see "Scope" in docs/contribute/versioning.mdx: each
-          // of these must only appear on its own instance's own pages).
-          // src/theme/NavbarItem/ScopedDocsVersionDropdown.jsx wraps it
-          // with that visibility check; ComponentTypes.js registers it
-          // under this custom type. One item per versioned instance — each
-          // hides itself unless active, so only ever one shows at a time.
+          // Renders site-wide (every page, not just software-tools' own
+          // pages) — the stock behavior for this navbar item type. Type
+          // 'docsVersionDropdown' resolves to
+          // src/theme/NavbarItem/DocsVersionDropdownNavbarItem.jsx, a
+          // swizzled wrapper: inside the instance it's the stock component
+          // unchanged (switching versions keeps you on the equivalent
+          // page); outside it (the home page, docs/intro.mdx,
+          // docs/contribute/*, ...) the stock component's own fallback was
+          // to navigate to software-tools' own main doc, which is a real
+          // navigation away from wherever the visitor actually was — the
+          // wrapper instead just remembers the choice and stays put. See
+          // that file's own comment for why.
           {
-            type: 'custom-scopedVersionDropdown',
-            docsPluginId: 'tactile-python',
-            position: 'right',
-          },
-          {
-            type: 'custom-scopedVersionDropdown',
-            docsPluginId: 'tactile-cpp',
-            position: 'right',
-          },
-          {
-            type: 'custom-scopedVersionDropdown',
-            docsPluginId: 'adaptive-grippers-cpp',
+            type: 'docsVersionDropdown',
+            docsPluginId: 'software-tools',
             position: 'right',
           },
 {

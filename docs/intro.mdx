@@ -19,14 +19,14 @@ For details about `Robotiq` product hardware, please refer to the corresponding
 Hardware manual available on [Robotiq support website](https://robotiq.com/support).
 :::
 
-Some `Robotiq`-maintained tools carry their own **Stable / Development
-(main) / Previous versions** switcher, next to the navbar on that tool's own
-pages. **Stable** is the version you want if you're integrating against
-one of these tools — it always tracks that tool's newest tagged release,
-and is the only version this site makes any compatibility commitment
-about. **Development (main)** documents in-progress work and can change
-without notice. See the [API stability policy](/docs/api-stability) for
-the full details.
+This site has a sitewide **Stable / Development (main)** switcher, at the
+top of every page, covering every `Robotiq`-maintained tool. **Stable** is
+the version you want if you're integrating against one of these tools —
+it always tracks that tool's newest tagged release, and is the only
+version this site makes any compatibility commitment about.
+**Development (main)** documents in-progress work and can change without
+notice. See the [software stability policy](/docs/api-stability) for the
+full details.
 
 ## Software tools
 
@@ -34,9 +34,9 @@ Here below is a summary about available tools.
 
 Badge colors indicate who maintains the integration: ![Robotiq](https://img.shields.io/badge/Robotiq-blue) an official `Robotiq` maintained driver, ![Third party](https://img.shields.io/badge/Third_party-lightgrey) a community-maintained project.
 
+{/* AUTO-GENERATED-LIBRARIES-TABLE:START */}
 ### Libraries
 
-{/* AUTO-GENERATED-LIBRARIES-TABLE:START */}
 | Product | C | C++ | Python |
 |---|---|---|---|
 | [Adaptive grippers](drivers/Adaptive%20grippers) | - | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/Adaptive%20grippers/Libraries/C++) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/Adaptive%20grippers/Libraries/Python) |
@@ -48,40 +48,20 @@ Badge colors indicate who maintains the integration: ![Robotiq](https://img.shie
 - **Python** — Interpreted, prototyping-oriented language.
 {/* AUTO-GENERATED-LIBRARIES-TABLE:END */}
 
+{/* AUTO-GENERATED-ROS-TABLE:START */}
 ### ROS
 
-#### ROS2
-
-{/* AUTO-GENERATED-ROS2-TABLE:START */}
-| Product | Lyrical | Jazzy | Humble |
-|---|---|---|---|
-| [Adaptive grippers](drivers/Adaptive%20grippers) | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/Adaptive%20grippers/ROS/ROS2-Lyrical) | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/Adaptive%20grippers/ROS/ROS2-Jazzy) | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/Adaptive%20grippers/ROS/ROS2-Humble) |
-| [EPick](drivers/EPick) | - | - | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/EPick/ROS/ROS2-Humble) |
-| [Force Torque Sensor](drivers/Force%20Torque%20Sensor) | - | - | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/Force%20Torque%20Sensor/ROS/ROS2-Humble) |
-| [Tactile Sensor](drivers/Tactile%20Sensor) | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/Tactile%20Sensor/ROS/ROS2-Lyrical) | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/Tactile%20Sensor/ROS/ROS2-Jazzy) | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/Tactile%20Sensor/ROS/ROS2-Humble) |
-
-- **Lyrical** — ROS 2 LTS release (2026).
-- **Jazzy** — ROS 2 LTS release (2024), supported until 2029.
-- **Humble** — ROS 2 LTS release (2022), supported until 2027.
-{/* AUTO-GENERATED-ROS2-TABLE:END */}
-
-#### ROS1
-
-{/* AUTO-GENERATED-ROS1-TABLE:START */}
-| Product | Noetic | Melodic | Kinetic | Indigo |
-|---|---|---|---|---|
-| [Adaptive grippers](drivers/Adaptive%20grippers) | - | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/Adaptive%20grippers/ROS/ROS1-Melodic) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/Adaptive%20grippers/ROS/ROS1-Kinetic) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/Adaptive%20grippers/ROS/ROS1-Indigo) |
-| [Tactile Sensor](drivers/Tactile%20Sensor) | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/Tactile%20Sensor/ROS/ROS1-Noetic) | - | - | - |
-
-- **Noetic** — Final ROS 1 release (2020), end of life May 2025.
-- **Melodic** — ROS 1 release (2018), end of life.
-- **Kinetic** — ROS 1 release (2016), end of life.
-- **Indigo** — ROS 1 release (2014), end of life.
-{/* AUTO-GENERATED-ROS1-TABLE:END */}
-
-### Simulation
+| Product | ROS |
+|---|---|
+| [Adaptive grippers](drivers/Adaptive%20grippers) | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/Adaptive%20grippers/ROS) |
+| [EPick](drivers/EPick) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/EPick/ROS) |
+| [Force Torque Sensor](drivers/Force%20Torque%20Sensor) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/Force%20Torque%20Sensor/ROS) |
+| [Tactile Sensor](drivers/Tactile%20Sensor) | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/Tactile%20Sensor/ROS) |
+{/* AUTO-GENERATED-ROS-TABLE:END */}
 
 {/* AUTO-GENERATED-SIMULATION-TABLE:START */}
+### Simulation
+
 | Product | Isaac Sim | PyBullet | MuJoCo |
 |---|---|---|---|
 | [Adaptive grippers](drivers/Adaptive%20grippers) | [![Robotiq](https://img.shields.io/badge/Robotiq-blue)](drivers/Adaptive%20grippers/Simulation/Isaac%20Sim) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/Adaptive%20grippers/Simulation/PyBullet) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/Adaptive%20grippers/Simulation/MuJoCo) |
@@ -92,9 +72,9 @@ Badge colors indicate who maintains the integration: ![Robotiq](https://img.shie
 - **MuJoCo** — MuJoCo (MJCF) model for physics-based simulation.
 {/* AUTO-GENERATED-SIMULATION-TABLE:END */}
 
+{/* AUTO-GENERATED-OTHER-TABLE:START */}
 ### Other community projects
 
-{/* AUTO-GENERATED-OTHER-TABLE:START */}
 | Product | GraspGen |
 |---|---|
 | [Adaptive grippers](drivers/Adaptive%20grippers) | [![Third party](https://img.shields.io/badge/Third_party-lightgrey)](drivers/Adaptive%20grippers/Other/GraspGen) |

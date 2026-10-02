@@ -1,348 +1,375 @@
 ---
-title: Per-tool Documentation Versioning
-sidebar_label: Versioning (Stable/Development)
+title: Documentation Versioning
+sidebar_label: Versioning (Stable/Development (main))
 displayed_sidebar: contributeSidebar
 ---
 
-# Per-tool documentation versioning
+# Documentation versioning
 
-Every Robotiq-maintained, submodule-synced tool gets its own independent
-**Stable / Development (main) / Previous versions** switcher (the dropdown
-next to the navbar on that tool's own pages). A tool that isn't
-submodule-synced (a hand-authored placeholder like PyBullet/MuJoCo/GraspGen)
-has nothing to version against and stays on the plain, single-version
-pattern described in [Adding a new software tool](./adding-a-tool) — this
-page only applies once a tool has a real submodule and real tags. See the
-[API stability policy](/docs/api-stability) for what this means for a
+The whole site has one, sitewide **Stable / Development (main)** switcher
+(the dropdown at the top of every page) — not a per-tool one. **Stable**
+means every Robotiq-maintained, submodule-synced tool at its own newest
+tag; **Development (main)** means every one of them at its own live `main`
+branch. Each tool can still be at a different *tag* (tactile_sensors'
+Stable might be `v2.0.0` while grippers' is `v1.0.0`), but there's exactly
+one sitewide *choice* between "released" and "in progress," and it's the
+same choice everywhere on the site, not something picked separately per
+tool page. A tool that isn't submodule-synced (a hand-authored placeholder
+like PyBullet/MuJoCo/GraspGen, or a product with no submodule at all like
+Force Torque Sensor/EPick) has no Stable/Development (main) split at all — it
+stays on the plain, single-version pattern described in
+[Adding a new software tool](./adding-a-tool). See the
+[software stability policy](/docs/api-stability) for what this means for a
 reader deciding which version to build against.
 
-## Why a 3-way switcher, not full per-tag archiving
+## One shared instance
 
-This site aggregates N independently-released repos (currently 3
-submodules) — there's no single "site version" a `grippers` release and a
-`tactile_sensors` release both correspond to, so full per-tag versioning
-(one archived build per release, per tool) would multiply without bound as
-tools and tags are added. The chosen shape stays bounded at **exactly two
-real builds per tool, forever**, plus one page that costs nothing per tag:
+Every submodule-synced tool's content lives in **one** shared
+`@docusaurus/plugin-content-docs` instance, `software-tools`
+(`docusaurus.config.js`'s `plugins` array), with `path: 'software-tools'`
+and `routeBasePath: 'docs/drivers'` — every tool's own subfolder under
+`software-tools/`, all versioned together. Docusaurus versions a `docs`
+plugin instance as a whole, not individual pages, so this one instance is
+what gives the whole site its single sitewide Stable/Development (main)
+switcher.
 
-- **Stable** — always the newest tag. A real, released state, rebuilt only
-  when that tag moves. Owns the tool's own root URL (`path: ''`) — the
-  default a bare link, a search result, or a first-time visitor lands on,
-  since that's the version this site actually makes a compatibility
-  commitment about.
-- **Development (main)** — always `main`, unchanged in content from
-  before this feature existed, just relocated off the root URL to `/next`
-  (`path: 'next'`) and tagged `banner: 'unreleased'` + `noIndex: true`
-  (kept out of search/sitemap). May include unreleased, uncommitted API
-  changes at any time.
-- **Previous versions** — not a real build. One static signpost page per
-  tool, linking each older tag straight to its own source on GitHub, so
-  readers checking an older release still get to matching docs without
-  this site having to host or rebuild them.
-
-An older-than-Stable reader doesn't get pixel-matching docs on this site —
-they're pointed at the source repo's own tag instead, the same place `git
-tag`/GitHub Releases already is the source of truth. That's a deliberate
-trade-off: it's what keeps "Previous versions" free of the combinatorial
-cost full archiving would add, while still answering the common case (a
-reader on a released version, not chasing `main`) directly. Other shapes
-considered and set aside: whole-site periodic snapshots (imprecise — one
-tool's release date doesn't mean anything for the others) and pushing
-versioning out to each tool repo entirely (loses the unified
-in-place-on-this-site reading experience for no real savings, since this
-site already carries substantial aggregation-pipeline complexity anyway).
+**Content lives under a top-level `software-tools/<Product>/<Tool>/`
+folder.** Nesting a second plugin instance's files inside the default
+instance's own `docs/` tree (even fully covered by that instance's own
+`exclude`) breaks MDX compilation with a bogus, content-independent
+`Unexpected FunctionDeclaration ... non-esm` error (confirmed by
+bisection: moving the exact same files outside `docs/` fixed it
+immediately, no content change). A `sync-external-docs.js` job opts into
+this with a `destRoot: 'software-tools'` field — see the jobs in
+`scripts/external-jobs.js` for the real shape, and the big comment on
+`destRoot`/`currentDocsRoot`/`currentRoutePrefix` near the top of
+`sync-external-docs.js` for how a `doxygen2docusaurus` job's slug/backlink
+generation adapts. `apiFolderPath` there is always the doc id relative to
+the instance's own root — for a tool sharing `software-tools` with
+others, that means the tool's own full subpath (e.g.
+`'Adaptive grippers/Libraries/C++/API'`), which keeps multiple tools' own
+doxygen jobs from colliding on the same generated doc ids or the same
+sidebar cache file.
 
 ## Which version the root URL serves
-
-Configured per tool in `docusaurus.config.js`'s `versions`:
 
 ```js
 versions: {
   current: { label: 'Development (main)', path: 'next', banner: 'unreleased', noIndex: true },
-  stable: { label: 'Stable (vX.Y.Z)', path: '' },
-  'previous-versions': { label: 'Previous versions', path: 'previous-versions' },
+  stable: { label: 'Stable', path: '' },
 },
 ```
 
 `stable` takes the empty `path: ''` — Docusaurus serves whichever version
-has that path at the instance's own root URL (e.g.
-`/docs/drivers/Tactile Sensor/Libraries/C++`), with no version segment in
+has that path at the instance's own root URL, with no version segment in
 the URL at all. `current` moves to `path: 'next'` instead (matching
 Docusaurus's own convention for unreleased docs elsewhere), and carries
 `banner: 'unreleased'` (renders the `src/theme/DocVersionBanner/index.jsx`
-warning — see [API Stability Policy](/docs/api-stability)) and
+warning — see [Software Stability Policy](/docs/api-stability)) and
 `noIndex: true` (a `<meta name="robots" content="noindex">` tag, so search
 engines and the sitemap never send a reader to unreleased docs by
-default).
+default). Neither label carries a tag — with one shared instance covering
+several tools that can each be at a different tag, there's no single
+sitewide version number to print in the dropdown; see
+[Per-page tag banners](#per-page-tag-banners) below for where each tool's
+own tag actually shows up.
 
-**A generated API reference needs one more piece wired up for this to
-work.** doxygen2docusaurus bakes every internal cross-reference
-(`<a href="/docs/...">`) as an ABSOLUTE URL directly into the generated
-HTML — it has no idea Docusaurus versioning exists, so it only ever uses
-the plugin instance's bare `routeBasePath` as the prefix, never that
-version's own path segment. Since this pipeline always writes the
-*current* version's content, moving `current` off the instance root means
-every one of those backlinks needs `/next` appended, or they 404. Set
-`currentVersionPath` on that tool's `doxygen2docusaurus` job in
-`scripts/external-jobs.js`, matching `versions.current.path` exactly —
-see the `2f85_cpp` job and the comment on `currentRoutePrefix` in
-`sync-external-docs.js` for the mechanics.
+**Bootstrapping the very first cut.** `lastVersion: 'stable'` (and the
+`stable` entry in `versions` above) can only resolve once `stable` is a
+version that already exists in `software-tools_versions.json` — every
+`docusaurus`/`docs:version:` CLI invocation validates both against
+whatever's actually in that file, *including* the very first
+`docs:version:` call that's about to create `stable` for the first time
+ever. `docusaurus.config.js` reads that file itself and falls back to
+leaving `lastVersion` unset and the `stable` entry out entirely until it
+sees `stable` already there — self-bootstrapping, no one-time manual
+config edit needed for a brand new site.
 
-## Why each versioned tool is a separate Docusaurus plugin instance
+## Per-page tag banners
 
-Docusaurus versions a `docs` plugin instance as a whole, not individual
-pages — there is no way to version one tool's pages while every other page
-on the site stays unversioned, short of giving that tool its own
-`@docusaurus/plugin-content-docs` instance. `docusaurus.config.js`'s
-`plugins` array has one entry per versioned tool (`tactile-python`,
-`tactile-cpp`, `isaac-sim`, `adaptive-grippers-cpp` as of this writing),
-each with its own `id`, `path`, `routeBasePath` (so the public URL is
-unchanged — still `/docs/drivers/<Product>/<Category>/<Tool>`), its own
-`sidebarPath`, and its own `versions` config.
+`src/theme/DocVersionBanner/index.jsx` renders on every submodule-backed
+tool's own page, on both versions — not just the `unreleased` warning on
+Development (main) (stock Docusaurus's own behavior), but also an info
+line on Stable, both naming that specific page's own tag (e.g. "Use
+**Stable**", "This page reflects Stable v1.0.0"). Neither banner mentions
+a tag on Development (main) — only the Stable page itself does, since a tag is
+only meaningful once you're actually looking at the release it names.
 
-**Content lives under a new top-level `versioned-tools/<Product>/<Tool>/`
-folder, never nested inside the main `docs/` tree** — even fully covered by
-that instance's own `exclude`, nesting a second plugin instance's files
-inside the default instance's `docs/` reproducibly breaks MDX compilation
-with a bogus, content-independent `Unexpected FunctionDeclaration ...
-non-esm` error (confirmed by bisection: moving the exact same files outside
-`docs/` fixed it immediately, no content change). A `sync-external-docs.js`
-job opts into this with a `destRoot: 'versioned-tools'` field (default is
-`'docs'`, so every non-versioned job is unaffected) — see the jobs in
-`scripts/external-jobs.js` for the real shape, and the big comment on
-`destRoot`/`currentDocsRoot`/`currentRoutePrefix` near the top of
-`sync-external-docs.js` for how a `doxygen2docusaurus` job's slug/backlink
-generation adapts to a destRoot instance (its own `apiFolderPath`/`docsBaseUrl`
-need to be the instance-relative tail, not the site-relative `to`).
+This banner renders *only* on a page that actually has a registered
+submodule behind it — `findToolId` (`src/theme/findToolId.js`) matches the
+page's own doc id against each tool's `toolPath` in
+`scripts/versioned-tools.js`, and the component returns `null` when there's
+no match. A hand-authored page with no sync job at all — a third-party
+tool (e.g. the community Python gripper driver), Force Torque Sensor,
+EPick, any product's own ROS pages — never actually differs between
+Development (main) and Stable, so showing version UI there is simply false: confirmed
+by hitting exactly that (the third-party Python driver page showed
+"documents unreleased main" before this guard, despite being identical
+content on both versions).
 
-## The full site navigation still has to appear on every versioned page
+Docusaurus's own default "Version: Stable"/"Version: Development (main)" pill (under
+the breadcrumbs) is disabled entirely (`badge: false` on both versions in
+docusaurus.config.js) — it only ever duplicated this same banner, with
+less context (just the bare label, not why it matters or what to do about
+it). There used to be a swizzled `src/theme/DocVersionBadge` just to
+additionally suppress it on pages with no registered tool; once the pill
+is off everywhere, that swizzle has nothing left to do — deleted.
 
-A plugin instance can only build sidebar items from doc ids it owns —
-everything else has to be a plain link. Because of that, each versioned
-tool's `sidebars.<tool>.js` (e.g. `sidebars.tactile-cpp.js`,
-`sidebars.adaptive-grippers-cpp.js`) must **not** just list that tool's own
-page(s). Listing only the tool's own pages replaces the entire left
-sidebar the moment a reader navigates into a versioned tool — every other
-product/tool disappears, and the page reads as a disconnected site rather
-than part of this one. The whole-tree navigation is a hard requirement for
-any new versioned instance, not a nice-to-have.
+Each tool's own tag comes from `software-tools-stable.json` directly
+(imported into the client bundle, not looked up over the network) — the
+same file `scripts/cut-version.js` writes to when it cuts Stable.
 
-The fix, and the pattern any new versioned tool must follow:
-`scripts/site-nav-tree.mjs` is the single source of truth for the whole
-site's nav tree, rendered two ways:
+`useDocsVersion()`'s returned version metadata names the version field
+`version`, not `name` — confirmed the hard way (an early version of this
+code checked `.name`, which is `undefined` on that object, and silently
+rendered no Stable banner anywhere, on every page, with no error). The
+`GlobalVersion`-shaped object `useDocVersionSuggestions()` returns
+(`latestVersionSuggestion` in `DocVersionBannerEnabled`) is a *different*
+type that does use `.name` — easy to mix up since both objects describe
+"a version" and sit right next to each other in the same file.
 
-- `buildMainSidebar()` — what `sidebars.js`'s `driverSidebar` uses.
-- `buildInstanceSidebar(activeTool, activeItem)` — what each
-  `sidebars.<tool>.js` uses: the **same full tree**, but every node is a
-  plain link except `activeTool`, which is replaced by `activeItem` (that
-  instance's own real, doc-id-based sidebar item/category). Read that
-  file's own header comment before touching it — it documents two
-  non-obvious failure modes already hit once each:
-  - **Never use Docusaurus's `pathname://` scheme for these cross-instance
-    links.** It looks like the obvious "internal path, not a doc id" escape
-    hatch, but `@docusaurus/core`'s `Link` component treats *any*
-    `pathname://` href as **not internal** — full page navigation to a new
-    tab (`target="_blank"`), not a client-side route change. Use a plain,
-    `encodeURI()`-escaped absolute path instead (e.g.
-    `/docs/drivers/Adaptive%20grippers/...`) — it passes the same sidebar
-    `href` validation (Docusaurus's `URISchema` accepts a percent-encoded
-    relative path; it's literal, un-encoded spaces that fail, not
-    root-relativeness) without triggering Link's "external" branch.
-  - **Cross-instance link labels are read from each doc's own frontmatter**
-    (`sidebar_label` then `title`) at sidebar-build time, not hardcoded —
-    they can't drift from the real page. This repo's `.mdx` files use CRLF
-    line endings; a frontmatter regex anchored on plain `\n` silently fails
-    to match and falls back to the raw doc id as the label. Match `\r?\n`.
+## The version dropdown is sitewide
 
-**A change to `site-nav-tree.mjs` doesn't retroactively fix already-cut
-versions.** Docusaurus freezes a version's sidebar at `docs:version:` cut
-time into `<id>_versioned_sidebars/version-<name>-sidebars.json` — it only
-reads the live `sidebars.<tool>.js` for the *current* version. After any
-change to `site-nav-tree.mjs`'s tree shape or link format, regenerate every
-existing frozen sidebar file directly (no need to re-run `docs:version:` —
-these are just static JSON, and re-cutting would also touch the
-already-correct versioned *content*):
+`docusaurus.config.js`'s navbar has one `docsVersionDropdown` item,
+`docsPluginId: 'software-tools'` — Docusaurus's stock behavior for this
+navbar item type is to render on *every* page, site-wide, rather than
+disappearing outside the instance's own pages. That's exactly "the
+dropdown is always on top of the site" (an explicit requirement) for
+free — a single shared instance means there's only ever one dropdown to
+show, unlike the old per-tool-instance shape, which needed a custom
+`useActivePlugin`-gated wrapper (deleted) specifically to *hide* each
+tool's own dropdown outside that tool's own pages, so N of them wouldn't
+all show at once.
 
-```bash
-node --input-type=module -e "
-import fs from 'node:fs';
-import { buildInstanceSidebar } from './scripts/site-nav-tree.mjs';
-const out = { tactileCppSidebar: buildInstanceSidebar('tactile-cpp', { type: 'doc', id: 'index', label: 'C++' }) };
-fs.writeFileSync('tactile-cpp_versioned_sidebars/version-stable-sidebars.json', JSON.stringify(out, null, 2) + '\n');
-"
-```
+**Switching versions navigates once, from the dropdown's own click.** The
+type still resolves to a swizzled component,
+`src/theme/NavbarItem/DocsVersionDropdownNavbarItem.jsx`: every item saves
+the choice (`savePreferredVersionName`, the same `localStorage` mechanism
+a `DocVersionBanner` suggestion link also writes to), then — only when the
+visitor is already on a `software-tools` page (`useActiveDocContext`
+finds an active version there; outside the instance, e.g. `/` or
+`/docs/intro`, there's no "same page" to map, so it only saves the
+preference) — navigates straight to the equivalent page in the clicked
+version via `findNearestDocInVersion` (`src/theme/findNearestDocInVersion.js`,
+shared with `src/theme/Layout`'s own redirect below): the exact same page
+if it exists there, else the nearest ancestor along its own folder
+hierarchy that does (e.g. an early tag can predate a Doxyfile, so Stable
+has no API reference yet even though Development (main) does — this
+walks up to the tool's own page instead, rather than the whole instance's
+unrelated main doc). `software-tools/index.mdx` (`slug: /`, a bare
+client-side redirect to `/docs/intro`) still exists — it's the instance's
+own real main doc, so Docusaurus's own `getMainDocId` resolves to
+something neutral for anyone who opens `/docs/drivers/` directly instead
+of the first product in the sidebar (confirmed this was Adaptive grippers
+before this page existed), and it's what `findNearestDocInVersion` itself
+falls back to once nothing closer exists either.
 
-Repeat per `<id>_versioned_sidebars/version-<name>-sidebars.json` file that
-exists (`stable` and `previous-versions`, for every tool that has them),
-matching each tool's own top-level sidebar key (`tactileCppSidebar`,
-`tactilePythonSidebar`, `adaptiveGrippersCppSidebar`, ...) and `activeItem`
-shape (a single `{type: 'doc', id: 'index', label: '<Tool>'}` for a
-one-page tool, or the same nested category `sidebars.<tool>.js` itself
-builds for a tool split into guides/API — see
-`sidebars.adaptive-grippers-cpp.js`'s `cppItem`).
+## Sticky version preference across visits
 
-## The version dropdown only appears on its own tool's pages
+Docusaurus already remembers a visitor's last-chosen version in
+`localStorage`, per plugin id (`useDocsPreferredVersion`, written whenever
+the dropdown or a `DocVersionBanner` suggestion link is used), and already
+keeps a visitor in that version while they click internal links *within*
+that version. The one thing it doesn't do on its own: honor that stored
+preference when landing on a `software-tools` page whose *own* version
+doesn't match it some OTHER way than the dropdown above — the site root
+(always serves Stable regardless of what a returning visitor picked last
+time), and, less obviously, any of the auto-generated tool-table links on
+`docs/intro.mdx` (see `generate-tools-table.js`): `intro.mdx` deliberately
+lives outside this instance so its own URL never changes, so those links
+can only ever be plain, version-less paths, which always resolve to
+whichever version owns the bare URL — Stable — no matter what the visitor
+actually has selected. `src/theme/Layout/index.jsx` (a swizzled `Layout`,
+wrapping every page) closes both gaps: whenever the current page belongs
+to `software-tools` and its version disagrees with the stored preference,
+it redirects client-side to the nearest matching page in the preferred
+version, via the same `findNearestDocInVersion` the dropdown uses above.
+By the time this runs after a dropdown click, the URL already matches, so
+it's a no-op there — this is only the backstop for the other two cases.
 
-Docusaurus's stock `docsVersionDropdown` navbar item renders site-wide,
-falling back to a plain link on every page outside its own instance —
-not the "only show on this tool's own pages" scoping this needs.
-`src/theme/NavbarItem/ScopedDocsVersionDropdown.jsx` wraps it with a
-`useActivePlugin({failfast: false})` check that returns `null` unless the
-current page's active plugin matches `docsPluginId`;
-`src/theme/NavbarItem/ComponentTypes.js` registers it under a custom type.
-In `docusaurus.config.js`'s navbar `items`, use
-`{ type: 'custom-scopedVersionDropdown', docsPluginId: '<tool-id>',
-position: 'right' }` — one entry per versioned tool. A tool with only one
-version (e.g. `isaac-sim`, before it has any tags) deliberately has **no**
-matching navbar entry: with a single version Docusaurus renders a plain,
-non-dropdown "Current" button instead of hiding it, which is clutter with
-no payoff — add the entry once that tool has its first tag and a real
-`stable`/`previous-versions` config.
+Swizzled into `Layout`, not `Root`: `useDocsPreferredVersion` needs
+`<DocsPreferredVersionContextProvider>`, which `@theme/Layout/Provider`
+only mounts inside `Layout`'s own children tree — `Root` wraps the whole
+app from further out, before that provider exists yet. Confirmed the hard
+way: mounting this in `Root` crashed every page in dev with "Hook
+useDocsPreferredVersionContext is called outside the
+`<DocsPreferredVersionContextProvider>`."
 
-The default two-paragraph `unreleased`/`unmaintained` version banner is
-also swizzled shorter, to one line
-(`src/theme/DocVersionBanner/index.jsx`) — unrelated to any of the above,
-just bundled into the same theme-swizzling work.
+**This check runs on every navigation, not just the first page load** —
+needed for the `docs/intro.mdx` case above, which by definition isn't
+caught on first load (the visitor is already past it by the time they
+follow one of those links). Re-running on every render used to cause its
+own "Maximum update depth exceeded" (React #185) crash, from three things
+combining: comparing an *unencoded* docs-data path against the *encoded*
+`window.location.pathname` (always mismatched, for any software-tools
+path with a space); the effect's own dependency array listing whole
+objects that are recreated every render, so it re-ran regardless of
+whether anything actually changed; and Docusaurus's own `PendingNavigation`
+keeping the OLD location rendering while the next route preloads, so the
+mismatch read as still-true for several renders in that window — each one
+queuing another `history.replace`, each one starting another pending
+navigation. Fixed by comparing decoded paths, depending on primitive
+version names instead of objects, and guarding with a ref keyed on
+(path, preferred version) so at most one replace ever fires per
+navigation — see `src/theme/Layout/index.jsx`'s own comment for the full
+breakdown.
 
-## Cutting Stable or Previous versions by hand
+## Cutting Stable
 
-There's no CI automation for this yet — every version cut is a manual,
-local operation, run once and committed. `scripts/list-submodule-tags.js`
-finds the current tags directly off each submodule's remote (`git
-ls-remote --tags`, not the local checkout, which can go stale):
+Stable's own rendered content isn't committed to git — `.gitignore`
+excludes `software-tools_versioned_docs/`, `software-tools_versioned_sidebars/`,
+and `software-tools_versions.json`, the same way it already excludes
+Development (main)'s own synced `.md` content. The only thing that's ever committed
+is `software-tools-stable.json`, a small `{toolId: tag}` map recording
+which tag each tool's Stable *should* track. Every normal build derives
+the real thing fresh from that one file, via
+`scripts/ensure-stable-version.js` (the last step of the `generate`
+prebuild hook — see `package.json` — so `npm start`/`npm run build`/every
+CI run already does this with no separate step to remember). This is
+deliberate, not an implementation detail: Development (main) and Stable are generated
+by the *exact same pipeline* (`sync-external-docs.js` →
+`generate-tools-table.js` → `docs:version:`), the only difference being
+which commit each submodule is checked out at first — so there's nothing
+about Stable that needs a second, independently-frozen copy sitting in
+the repo.
 
-```bash
-node scripts/list-submodule-tags.js
-```
+`scripts/cut-version.js` (`materializeStable`/`cutStable`) is what both
+`ensure-stable-version.js` and the daily automation below actually call
+to do this — the one place the checkout/sync/version/restore procedure
+that used to be done entirely by hand lives:
 
-**To cut (or re-cut) Stable at the newest tag:**
+- Checks out each tool's submodule at its target tag.
+- Re-syncs every tool's docs together (`sync-external-docs.js`, with
+  `SKIP_SUBMODULE_RESET` so the checkouts aren't immediately reverted).
+- Clears any content and generated-sidebar cache left over from a
+  *different* checkout before syncing, so a tag that predates a guide
+  folder or a Doxyfile ends up genuinely sparse rather than inheriting
+  another checkout's leftovers (`scripts/lib/prune.js`'s
+  `pruneLegacyFolder`, plus wiping `scripts/generated/`).
+- Regenerates every product-page and dedicated-category-page table
+  (`generate-tools-table.js`) against what this tag actually synced —
+  necessary because a wrapper `.mdx` page is never touched by
+  `pruneLegacyFolder` (kept, not a synced `.md`), so its own
+  `AUTO-GENERATED-*-TABLE` marker blocks would otherwise carry whatever
+  they were last generated for (Development (main)'s own, since this same pipeline
+  just ran for Development (main) a moment earlier in the same `npm run generate`)
+  — see [Auto-generated software tools tables](./tools-tables).
+- Prunes any `AUTO-GENERATED-*-TABLE` sub-page link that wouldn't
+  actually exist for this tag (`pruneDanglingSubpageLinks`).
+- Rewrites each tool's synced content's `tree/main/...` / `blob/main/...`
+  GitHub links (READMEs, guides, the wrapper page's own "Source Code"
+  button) to point at that tool's own tag instead (`rewriteMainLinksToTag`)
+  — the file at `main` can already differ from what shipped in the tag
+  Stable represents.
+- Runs `docs:version:` into a scratch version name first, then renames it
+  into place — `docusaurus.config.js`'s `lastVersion`/`versions` config
+  has to keep resolving to an existing version for the entire duration of
+  *any* `docusaurus` CLI invocation, including this one, so
+  deleting-then-recutting the real name directly trips
+  `lastVersion: ... is invalid`.
+- Restores every checked-out submodule to the exact commit it was actually
+  at beforehand (not necessarily its pin — `npm run preview`/
+  `SKIP_SUBMODULE_RESET=1 npm start` deliberately leave one at a WIP
+  branch's `FETCH_HEAD` instead, and this has to put it back there, not
+  revert it), Development (main)'s own synced content, *and* Development (main)'s own tables (another
+  `generate-tools-table.js` run — the one this function ran earlier
+  reflected the STABLE tags just checked out, not Development (main)'s) regardless of
+  whether the materialization itself succeeded. This makes the whole
+  function self-contained: it leaves Development (main)'s own live state exactly as
+  it found it no matter where in a build it's called from.
 
-```bash
-cd external/<submodule>
-git checkout <tag>
-cd ../..
-SKIP_SUBMODULE_RESET=1 node scripts/sync-external-docs.js
-npm run docusaurus -- docs:version:<plugin-id> stable
-cd external/<submodule> && git checkout main && cd ../..
-SKIP_SUBMODULE_RESET=1 node scripts/sync-external-docs.js   # restore Development (main)'s own content
-```
+Unit tests for its pure helpers live in `test/cut-version.test.js` — the
+full checkout/sync/version orchestration itself isn't unit tested (see
+that file's own header comment); it's exercised end to end every time it
+actually runs, in any of the three ways below.
 
-`SKIP_SUBMODULE_RESET=1` is required — `sync-external-docs.js` runs `git
-submodule update --init --force` on every normal invocation, which would
-silently revert the manual `git checkout <tag>` right back to the pinned
-commit before the sync even ran.
+**Three ways this runs, each doing a different part of the job:**
 
-**Rewrite any `main`-branch source links to the tag, before cutting.**
-Content synced from the submodule (its README, guides) routinely links
-back to its own source on GitHub — `tree/main/...`, `blob/main/...` — which
-is correct for Development but wrong once that same text is frozen into a
-Stable snapshot: the file at `main` can already differ from what shipped
-in the tag Stable is supposed to represent. Rewrite every such link to
-`tree/<tag>/...` / `blob/<tag>/...` in the checked-out content *before*
-running `docs:version:`, and do the same for any hand-authored "Source
-Code" button/CTA on the tool's own wrapper page
-(`https://github.com/<org>/<repo>` → `https://github.com/<org>/<repo>/tree/<tag>`).
-There's no automation for this yet — grep the synced content for
-`/main/` under `github.com/robotiq/` before cutting, and check by hand.
+1. **Every normal build** (`npm start`/`npm run build`/any CI run) —
+   `scripts/ensure-stable-version.js` reads whatever's already in
+   `software-tools-stable.json` and calls `materializeStable` with it
+   *unchanged* — it never decides a new tag should become Stable, only
+   reproduces whatever's already recorded. Skips the (checkout-heavy)
+   work entirely if nothing about those tags has changed since the last
+   run in the same working directory (a small gitignored local marker,
+   `.stable-materialized.json`), so a repeated `npm start` during normal
+   development doesn't redo it every time.
+2. **`.github/workflows/cut-versions.yml`**, daily — checks every
+   submodule for a newer tag (`scripts/auto-cut-versions.js`), and if any
+   has one, updates `software-tools-stable.json` to record it — that's
+   the whole job; it does *not* call `materializeStable` itself. The
+   workflow's own subsequent `npm run build && npm test` steps (already
+   there, specifically so a broken cut never reaches `main`) do the
+   actual materializing and verifying, through the exact same prebuild
+   hook every other build already goes through — then the small,
+   one-file diff is committed and merged through a PR the workflow opens
+   and merges itself. Nobody needs to remember to run this after a
+   release, and nobody needs to click merge either. There's no filtering
+   on tag name yet (e.g. skipping a pre-release/beta tag) — every tool
+   currently opted into versioning only ever tags real releases, so
+   "newest tag" already means "newest release" for all of them; a
+   name-based filter is a deliberate, not-yet-needed follow-up for the
+   day that stops being true.
+3. **By hand** (a brand new site's very first cut; re-cutting to a
+   specific non-newest tag; or just wanting to see the result immediately
+   instead of waiting for `npm start`/the daily schedule) — one command:
 
-**Watch for stale-content contamination.** `sync-external-docs.js` never
-deletes a previously-written folder (e.g. a tool's `docs/` guides or
-generated `API/`) just because the currently-checked-out tag's job skips
-(no `Doxyfile` yet at that tag, no `docs/` folder yet, ...) — it only
-writes what the current job list produces. If `versioned-tools/<Product>/<Tool>/`
-already has content left over from a *different* (usually newer) checkout
-when you cut a version, that stale content gets captured into the
-snapshot too. Before cutting a version that should be sparse (an early
-tag that predates a guide folder, or a `previous-versions` signpost that
-should hold only its own hand-written `index.mdx`), move anything the
-current tag's own sync wouldn't produce out of the way first, cut, then
-restore it afterward for Development's own benefit. Verify with a plain
-`find <tool>_versioned_docs/version-<name> -type f` before trusting the
-cut — skipping this step is an easy way to leak a stale `docs`/`API` tree
-into what should have been a two-file signpost.
+   ```bash
+   node scripts/cut-version.js stable [<toolId>=<tag> ...]
+   ```
 
-**Writing the `Previous versions` signpost.** It's a hand-authored
-`index.mdx`, temporarily written over the live wrapper page (back it up
-first), cut with `docs:version:<plugin-id> previous-versions`, then
-restored:
-
-```mdx
----
-title: C++
-sidebar_label: C++
----
-
-**Stable** currently tracks `<submodule>`'s newest release, **vX.Y.Z**.
-
-We only host **Development (main)** and **Stable** here — older releases
-aren't archived on this site. Browse their own tag in the source
-repository instead:
-
-- **vA.B.C** — [browse source](https://github.com/robotiq/<repo>/tree/vA.B.C)
-```
-
-**List only tags OLDER than the one Stable tracks — never re-list Stable's
-own tag.** A tool with only one tag total has *nothing* to list here yet;
-say so explicitly ("there are no older releases archived here yet") rather
-than reusing another tool's list shape unchanged. "Exclude whatever Stable
-tracks" is the actual rule, not "list every tag that isn't literally the
-newest" — those only coincide once a tool has 2+ tags, so copying a
-multi-tag tool's signpost as a template for a single-tag one silently
-re-lists Stable's own tag as if it were archived separately. Check each
-tool's actual tag count before authoring its signpost; don't assume the
-same shape applies.
-
-**Make the Stable tag visible.** Nothing on a Stable page itself ever
-prints which tag it is — without a visible marker, the only tag a visitor
-ever sees named anywhere is whatever the `Previous versions` page lists,
-which reads as "only 1 of N releases is on this site" even when Stable
-silently *is* the newest one. Label it in `docusaurus.config.js`'s
-`versions` config:
-
-```js
-stable: { label: 'Stable (v2.0.0)', path: '' },
-```
-
-Update this by hand every time Stable is re-cut to a newer tag.
+   With no arguments, every tool with any tags resolves to its own
+   newest. Pass `<toolId>=<tag>` pairs (ids from
+   `scripts/versioned-tools.js`) to pin specific tools instead —
+   everything else still resolves to its own newest. A tool whose
+   submodule has no tags at all is left out entirely; its Stable content
+   just mirrors whatever's currently synced from its own live `main`,
+   same as Development (main), until it gets a first tag. This is the one path that
+   both *decides* tags and *materializes* them immediately — run a full
+   `npm run build` afterward to see the result rendered (the script
+   prints this reminder itself).
 
 ## Checklist: adding versioning to a new tool
 
 Assuming the tool already has its own wrapper page and a
-`sync-external-docs.js` job (see [Adding a new software tool](./adding-a-tool)):
+`sync-external-docs.js` job under `software-tools/` (see
+[Adding a new software tool](./adding-a-tool) — every tool lives there
+from the start now, versioned or not, so nothing needs to move):
 
-1. Add `destRoot: 'versioned-tools'` to that tool's job(s) in
-   `scripts/external-jobs.js`, and change `to` to be relative to
-   `versioned-tools/` instead of `docs/`.
-2. Move the tool's existing content (its wrapper `index.mdx`, and any other
-   hand-authored files) from `docs/drivers/<Product>/<Category>/<Tool>/` to
-   `versioned-tools/<Product>/<Category>/<Tool>/`.
-3. Add a new `@docusaurus/plugin-content-docs` entry to
-   `docusaurus.config.js`'s `plugins` array — copy `tactile-cpp`'s or
-   `adaptive-grippers-cpp`'s as a starting point depending on whether the
-   tool is a single page or split into guides/API.
-4. In `sidebars.js`, replace the tool's doc-id sidebar entry with a
-   `{ type: 'link', href: encodeURI('/docs/drivers/<Product>/<Category>/<Tool>') }`
-   item (see any existing versioned tool's entry there for the exact
-   shape) — it no longer belongs to the default instance.
-5. Create `sidebars.<tool>.js`, calling
-   `buildInstanceSidebar('<plugin-id>', activeItem)` from
-   `scripts/site-nav-tree.mjs` — `activeItem` is a single `{type: 'doc',
-   id: 'index', label: '<Tool>'}` for a one-page tool, or a nested category
-   for a tool split into guides/API (see
-   `sidebars.adaptive-grippers-cpp.js`).
-6. Add the tool's `versioned` node (`{ label, tool: '<plugin-id>' }`) to
-   `scripts/site-nav-tree.mjs`'s `SITE_TREE`, replacing whatever `leaf(...)`
-   entry described it before, and add its path to
-   `VERSIONED_TOOL_PATHS`.
-7. If the tool already has a tag, cut `stable` (and `previous-versions`,
-   if it has 2+ tags) following [Cutting Stable or Previous versions by
-   hand](#cutting-stable-or-previous-versions-by-hand) above, and add the
-   matching `versions`/`lastVersion` config plus a
-   `custom-scopedVersionDropdown` navbar item. If it has no tags yet, skip
-   this step entirely — leave `includeCurrentVersion: true` with no
-   `versions` config, matching `isaac-sim`, and come back to it once a tag
-   exists.
-8. Run a full clean rebuild (`rm -rf .doxygen2docusaurus-staging build
+Only two manual edits — `scripts/versioned-tools.js` and
+`sidebars.software-tools.js`'s `activeItems` are both derived
+automatically now (see their own header comments), not separate
+registration steps:
+
+1. Wrap the tool's job(s) in `scripts/external-jobs.js` with
+   `versionedTool('<toolId>', '<toolPath>', [...])` (see the existing
+   entries there for the shape) — this is the one place `toolId`/
+   `toolPath` get stated; `scripts/versioned-tools.js` picks up
+   `submodule`/`repoUrl` for free from the enclosing `submoduleJobs(...)`
+   call, and `sidebars.software-tools.js` detects whether this tool needs
+   a guides/API-reference category (vs. a plain one-page link) by
+   checking whether a `to: '<toolPath>/docs'` job or a
+   `doxygen2docusaurus` job exists for it — no separate hand-picking.
+2. In `scripts/site-nav-tree.mjs`'s `SITE_TREE`, replace the tool's
+   `leaf(...)` entry with `versioned(label, '<toolId>')` — the one thing
+   nothing else can derive: where in the nav this tool belongs, and what
+   it's called there.
+3. If the tool also gets a generated API reference (a
+   `doxygen2docusaurus` job in `external-jobs.js`), set
+   `currentVersionPath: 'next'` on that job (must match
+   `versions.current.path` exactly — see
+   [Which version the root URL serves](#which-version-the-root-url-serves)).
+   `routeBasePath` should already be `/docs/drivers` (the shared
+   instance's own, set once for the tool's job regardless of whether it's
+   versioned — see [One shared instance](#one-shared-instance)).
+4. If the tool already has a tag, cut Stable following
+   [Cutting Stable](#cutting-stable) above. If it has no tags yet, skip
+   this step entirely — the tool's content just tracks `main` on both
+   versions until it does.
+5. Run a full clean rebuild (`rm -rf .doxygen2docusaurus-staging build
    .docusaurus scripts/generated node_modules/.cache && npm run build`)
-   and check the tool's `<nav aria-label="Docs sidebar">` output contains
-   the full site tree, not just its own branch, on every version it has.
+   and check: the tool's `<nav aria-label="Docs sidebar">` output contains
+   the full site tree, not just its own branch, on every version; Stable
+   (once cut) serves at the instance's own root URL and Development (main) at
+   `/next`; and, if the tool has a generated API reference, its
+   cross-reference links resolve correctly under `/next`.

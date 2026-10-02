@@ -88,7 +88,7 @@ test('cleanupLegacyDestRoot: removes a legacy folder job\'s old output, keeps a 
   const siblingIndex = write(root, 'docs/drivers/Adaptive grippers/Libraries/C++/docs/index.mdx');
   const siblingFolder = write(root, 'docs/drivers/Adaptive grippers/Other/GraspGen/index.mdx');
 
-  const result = cleanupLegacyDestRoot(root, {to: 'Adaptive grippers/Libraries/C++/API', destRoot: 'versioned-tools'});
+  const result = cleanupLegacyDestRoot(root, {to: 'Adaptive grippers/Libraries/C++/API', destRoot: 'software-tools'});
 
   assert.equal(result, path.join('docs', 'drivers', 'Adaptive grippers/Libraries/C++/API'));
   assert.ok(!fs.existsSync(path.join(root, 'docs/drivers/Adaptive grippers/Libraries/C++/API')));
@@ -99,13 +99,13 @@ test('cleanupLegacyDestRoot: removes a legacy folder job\'s old output, keeps a 
 test('cleanupLegacyDestRoot: removes a legacy file job\'s old output', () => {
   const root = tempDir();
   const legacyReadme = write(root, 'docs/drivers/Tactile Sensor/Libraries/C++/_readme.md');
-  const result = cleanupLegacyDestRoot(root, {to: 'Tactile Sensor/Libraries/C++/_readme.md', destRoot: 'versioned-tools'});
+  const result = cleanupLegacyDestRoot(root, {to: 'Tactile Sensor/Libraries/C++/_readme.md', destRoot: 'software-tools'});
   assert.equal(result, path.join('docs', 'drivers', 'Tactile Sensor/Libraries/C++/_readme.md'));
   assert.ok(!fs.existsSync(legacyReadme));
 });
 
 test('cleanupLegacyDestRoot: no-op when nothing legacy exists', () => {
   const root = tempDir();
-  const result = cleanupLegacyDestRoot(root, {to: 'Tactile Sensor/Libraries/Python/_readme.md', destRoot: 'versioned-tools'});
+  const result = cleanupLegacyDestRoot(root, {to: 'Tactile Sensor/Libraries/Python/_readme.md', destRoot: 'software-tools'});
   assert.equal(result, undefined);
 });

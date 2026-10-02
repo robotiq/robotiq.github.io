@@ -7,18 +7,24 @@ displayed_sidebar: contributeSidebar
 # Step-by-step: adding a new software tool
 
 The steps below add a Python tool for the **Adaptive grippers** family hosted
-at `https://github.com/robotiq/2f85-python-driver`, living under `docs/`
-like every non-versioned tool.
+at `https://github.com/robotiq/2f85-python-driver`. Every product/tool page
+(versioned or not) lives under `software-tools/` and is served by the
+shared `software-tools` Docusaurus instance — see
+[Documentation versioning](./versioning) for why: two plugin instances
+can't split ownership of one URL prefix, and every tool's page lives under
+`/docs/drivers/*`.
 
 **If the new tool is Robotiq-maintained and submodule-synced** (as opposed
-to a third-party or not-yet-available tool), it should usually also get its
-own **Stable / Development (main) / Previous versions** switcher, matching every other
-Robotiq-maintained tool on this site — see
-[Per-tool documentation versioning](./versioning) once the steps below are
-done. That changes *where* the tool's files live (`versioned-tools/`
-instead of `docs/`) and adds a few extra pieces (its own Docusaurus plugin
-instance, its own `sidebars.<tool>.js`); everything below — the sync job,
-the wrapper page, the badges — stays exactly the same either way.
+to a third-party or not-yet-available tool), it should usually also join
+the sitewide **Stable / Development (main)** switcher, matching every
+other Robotiq-maintained tool on this site — see
+[Documentation versioning](./versioning) once the steps below are done.
+That's just two extra steps (tagging the sync job with a `toolId`, and
+one `versioned(...)` entry in the nav tree — see
+[Documentation versioning](./versioning#checklist-adding-versioning-to-a-new-tool)'s
+checklist) — it doesn't change where the tool's files live or how the
+sync job itself is declared, both already the same either way; only
+whether that tool participates in Stable/Development (main) cuts.
 
 ## 1. Add the submodule
 
@@ -44,9 +50,14 @@ them on each entry. Start a new call for a new submodule:
 
 ```js
 ...submoduleJobs('2f85_python', { repoUrl: 'https://github.com/robotiq/2f85-python-driver', branch: 'main' }, [
-  { from: 'README.md', to: 'drivers/Adaptive grippers/Libraries/Python/_readme.md' },
+  { from: 'README.md', to: 'Adaptive grippers/Libraries/Python/_readme.md', destRoot: 'software-tools' },
 ]),
 ```
+
+`destRoot: 'software-tools'` is what every driver job needs (see
+[Documentation versioning](./versioning)) — content outside `software-tools/`
+lands in the default `docs` instance's own tree instead, which doesn't
+serve anything under `/docs/drivers/*`.
 
 For a repo that contains multiple tools, add one job per tool inside the
 same call:
@@ -54,9 +65,9 @@ same call:
 ```js
 ...submoduleJobs('2f85_drivers', { repoUrl: '...', branch: 'main' }, [
   // C++ tool
-  { from: 'sdk_cpp/README.md', to: 'drivers/Adaptive grippers/Libraries/C++/_readme.md' },
+  { from: 'sdk_cpp/README.md', to: 'Adaptive grippers/Libraries/C++/_readme.md', destRoot: 'software-tools' },
   // Python tool
-  { from: 'python/README.md', to: 'drivers/Adaptive grippers/Libraries/Python/_readme.md' },
+  { from: 'python/README.md', to: 'Adaptive grippers/Libraries/Python/_readme.md', destRoot: 'software-tools' },
 ]),
 ```
 
@@ -73,7 +84,7 @@ node scripts/sync-external-docs.js
 
 ## 3. Create the wrapper page
 
-Create `docs/drivers/Adaptive grippers/Libraries/Python/index.mdx`. This file
+Create `software-tools/Adaptive grippers/Libraries/Python/index.mdx`. This file
 is tracked in git and controls the page title, sidebar label, and
 any introductory text above the synced README:
 
@@ -105,45 +116,47 @@ walks the folder tree looking for the `Category` badge to decide which
 table a page belongs to, and reads the `Supported_by` badge for the cell
 shown in that table (see
 [Auto-generated software tools tables](./tools-tables)). Valid `Category`
-values: `Libraries`, `Simulation`, `Other`, `ROS1`, `ROS2`. Use
+values: `Libraries`, `Simulation`, `Other`, `ROS`. Use
 `Supported_by-Robotiq-blue` for tools developed and maintained by Robotiq,
 or `Supported_by-Third_party-lightgrey` for community-maintained tools.
 
-**ROS pages are one distro each.** A ROS tool page is a leaf just like any
-other — one `Category-ROS1` or `Category-ROS2` badge, one `Supported_by`
-badge — but its `title` is the bare distro name, not "ROS". `sidebar_label`
-is different: it's prefixed with the generation (`ROS1 · `/`ROS2 · `) since
-the sidebar lists every distro from every generation as one flat group,
-where a bare distro name alone wouldn't say which ROS version it's for:
+**`ROS` is one page per product, not one per distro or generation.**
+There's no `ROS1`/`ROS2` split — a product gets at most a single
+`Category-ROS` leaf, `software-tools/<Product>/ROS/index.mdx`, covering
+whatever ROS integration that product has. Which specific ROS distros it
+supports is the driver's own repo README's job, not this page's. For a
+Robotiq-maintained ROS driver, this page is synced exactly like the
+Tactile Sensor C++ library page in [step 3 above](#3-create-the-wrapper-page) —
+a submodule, a sync job pulling its README, and a thin wrapper importing
+it:
 
 ```mdx
 ---
-title: Jazzy
-sidebar_label: ROS2 · Jazzy
+title: ROS
+sidebar_label: ROS
 ---
 
-![Category](https://img.shields.io/badge/Category-ROS2-lightgrey)
+![Category](https://img.shields.io/badge/Category-ROS-lightgrey)
 ![Supported by Robotiq](https://img.shields.io/badge/Supported_by-Robotiq-blue)
 
-Short description, and a **Reference:** link to the driver repository or
-manual that this distro's page documents.
+Brief description and link to the source repository.
+
+## Intro
+
+import Readme from './_readme.md';
+
+<Readme />
 ```
 
-`title` stays the bare distro name because `generate-tools-table.js` uses it
-as the table column header and legend key (see `COLUMN_DESCRIPTIONS` in that
-script) — prefixing it there would duplicate the table's own ROS2/ROS1
-section heading and break the legend lookup.
+For a third-party ROS integration, write it by hand instead, same as any
+other no-README tool (see "No README or no software tool yet?" below) —
+`Supported_by-Third_party-lightgrey`, short description, and a
+**Reference:** link to the community repository.
 
-Create this page under `ROS/<Generation><Distro>/index.mdx` — e.g.
-`docs/drivers/Tactile Sensor/ROS/ROS2-Jazzy/index.mdx` (see that file for a full
-example with build/run instructions). A product supporting several distros
-gets one such folder per distro (see
-`docs/drivers/Adaptive grippers/ROS/` for a six-distro example) — each with its own
-page, and its own link in the compatibility table, rather than one page
-listing every distro. List them in `sidebars.js` newest to oldest per
-generation (see [step 5](#5-register-in-sidebarsjs) below), and see
-[step 4](#4-create-the-product-landing-page) for the `ROS/index.mdx`
-landing page this requires.
+Since this page is now a single leaf directly under `ROS/`, not a
+container, it does **not** get a separate dedicated landing page the way
+Libraries/Simulation/Other do — see
+[step 4](#4-create-the-product-landing-page) for why.
 
 **No README or no software tool yet?** Skip steps 1 and 2 entirely
 and write the `index.mdx` manually. This is the right approach when
@@ -172,7 +185,7 @@ a synced README later, once the tool or its documentation exists.
 ## 4. Create the product landing page
 
 If the product folder has no `index.mdx` yet, create
-`docs/drivers/Adaptive grippers/index.mdx`:
+`software-tools/Adaptive grippers/index.mdx`:
 
 ```mdx
 ---
@@ -185,119 +198,99 @@ Short description of the product family.
 
 ## Available drivers
 
-### Libraries
-
 {/* AUTO-GENERATED-PRODUCT-LIBRARIES-TABLE:START */}
 {/* AUTO-GENERATED-PRODUCT-LIBRARIES-TABLE:END */}
 
-### ROS
-
-See the [ROS](ROS) page for the per-distro compatibility table.
-
-### Simulation
+{/* AUTO-GENERATED-PRODUCT-ROS-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-ROS-TABLE:END */}
 
 {/* AUTO-GENERATED-PRODUCT-SIMULATION-TABLE:START */}
 {/* AUTO-GENERATED-PRODUCT-SIMULATION-TABLE:END */}
-
-### Other
 
 {/* AUTO-GENERATED-PRODUCT-OTHER-TABLE:START */}
 {/* AUTO-GENERATED-PRODUCT-OTHER-TABLE:END */}
 ```
 
-Don't write any of these tables by hand — leave each marker pair next
-to each other and `scripts/generate-tools-table.js` fills in a
-single-row version of the matching category table (see
-[Auto-generated software tools tables](./tools-tables)) on the next build.
-The `title` here is what shows up as the row label there. A category with
-no tool yet renders a short "not documented yet" placeholder instead of an
-empty table, so it's safe to keep all four headings even before every
-category has content.
+Don't write any of these tables by hand — leave each marker pair where
+shown and `scripts/generate-tools-table.js` fills in a single-row version
+of the matching category's table (see
+[Auto-generated software tools tables](./tools-tables)) on the next
+build, including that category's own heading (e.g. `### Libraries`,
+`### ROS`) written *inside* the marker pair. A category with no tool yet
+writes nothing between its markers at all — heading included — so leave
+each empty pair exactly as shown above; the whole section simply won't
+appear until it has its first tool.
 
-**If the product has any ROS tool pages**, also create
-`docs/drivers/Adaptive grippers/ROS/index.mdx` — this is where the ROS2/ROS1 tables
-live instead, since a product's ROS distros usually outnumber its other
-tools:
+**For each of `Libraries`/`Simulation`/`Other` the product actually has
+any tool pages in**, *also* create a matching dedicated sub-page, e.g.
+`software-tools/Adaptive grippers/Libraries/index.mdx`:
 
 ```mdx
 ---
-title: ROS
-sidebar_label: ROS
+title: Libraries
+sidebar_label: Libraries
 ---
 
-Short description.
-
-### ROS2
-
-{/* AUTO-GENERATED-PRODUCT-ROS2-TABLE:START */}
-{/* AUTO-GENERATED-PRODUCT-ROS2-TABLE:END */}
-
-### ROS1
-
-{/* AUTO-GENERATED-PRODUCT-ROS1-TABLE:START */}
-{/* AUTO-GENERATED-PRODUCT-ROS1-TABLE:END */}
+{/* AUTO-GENERATED-PRODUCT-LIBRARIES-TABLE:START */}
+{/* AUTO-GENERATED-PRODUCT-LIBRARIES-TABLE:END */}
 ```
 
-`generate-tools-table.js` throws a build error naming the missing file if a
-product has ROS tool pages but no `ROS/index.mdx` with these markers.
+This is what a click on that category in the sidebar actually lands on —
+the product page's own table is a quick, at-a-glance summary, and the
+dedicated page is where that summary is reachable as its own page.
+`generate-tools-table.js` throws a build error naming the missing file if
+a product has tool pages in one of these three categories but no matching
+`<Category>/index.mdx` with these markers; a category with **no** tool
+pages for this product never gets one at all — nothing to make a page
+out of, so that category's whole section simply doesn't appear on the
+product's own page, above, and there's no dedicated page either.
 
-## 5. Register in `sidebars.js`
+**`ROS` is the one exception — it never gets a dedicated landing page.**
+A product has at most one `Category-ROS` leaf, so there's no multi-item
+table to land on beyond the leaf page itself; `ROS/index.mdx` created in
+[step 3](#3-create-the-wrapper-page) above is both the category folder
+*and* the real content page, with no separate landing step here.
 
-Add a category entry with a `link` pointing at the product landing
-page, nesting the tool pages under a Libraries / ROS / Simulation / Other
-sub-category matching where they live on disk:
+## 5. Register in `site-nav-tree.mjs`
+
+Add the tool's node to `scripts/site-nav-tree.mjs`'s `SITE_TREE` — the
+single source of truth for the whole "Software Tools" nav tree, shared by
+`sidebars.software-tools.js` (the real sidebar) and `sidebars.js`'s
+`overviewSidebar` (the plain-link copy shown on `docs/intro.mdx`, which
+lives on a different plugin instance and can't display this one's sidebar
+directly). Doc ids are relative to `software-tools/`, with no `drivers/`
+prefix — that prefix is only the URL's own `routeBasePath`, added by
+Docusaurus itself, not part of the doc id:
 
 ```js
-{
-  type: 'category',
-  label: 'Adaptive grippers',
-  link: { type: 'doc', id: 'drivers/Adaptive grippers/index' },
-  items: [
-    {
-      type: 'category',
-      label: 'Libraries',
-      items: [
-        'drivers/Adaptive grippers/Libraries/C++/index',
-        'drivers/Adaptive grippers/Libraries/Python/index',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'ROS',
-      link: { type: 'doc', id: 'drivers/Adaptive grippers/ROS/index' },
-      items: [
-        // Newest to oldest, grouped by generation (ROS2 above ROS1).
-        'drivers/Adaptive grippers/ROS/ROS2-Rolling/index',
-        'drivers/Adaptive grippers/ROS/ROS2-Humble/index',
-        'drivers/Adaptive grippers/ROS/ROS1-Melodic/index',
-        'drivers/Adaptive grippers/ROS/ROS1-Indigo/index',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Simulation',
-      items: [
-        'drivers/Adaptive grippers/Simulation/Isaac Sim/index',
-        'drivers/Adaptive grippers/Simulation/PyBullet/index',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Other',
-      items: [
-        'drivers/Adaptive grippers/Other/GraspGen/index',
-      ],
-    },
-  ],
-},
+category('Adaptive grippers', [
+  category('Libraries', [
+    leaf('Adaptive grippers/Libraries/C++/index'),
+    leaf('Adaptive grippers/Libraries/Python/index'),
+  ]),
+  leaf('Adaptive grippers/ROS/index'),
+  category('Simulation', [
+    leaf('Adaptive grippers/Simulation/Isaac Sim/index'),
+    leaf('Adaptive grippers/Simulation/PyBullet/index'),
+  ]),
+  category('Other', [
+    leaf('Adaptive grippers/Other/GraspGen/index'),
+  ]),
+], 'Adaptive grippers/index'),
 ```
 
-Only include the sub-categories that actually have pages — e.g. Force
-Torque Sensor has no Simulation or Other tools yet, so its sidebar
-entry skips those two groups entirely.
+`ROS` is a plain `leaf`/`versioned` node, not a `category` — a product
+has at most one `Category-ROS` page, so there's nothing to expand into.
+`category(label, items, docId?)` takes an optional trailing doc id, only
+when that category's own landing page exists (e.g. the product's own
+`index.mdx`) — omit it and the category header is still expandable, just
+not itself clickable, same as Force Torque Sensor's entry (no
+`Simulation`/`Other` groups yet, since it has no tools there).
 
-**Adding versioning to this tool afterward** replaces its doc-id string
-above (e.g. `'drivers/Adaptive grippers/Libraries/Python/index'`) with a
-plain link into its own new plugin instance — see
-[Per-tool documentation versioning](./versioning#checklist-adding-versioning-to-a-new-tool)
-for the full checklist.
+**A submodule-backed tool that also joins Stable/Development (main) versioning** uses
+a `versioned(label, toolId)` node instead of `leaf(docId)` — see
+[Documentation versioning](./versioning#checklist-adding-versioning-to-a-new-tool)
+for the full checklist (it also needs its sync job in
+`scripts/external-jobs.js` tagged with that same `toolId` — everything
+else, `scripts/versioned-tools.js` and `sidebars.software-tools.js`'s
+`activeItems` map, derives from that automatically).

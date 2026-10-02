@@ -17,8 +17,8 @@ GitHub repository. Embedding it here works in two steps:
 
 2. **Sync script** — [`scripts/sync-external-docs.js`](https://github.com/robotiq/robotiq.github.io/blob/main/scripts/sync-external-docs.js)
    reads the checked-out submodule files and copies the ones you
-   declare into `docs/`, rewriting relative links so they resolve
-   correctly on this site. For a folder job, it also removes any
+   declare into `software-tools/`, rewriting relative links so they
+   resolve correctly on this site. For a folder job, it also removes any
    previously-synced file that source no longer has (e.g. the source repo
    renamed or deleted a page) — except a folder's own hand-authored
    `index.mdx`/`README`, which the sync never writes and never touches.
@@ -32,63 +32,61 @@ robotiq.github.io/
 ├── docs/
 │   ├── intro.mdx                       ← overview page, includes the
 │   │                                     auto-generated software tools tables
-│   └── drivers/
-│       ├── Tactile Sensor/
-│       │   ├── index.mdx              ← product landing page (in git)
-│       │   ├── Libraries/              ← C++ and Python are VERSIONED tools
-│       │   │                             (see versioned-tools/ below) — this
-│       │   │                             folder holds no tool pages, only
-│       │   │                             the sidebar link to each
-│       │   ├── ROS/
-│       │   │   ├── index.mdx          ← ROS landing page (in git), holds
-│       │   │   │                         the per-distro compatibility table
-│       │   │   └── ROS2-Jazzy/index.mdx
-│       │   └── Simulation/
-│       │       └── Isaac Sim/index.mdx ← NOT versioned (own Isaac Sim page,
-│       │                                  distinct from Adaptive grippers')
-│       ├── Force Torque Sensor/
-│       │   ├── index.mdx
-│       │   ├── Libraries/C/ …
-│       │   ├── Libraries/Python/ …
-│       │   └── ROS/
-│       │       ├── index.mdx
-│       │       └── ROS2-Humble/ …
-│       └── Adaptive grippers/
-│           ├── index.mdx
-│           ├── Libraries/              ← C++ is a VERSIONED tool (below);
-│           │                             Python isn't yet
-│           │   └── Python/ …
-│           ├── ROS/                    ← newest to oldest, per generation
-│           │   ├── index.mdx
-│           │   ├── ROS2-Lyrical/ …
-│           │   ├── ROS2-Jazzy/ …
-│           │   ├── ROS2-Humble/ …
-│           │   ├── ROS1-Melodic/ …
-│           │   ├── ROS1-Kinetic/ …
-│           │   └── ROS1-Indigo/ …
-│           ├── Simulation/PyBullet/ …
-│           └── Other/GraspGen/ …      ← "Other" category
-├── versioned-tools/                    ← content for VERSIONED tools (own
-│   │                                     Docusaurus plugin instance each,
-│   │                                     Stable/Development/Previous versions —
-│   │                                     see contribute/versioning.mdx),
-│   │                                     mirrors docs/drivers/'s own shape
-│   │                                     one level in from <Product>
+│   ├── api-stability.mdx               ← Software stability policy
+│   └── contribute/                     ← this doc, and its siblings
+├── software-tools/                    ← every product/tool page, versioned
+│   │                                     or not — one shared Docusaurus
+│   │                                     plugin instance, sitewide Stable/
+│   │                                     Development (main), see
+│   │                                     contribute/versioning.mdx for why
+│   │                                     this can't be split across two
+│   │                                     instances
 │   ├── Tactile Sensor/
-│   │   └── Libraries/
-│   │       ├── C++/
-│   │       │   ├── index.mdx          ← wrapper page (in git)
-│   │       │   ├── _readme.md         ← synced from submodule
-│   │       │   ├── API/               ← generated API reference (Doxygen +
-│   │       │   │   └── index.mdx         doxygen2docusaurus), see below
-│   │       │   └── docs/              ← synced copy of the submodule's own
-│   │       │       └── index.mdx         docs/ folder (guides, design notes)
-│   │       └── Python/
-│   │           ├── index.mdx
-│   │           └── _readme.md
+│   │   ├── index.mdx                  ← product landing page (in git)
+│   │   ├── Libraries/
+│   │   │   ├── C++/                   ← VERSIONED tool
+│   │   │   │   ├── index.mdx          ← wrapper page (in git)
+│   │   │   │   ├── _readme.md         ← synced from submodule
+│   │   │   │   ├── API/               ← generated API reference (Doxygen +
+│   │   │   │   │   └── index.mdx         doxygen2docusaurus), see below
+│   │   │   │   └── docs/              ← synced copy of the submodule's own
+│   │   │   │       └── index.mdx         docs/ folder (guides, design notes)
+│   │   │   └── Python/                ← VERSIONED tool, single page
+│   │   │       ├── index.mdx
+│   │   │       └── _readme.md
+│   │   ├── ROS/
+│   │   │   ├── index.mdx              ← VERSIONED tool, the ROS leaf page
+│   │   │   │                             itself (not a landing page — see
+│   │   │   │                             below)
+│   │   │   └── _readme.md             ← synced from submodule
+│   │   └── Simulation/
+│   │       └── Isaac Sim/index.mdx    ← NOT versioned yet (own Isaac Sim
+│   │                                     page, distinct from Adaptive
+│   │                                     grippers' below)
+│   ├── Force Torque Sensor/            ← no submodule at all, entirely
+│   │   │                                 hand-authored
+│   │   ├── index.mdx
+│   │   ├── Libraries/C/ …
+│   │   ├── Libraries/Python/ …
+│   │   └── ROS/index.mdx              ← NOT versioned, third-party
+│   │                                     integration, hand-authored
+│   ├── EPick/                          ← same, no submodule
+│   │   ├── index.mdx
+│   │   └── ROS/index.mdx              ← same, third-party
 │   └── Adaptive grippers/
-│       ├── Libraries/C++/ …           ← same guides+API shape as above
-│       └── Simulation/Isaac Sim/ …    ← single page, Development (main) only so far
+│       ├── index.mdx
+│       ├── Libraries/
+│       │   ├── C++/ …                 ← VERSIONED tool, same guides+API
+│       │   │                             shape as Tactile Sensor's above
+│       │   └── Python/ …              ← NOT versioned yet
+│       ├── ROS/
+│       │   ├── index.mdx              ← VERSIONED tool, the ROS leaf page
+│       │   └── _readme.md             ← synced from submodule
+│       ├── Simulation/
+│       │   ├── Isaac Sim/ …           ← VERSIONED tool
+│       │   ├── PyBullet/ …
+│       │   └── MuJoCo/ …
+│       └── Other/GraspGen/ …          ← "Other" category
 ├── draft/                              ← content with no nav link yet (never
 │                                          built into a page — outside docs/)
 ├── scripts/
@@ -96,26 +94,34 @@ robotiq.github.io/
 │   ├── generate-tools-table.js
 │   └── site-nav-tree.mjs               ← shared nav tree, see
 │                                           contribute/versioning.mdx
-├── sidebars.js                         ← main instance's sidebar
-└── sidebars.<tool>.js                  ← one per versioned tool
+├── sidebars.js                         ← default instance's sidebar (just
+│                                           docs/intro.mdx, api-stability.mdx,
+│                                           and contribute/*)
+└── sidebars.software-tools.js         ← shared software-tools instance's
+                                            own sidebar, the whole Software
+                                            Tools tree at once
 ```
 
 Files prefixed with `_` are Docusaurus **partials** — imported by a
 wrapper `.mdx` but not standalone pages themselves.
 
-**A tool listed above as "VERSIONED" lives under `versioned-tools/`, not
-`docs/`, and has its own Docusaurus plugin instance with its own
-Stable/Development/Previous versions switcher** — see
-[Per-tool documentation versioning](./versioning) for the whole mechanism,
-why it needs a separate top-level folder rather than living inside
-`docs/`, and how to add it to a new tool. Everything else on this page
+**A tool listed above as "VERSIONED" has its sync job tagged with a
+`toolId` in `scripts/external-jobs.js` (`scripts/versioned-tools.js` and
+`sidebars.software-tools.js`'s active-items map both derive from that),
+and participates in Stable/Development (main) cuts** — see
+[Documentation versioning](./versioning) for the whole mechanism and how
+to add it to a new tool. Every product/tool, versioned or not, lives
+under `software-tools/` (not `docs/`) — see that same page for why: the
+shared instance owns the entire `/docs/drivers/*` URL space, so a
+non-versioned tool living in `docs/` instead would collide with it.
+Everything else on this page
 (the sync script, the exclude-content markers, splitting a tool into
 guides/API/overview, refreshing submodule pins) applies identically to a
 versioned or non-versioned tool — versioning only changes *where* the
 files live and *how many builds* exist of them, not how they're
 authored or synced.
 
-The `Libraries/`, `ROS/`, `Simulation/`, and `Other/` folders are just
+The `Libraries/`, `Simulation/`, and `Other/` folders are just
 organizational containers — `generate-tools-table.js` doesn't care about
 folder names, only about which `index.mdx` files carry a `Category` badge
 (see [step 3](./adding-a-tool#3-create-the-wrapper-page) of adding a new
@@ -123,15 +129,25 @@ tool). A tool page could just as well sit directly under the product
 folder with no wrapper folder at all — it would still land in the right
 table, because classification comes from the badge, not the path. The
 wrapper folders exist purely to keep the repo tidy for humans browsing it.
+`ROS/` is the one exception: its own `index.mdx` carries the
+`Category-ROS` badge directly, so it's a leaf, not a container — a
+product has at most one ROS page (no distro or generation split; which
+ROS distros a driver supports lives in that driver's own repo README, not
+as a page on this site).
 
-`ROS/` is a container with one exception: its own `index.mdx` is a real page
-(no `Category` badge, so the script still treats it as a container and
-recurses into it), used as the ROS landing page — it carries the
-auto-generated per-distro compatibility table for that product. Each ROS
-distro is its own leaf folder named `<Generation>-<Distro>` (e.g.
-`ROS2-Humble/`, `ROS1-Indigo/`), rather than one page listing every distro a
-generation supports — so every distro gets its own page, and its own link in
-the compatibility table, to a distro-specific reference.
+Any of the three container folders can *also* carry its own `index.mdx`
+landing page (no `Category` badge, so the script still treats it as a
+container and recurses into it) — once a product has any tool pages in
+that category, that page gets the same auto-generated table the
+product's own top-level `index.mdx` already shows as a quick summary, as
+its own dedicated page (see
+[step 4](./adding-a-tool#4-create-the-product-landing-page)). `ROS/`
+never gets one of these: there's only ever the one leaf, so its
+`index.mdx` is already the real content page — synced from
+[robotiq/ros](https://github.com/robotiq/ros) the same way the Tactile
+Sensor C++ library page syncs from `tactile_sensors` (see the tree above)
+for a Robotiq-maintained integration, hand-authored for a third-party
+one.
 
 ## Excluding content from a synced README
 
@@ -181,13 +197,10 @@ A tool's `_readme.md` partial is meant to stay a short overview. Once a
 repository also has a generated API reference and its own prose
 documentation (design notes, guides — more than fits in a README), don't
 cram all three into one page. Split them into sibling folders next to the
-tool's `index.mdx`. The example below is written against a plain,
-non-versioned tool under `docs/`; the real worked example on this site,
-`versioned-tools/Adaptive grippers/Libraries/C++/`, is a *versioned* tool
-(see [Per-tool documentation versioning](./versioning)) — same folder
-shape, but under `versioned-tools/` instead of `docs/`, and with a
-different sidebar entry (`sidebars.adaptive-grippers-cpp.js`'s `cppItem`,
-not a `sidebars.js` entry):
+tool's `index.mdx`, under `software-tools/<Product>/<Category>/<Tool>/`
+(every tool lives there, versioned or not — see
+[Documentation versioning](./versioning)). The real worked example on
+this site is `software-tools/Adaptive grippers/Libraries/C++/`:
 
 - **`<Tool>/index.mdx`** — the manually maintained overview (unchanged);
   still imports `_readme.md`. No need to link to the two folders below by
@@ -204,7 +217,7 @@ not a `sidebars.js` entry):
   `scripts/external-jobs.js`:
 
   ```js
-  { from: 'docs', to: 'drivers/<Product>/<Category>/<Tool>/docs' },
+  { from: 'docs', to: '<Product>/<Category>/<Tool>/docs', destRoot: 'software-tools' },
   ```
 
   **Name the source repo's guide files `NN-kebab-case.md`** (e.g.
@@ -223,20 +236,26 @@ not a `sidebars.js` entry):
 
 Each folder needs its own `index.mdx` landing page (`title`/`sidebar_label`
 frontmatter only — no `Category`/`Supported_by` badges, since these aren't
-separate tools) and an entry in `sidebars.js` nested under the tool, which
-becomes a category instead of a single page:
+separate tools) and the tool's own entry in
+`sidebars.software-tools.js`'s active-items map becomes a category
+instead of a single doc:
 
 ```js
 {
   type: 'category',
   label: '<Tool>',
-  link: { type: 'doc', id: 'drivers/<Product>/<Category>/<Tool>/index' },
+  link: { type: 'doc', id: '<Product>/<Category>/<Tool>/index' },
   items: [
-    'drivers/<Product>/<Category>/<Tool>/API/index',
-    'drivers/<Product>/<Category>/<Tool>/docs/index',
+    '<Product>/<Category>/<Tool>/API/index',
+    '<Product>/<Category>/<Tool>/docs/index',
   ],
 },
 ```
+
+(the real, current version of this — `guidesCategory`/`doxygenApiCategory`
+in `sidebars.software-tools.js` — additionally guards each item against
+the content not existing yet in some version's own cut; see
+[Documentation versioning](./versioning) for why.)
 
 `generate-tools-table.js` stops walking a product's folder tree as soon as
 it finds an `index.mdx` with a `Category` badge (see
