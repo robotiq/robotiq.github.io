@@ -121,6 +121,25 @@ function pruneDoxygenSidebarNode(node, apiFolderPath, exclude) {
   return { ...node, items };
 }
 
+// doxygen2docusaurus's own Xref section renderer (\deprecated/\todo/\bug/
+// \test — "docxrefsecttype.js" in @xpack/doxygen2docusaurus) emits its one
+// link unquoted: `<a href=${permalink}>` instead of `<a href="${permalink}">`,
+// the only spot in its whole output that does — every other backlink in
+// this file's own grep for "href=" is properly quoted. Harmless on a site
+// with no spaces in its URLs; this one has them everywhere ("Adaptive
+// grippers"), and an HTML parser ends an unquoted attribute at the first
+// one — so a page with a `\deprecated` (or \todo/\bug/\test) tag anywhere
+// silently truncated its own Xref link to e.g. `/docs/drivers/Adaptive`,
+// which Docusaurus's broken-link check then (rightly) failed the build on.
+// Latent until a doc comment actually used one of those commands — this
+// surfaced from a routine submodule bump, nothing to do with this site's
+// own content. Quote it here rather than patching node_modules: nothing
+// else reads this before it's rendered to HTML, so this is the one place
+// left to fix it from this repo.
+function quoteUnquotedAnchorHrefs(content) {
+  return content.replace(/<a href=([^"'][^>]*)>/g, '<a href="$1">');
+}
+
 // doxygen2docusaurus bakes plain HTML `<a href="/docs/...">` backlinks into
 // every documented entity ("Definition at line N of file X", the
 // `#include <...>` line, etc.) pointing at its own Files/Folders/Namespaces
@@ -1278,7 +1297,7 @@ function runDoxygen2Docusaurus(job, written, folderDestPaths) {
     repoUrl: job.repoUrl,
     branch: job.branch,
     rawCopy: true,
-    transformContent: (content) => injectTitleFromH1(moveDetailedDescriptionToTop(stripDeadDoxygenLinks(splitMemberSignatures(improveTitleAndStripDeclaration(mergeMemberIndexTables(stripLocationParagraphs(stripPrivateMemberSections(content))))), apiFolderPath, job.exclude))),
+    transformContent: (content) => injectTitleFromH1(moveDetailedDescriptionToTop(stripDeadDoxygenLinks(splitMemberSignatures(improveTitleAndStripDeclaration(mergeMemberIndexTables(stripLocationParagraphs(stripPrivateMemberSections(quoteUnquotedAnchorHrefs(content)))))), apiFolderPath, job.exclude))),
   }, stagingApiDir, written);
   folderDestPaths.add(destPath);
   stripDanglingAnchorLinksAcrossFiles(destPath);
