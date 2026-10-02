@@ -1,0 +1,132 @@
+name: Auto-cut Stable versions
+
+# Checks every versioned tool for a newer tag upstream (see
+# scripts/auto-cut-versions.js) and, if one exists, records it in
+# software-tools-stable.json, then merges the result straight to main —
+# see "Cutting Stable" in docs/contribute/versioning.mdx. Stable's own
+# frozen content isn't committed to git (see .gitignore); the Build step
+# below is what actually materializes it from the newly-recorded tags
+# (scripts/ensure-stable-version.js, the same prebuild step every other
+# build already runs) and the Test step verifies the result — so build +
+# test passing here is both "does this tag actually work" AND "does the
+# small commit about to be pushed produce it," not a separate concern.
+# Fully automatic end to end: a newer tag existing upstream is itself the
+# only signal this waits for, and that build + test run is the gate, not a
+# human. Runs on a schedule so nobody has to remember to run that script
+# by hand after a release, and nobody has to click merge either.
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # daily, 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: auto-cut-versions
+  cancel-in-progress: false
+
+jobs:
+  auto-cut:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # See the matching comment in ci.yml for why both are needed.
+      - name: Install Doxygen and Graphviz
+        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+
+      - name: Check for new tags and cut Stable
+        run: node scripts/auto-cut-versions.js
+
+      - name: Determine whether anything was cut
+        id: check
+        run: |
+          if [ -f cut-version-summary.md ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # A cut is never pushed unverified — build/test have to pass on the
+      # actual result before a PR is opened or updated with it.
+      - name: Build
+        if: steps.check.outputs.changed == 'true'
+        run: npm run build
+
+      - name: Test
+        if: steps.check.outputs.changed == 'true'
+        run: npm test
+
+      # Needed so the push and PR-open below read as a real, distinct
+      # actor instead of GITHUB_TOKEN — same reasoning as this same
+      # pattern in dependabot-auto-merge.yml. GitHub doesn't start
+      # workflow runs (ci.yml's own "build-and-test" required check
+      # included) from a GITHUB_TOKEN-authored push or PR-open event, so
+      # a GITHUB_TOKEN-pushed cut can never pick up the check prToMain
+      # requires, and a GITHUB_TOKEN merge wouldn't fire deploy.yml's
+      # `push` trigger either, even if branch protection somehow let it
+      # through.
+      - name: Mint App token
+        if: steps.check.outputs.changed == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      # One fixed branch, force-pushed each run — a run the next day with
+      # no further upstream changes has nothing new to add, and a run
+      # while an earlier auto-cut PR somehow still exists updates that
+      # same PR in place instead of opening a duplicate.
+      - name: Push the cut and open (or update) the PR
+        if: steps.check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          BRANCH="automated/cut-versions"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add -- software-tools-stable.json
+          git commit -m "$(printf 'Auto-cut Stable version(s)\n\n%s' "$(cat cut-version-summary.md)")"
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "$BRANCH"
+          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')" ]; then
+            gh pr create --title "Auto-cut Stable version(s)" --body-file cut-version-summary.md --head "$BRANCH" --base main
+          else
+            gh pr edit "$BRANCH" --body-file cut-version-summary.md
+          fi
+
+      # The approval has to come from a different actor than the PR's own
+      # author (the App, just above) — GITHUB_TOKEN's own actor
+      # (github-actions, distinct from the App) qualifies, same reasoning
+      # as dependabot-auto-merge.yml's own approval step.
+      - name: Approve
+        if: steps.check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr review --approve "automated/cut-versions"
+
+      # Build + Test above already validated this exact commit, so this
+      # queues the merge rather than waiting on anything further by hand —
+      # `--auto` still only completes the merge once ci.yml's own
+      # "build-and-test" check (now actually running, since the PR has a
+      # real author) reports success, so a cut that somehow fails it sits
+      # open for a human instead of merging partway. Uses the App token,
+      # not GITHUB_TOKEN, so the merge commit on main is attributed to a
+      # real actor and fires deploy.yml.
+      - name: Enable auto-merge
+        if: steps.check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: gh pr merge --auto --merge --delete-branch "automated/cut-versions"

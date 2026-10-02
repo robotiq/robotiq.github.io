@@ -71,28 +71,26 @@ jobs:
         run: npm run build
 
       # generate-tools-table.js (run above, via the prebuild hook) rewrites
-      # docs/intro.mdx, every product's own index.mdx/ROS/index.mdx, and any
-      # tool/guide page that's grown a self-installed sub-section list — all
-      # committed files, none of them gitignored (only the submodule-synced
-      # docs/drivers/**/*.md content is — see the comment above that rule in
-      # .gitignore). It does the exact same thing under versioned-tools/ for
-      # a per-tool-versioned tool's own wrapper page (see
-      # docs/contribute/versioning.mdx) — same gitignore split there
-      # (versioned-tools/**/*.md), so this check covers both directories.
-      # regenerate-versioned-sidebars.mjs (also run via the prebuild hook,
-      # as part of `npm run generate`) does the same for every
-      # `*_versioned_sidebars/*.json` snapshot — the unit-test drift guard
-      # above already covers this statically, but a real build regenerating
-      # something the static check couldn't see (e.g. a doc's frontmatter
-      # label actually changing) still needs this line to catch it.
-      # Nothing else regenerates and commits these after a merge, so a PR
-      # that changes something the generator depends on (e.g. a Dependabot
-      # submodule bump) without also re-running it locally would otherwise
-      # silently ship a deployed site that doesn't match what's committed.
-      # This catches that here, generically — no file list to keep in sync
-      # as the generator's own output grows.
+      # docs/intro.mdx and, under software-tools/ (every product/tool page,
+      # versioned or not — see docs/contribute/versioning.mdx), every
+      # product's own index.mdx/ROS/index.mdx and any tool/guide page
+      # that's grown a self-installed sub-section list — all committed
+      # files, none of them gitignored (only the submodule-synced
+      # software-tools/**/*.md content is — see the comment above that
+      # rule in .gitignore). Nothing else regenerates and commits these
+      # after a merge, so a PR that changes something the generator
+      # depends on (e.g. a Dependabot submodule bump) without also
+      # re-running it locally would otherwise silently ship a deployed
+      # site that doesn't match what's committed. This catches that here,
+      # generically — no file list to keep in sync as the generator's own
+      # output grows. (Stable's own frozen content —
+      # software-tools_versioned_docs/, software-tools_versioned_sidebars/,
+      # software-tools_versions.json — is gitignored now, materialized
+      # fresh by every build's own prebuild hook
+      # (scripts/ensure-stable-version.js) rather than committed, so there's
+      # nothing to verify-committed for it here; see docs/contribute/versioning.mdx.)
       - name: Verify generated content is committed
-        run: git diff --exit-code -- docs/ versioned-tools/ '*_versioned_sidebars/'
+        run: git diff --exit-code -- docs/ software-tools/
 
       # Smoke-tests the generated output (key pages + tools table present).
       - name: Test

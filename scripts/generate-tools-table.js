@@ -1,72 +1,86 @@
-// Regenerates the software-tools tables by scanning docs/drivers/:
-//  - one table per category (Libraries, ROS2, ROS1, Simulation, Other) in
+// Regenerates the software-tools tables by scanning software-tools/:
+//  - one table per category (Libraries, ROS, Simulation, Other) in
 //    docs/intro.mdx, all products x tools in that category
-//  - the same Libraries / Simulation / Other tables, single-row versions
-//    scoped to just that product, on each product's own index.mdx
-//  - the same ROS2 / ROS1 tables, single-row versions scoped to just that
-//    product, on each product's ROS/index.mdx
+//  - the same tables, single-row versions scoped to just that product, on
+//    each product's own index.mdx
+//  - the same Libraries / Simulation / Other tables again, once a product
+//    actually has tools there, on that category's own dedicated
+//    <Category>/index.mdx landing page — ROS is the one exception (see
+//    below)
 //
-// Each product (hardware) is a folder under docs/drivers/ with its own
+// Each product (hardware) is a folder under software-tools/ with its own
 // index.mdx (frontmatter title = row label). Underneath, tool pages are
 // found by walking the folder tree until an index.mdx with a
 // `Category-<Name>` shields.io badge is found — that page is a leaf ("tool")
 // classified into that category, regardless of how deep it's nested (e.g.
-// docs/drivers/<product>/Libraries/Python/index.mdx or
-// docs/drivers/<product>/ROS/ROS2-Humble/index.mdx). Plain folders in
-// between (Libraries/, ROS/, Simulation/) are just containers — except ROS/
-// itself, which also carries its own index.mdx (no Category badge, so it's
-// still treated as a container), the landing page that receives the ROS2 /
-// ROS1 tables.
+// software-tools/<product>/Libraries/Python/index.mdx or
+// software-tools/<product>/ROS/index.mdx). Plain folders in between
+// (Libraries/, Simulation/) are just containers.
 //
-// A ROS tool page is a single distro (title = distro name, e.g. "Humble"),
-// carrying a `Category-ROS1` or `Category-ROS2` badge — otherwise identical
-// to a non-ROS tool page (one `Supported_by-<Label>-<Color>` badge). A
-// product supporting several distros gets one leaf folder per distro (e.g.
-// `ROS/ROS2-Humble/`, `ROS/ROS2-Iron/`) instead of one page listing many.
+// ROS is the one category capped at a single tool per product — there is
+// no per-distro or per-generation split any more, just one `Category-ROS`
+// page (software-tools/<product>/ROS/index.mdx), carrying real content
+// itself (synced from https://github.com/robotiq/ros for Robotiq-
+// maintained products, hand-authored for third-party ones) rather than
+// being a container with its own auto-generated landing table. So unlike
+// Libraries/Simulation/Other, ROS never gets a dedicated landing page
+// written by this script — there's nothing to land on beyond the leaf
+// page itself.
 //
-// Add a new hardware folder, tool page, or distro page under docs/drivers/
-// and every table picks it up automatically on the next `npm start` / `npm run build`.
-
+// Add a new hardware folder or tool page under software-tools/ and every
+// table picks it up automatically on the next `npm start` / `npm run
+// build`. Every product lives here — not just submodule-synced tools —
+// because the shared 'software-tools' Docusaurus instance (see
+// docs/contribute/versioning.mdx) owns the entire `/docs/drivers/*` URL
+// space; a plugin instance can only build its own routes from its own
+// content root, and two instances can't split ownership of one URL prefix
+// (client-side route matching picks whichever instance's own top-level
+// route registers first, for every path under that prefix, with no
+// fallback to the other — confirmed by hitting this directly: a page that
+// used to live in docs/drivers/ 404'd once 'software-tools' claimed
+// /docs/drivers as its own routeBasePath).
 const fs = require('fs');
 const path = require('path');
 const matter = require('gray-matter');
 
 const ROOT = path.resolve(__dirname, '..');
-const DRIVERS_DIR = path.join(ROOT, 'docs', 'drivers');
-// A tool piloting per-tool documentation versioning (see
-// docs/contribute/versioning.mdx) lives here instead of under
-// DRIVERS_DIR — its own Docusaurus plugin instance can't be nested inside
-// the main docs/ tree (see the destRoot comment in sync-external-docs.js).
-// Mirrors DRIVERS_DIR's own <Product>/<...> structure underneath each
-// product folder, so a tool moving here needs no href-computation changes,
-// just an extra folder to also walk.
-const VERSIONED_TOOLS_DIR = path.join(ROOT, 'versioned-tools');
+const DRIVERS_DIR = path.join(ROOT, 'software-tools');
 const INTRO_FILE = path.join(ROOT, 'docs', 'intro.mdx');
 
-// Categories, in the order their tables appear on docs/intro.mdx. Every
-// category — ROS1/ROS2 included — is rendered the same way: a plain
-// "product x tool" table, one column per distinct tool `title` found under
-// that category's leaf pages.
-const CATEGORIES = ['Libraries', 'ROS2', 'ROS1', 'Simulation', 'Other'];
-const NO_PRODUCTS_MESSAGE = {
-  Libraries: '_No libraries documented yet._',
-  ROS2: '_No products currently support ROS 2._',
-  ROS1: '_No products currently support ROS 1._',
-  Simulation: '_No simulation integrations documented yet._',
-  Other: '_No other community integrations documented yet._',
-};
+// Categories, in the order their tables appear on docs/intro.mdx and on
+// each product page. Every category is rendered the same way: a plain
+// "product x tool" table, one column per distinct tool `title` found
+// under that category's leaf pages — for ROS that's always just the one
+// column, "ROS", since a product has at most one ROS leaf page now.
+const CATEGORIES = ['Libraries', 'ROS', 'Simulation', 'Other'];
 
-// Categories whose tables live on the product's own index.mdx, vs. on its
-// ROS/index.mdx landing page (see "each product's ROS/index.mdx" below).
-const PRODUCT_PAGE_CATEGORIES = ['Libraries', 'Simulation', 'Other'];
-const PRODUCT_ROS_CATEGORIES = ['ROS2', 'ROS1'];
+// Categories that also get a dedicated, multi-item `<Category>/index.mdx`
+// landing page once a product actually has any tools there (every one
+// except ROS — see the header comment above for why).
+const LANDING_PAGE_CATEGORIES = ['Libraries', 'Simulation', 'Other'];
+
+// Heading text for each category, keyed by where it's rendered. The
+// heading lives INSIDE the marker-controlled content (rather than
+// hand-authored above it) specifically so a category with zero tools can
+// omit its whole section — heading included, not just the table — by
+// writing nothing between the markers at all.
+const INTRO_HEADING = {
+  Libraries: '### Libraries',
+  ROS: '### ROS',
+  Simulation: '### Simulation',
+  Other: '### Other community projects',
+};
+const PRODUCT_HEADING = {
+  Libraries: '### Libraries',
+  ROS: '### ROS',
+  Simulation: '### Simulation',
+  Other: '### Other',
+};
 
 // Preferred left-to-right column order. Anything not listed here still
 // appears automatically — it's just sorted alphabetically after these.
 const COLUMN_ORDER = {
   Libraries: ['C', 'C++', 'Python'],
-  ROS2: ['Rolling', 'Lyrical', 'Jazzy', 'Iron', 'Humble', 'Galactic', 'Foxy'],
-  ROS1: ['Noetic', 'Melodic', 'Kinetic', 'Jade', 'Indigo'],
   Simulation: ['Isaac Sim', 'PyBullet', 'MuJoCo'],
   Other: [],
 };
@@ -83,18 +97,6 @@ const COLUMN_DESCRIPTIONS = {
   'C': 'Compiled, performance-oriented language.',
   'C++': 'Compiled, performance-oriented object-oriented language.',
   'Python': 'Interpreted, prototyping-oriented language.',
-  'Foxy': 'ROS 2 LTS release (2020), end of life.',
-  'Galactic': 'ROS 2 release (2021), end of life.',
-  'Humble': 'ROS 2 LTS release (2022), supported until 2027.',
-  'Iron': 'ROS 2 release (2023), end of life.',
-  'Jazzy': 'ROS 2 LTS release (2024), supported until 2029.',
-  'Lyrical': 'ROS 2 LTS release (2026).',
-  'Rolling': 'ROS 2 rolling development distro, always tracking the latest sources.',
-  'Indigo': 'ROS 1 release (2014), end of life.',
-  'Jade': 'ROS 1 release (2015), end of life.',
-  'Kinetic': 'ROS 1 release (2016), end of life.',
-  'Melodic': 'ROS 1 release (2018), end of life.',
-  'Noetic': 'Final ROS 1 release (2020), end of life May 2025.',
   'Isaac Sim': 'NVIDIA Isaac Sim integration for simulating the hardware.',
   'PyBullet': 'PyBullet integration for physics-based simulation.',
   'MuJoCo': 'MuJoCo (MJCF) model for physics-based simulation.',
@@ -141,8 +143,11 @@ function isDirectory(p) {
 }
 
 // Walks a hardware folder looking for tool leaf pages: an index.mdx carrying
-// a Category badge. Recurses through plain container folders (Libraries/, ROS/,
-// Simulation/, ...) that have no such index.mdx of their own.
+// a Category badge. Recurses through plain container folders (Libraries/,
+// Simulation/, ...) that have no such index.mdx of their own — ROS/ is
+// NOT one of these any more: its own index.mdx carries the Category-ROS
+// badge directly, so it's a leaf, not a container, and recursion never
+// goes any deeper than it.
 function collectToolPages(dir, hardwareDir) {
   const found = [];
   for (const name of fs.readdirSync(dir).sort()) {
@@ -177,8 +182,8 @@ function collectToolPages(dir, hardwareDir) {
 // tool's own folder that has its own index page (.mdx, or .md for
 // doxygen2docusaurus's generated API/index.md) but carries no Category
 // badge of its own — i.e. it's a sub-section of this tool, not a
-// different tool — becomes an entry. A tool with none (every ROS distro
-// and Simulation page today) yields an empty list.
+// different tool — becomes an entry. A tool with none (every Simulation
+// page today) yields an empty list.
 function collectSubpages(toolDir) {
   const subpages = [];
   for (const name of fs.readdirSync(toolDir).sort()) {
@@ -197,7 +202,19 @@ function collectSubpages(toolDir) {
     // this folder (doxygenApiCategory) rather than that generated page's
     // own long, product-specific title — kept consistent with it here too.
     const label = name.toLowerCase() === 'api' ? 'API Reference' : (readFrontmatterTitle(raw) || name);
-    subpages.push({label, href: name});
+    // Trailing slash is load-bearing, not cosmetic — this href is rendered
+    // as a raw `<a href>` (see installLinkListBlock), not a Docusaurus
+    // `<Link>`, so the browser resolves it with plain relative-URL rules
+    // at click time, not anything Docusaurus-aware. `name` here is always
+    // a folder (this function only ever collects an index PAGE found
+    // inside a subdirectory), so without the trailing slash, clicking it
+    // lands on a URL indistinguishable from a plain leaf page one level
+    // up (e.g. "docs" instead of "docs/") — then any *further* relative
+    // link on THAT landing page (e.g. one of collectFolderGuides' own
+    // guide tiles) resolves against the wrong base and silently 404s.
+    // Confirmed the hard way: exactly this chain, via the tool page's own
+    // "Introduction guides" tile → its "Quick start" tile.
+    subpages.push({label, href: `${name}/`});
   }
   subpages.sort((a, b) => byOrder(SUBPAGE_ORDER)(a.href, b.href));
   return subpages;
@@ -373,8 +390,8 @@ function ensureSubpagesBlock(indexPath) {
   }
 }
 
-// product: { title, href, indexPath, rosIndexPath,
-//            tools: { Libraries: { toolTitle -> {href, localHref, rosLocalHref, badge} }, ... } }
+// product: { title, href, indexPath,
+//            tools: { Libraries: { toolTitle -> {href, localHref, categoryLocalHref, badge} }, ... } }
 const products = [];
 const categoryColumns = {};
 for (const catKey of CATEGORIES) categoryColumns[catKey] = new Set();
@@ -390,7 +407,6 @@ for (const hardwareName of fs.readdirSync(DRIVERS_DIR).sort()) {
     title: readFrontmatterTitle(fs.readFileSync(hardwareIndex, 'utf8')) || hardwareName,
     href: docHref('drivers', hardwareName),
     indexPath: hardwareIndex,
-    rosIndexPath: path.join(hardwareDir, 'ROS', 'index.mdx'),
     tools: {},
   };
   for (const catKey of CATEGORIES) product.tools[catKey] = {};
@@ -404,24 +420,19 @@ for (const hardwareName of fs.readdirSync(DRIVERS_DIR).sort()) {
     product.tools[tool.category][tool.title] = {
       href: docHref('drivers', hardwareName, ...tool.relSegments),
       localHref: docHref(...tool.relSegments),
-      // Relative to the product's ROS/index.mdx rather than its top-level
-      // index.mdx — only meaningful (and only used) for ROS1/ROS2 tools,
-      // which always live one level deeper, under ROS/.
-      rosLocalHref: docHref(...tool.relSegments.slice(1)),
+      // Relative to the category's own <Category>/index.mdx landing page
+      // (Libraries/index.mdx, Simulation/index.mdx, Other/index.mdx —
+      // ROS has none, see the header comment, so this field is simply
+      // unused for it) rather than the product's top-level index.mdx —
+      // every other product-page category gets one of these once it
+      // actually has any tools, one level below the product root, so
+      // this only ever needs to drop that one leading segment.
+      categoryLocalHref: docHref(...tool.relSegments.slice(1)),
       badge: readCompactBadge(tool.raw),
     };
   };
 
   for (const tool of collectToolPages(hardwareDir, hardwareDir)) addTool(tool);
-
-  // Same walk, over this product's mirror folder under VERSIONED_TOOLS_DIR
-  // (if it has one) — relSegments come out identical either way since the
-  // structure underneath mirrors DRIVERS_DIR/<hardwareName>, so href
-  // computation above needs no branching on where a tool actually lives.
-  const versionedHardwareDir = path.join(VERSIONED_TOOLS_DIR, hardwareName);
-  if (fs.existsSync(versionedHardwareDir) && isDirectory(versionedHardwareDir)) {
-    for (const tool of collectToolPages(versionedHardwareDir, versionedHardwareDir)) addTool(tool);
-  }
 
   products.push(product);
 }
@@ -438,9 +449,13 @@ function byOrder(order) {
 }
 
 // hrefField picks which of a tool's precomputed hrefs to link to:
-//  - 'href'         — root-relative, for docs/intro.mdx
-//  - 'localHref'    — relative to the product's own index.mdx
-//  - 'rosLocalHref' — relative to the product's ROS/index.mdx
+//  - 'href'              — root-relative, for docs/intro.mdx
+//  - 'localHref'          — relative to the product's own index.mdx (a
+//                           category with zero tools for this product,
+//                           still rendered there as a placeholder — no
+//                           dedicated subpage exists to link into)
+//  - 'categoryLocalHref'  — relative to that category's own dedicated
+//                           <Category>/index.mdx landing page
 function buildCategoryTable(catKey, productList, { hrefField = 'href' } = {}) {
   const columns = [...categoryColumns[catKey]].sort(byOrder(COLUMN_ORDER[catKey] || []));
   const relevant = productList.filter((p) => Object.keys(p.tools[catKey]).length > 0);
@@ -474,6 +489,16 @@ function escapeRegExp(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// When a category has no tools, writes nothing at all between its markers
+// — not even a "not documented yet" placeholder — so the whole section,
+// heading included, disappears from the rendered page rather than sitting
+// there under an empty heading.
+function sectionContent(headingLine, table, legend) {
+  if (!table) return '';
+  const body = [table, legend].filter(Boolean).join('\n\n');
+  return headingLine ? [headingLine, body].join('\n\n') : body;
+}
+
 function writeBetweenMarkers(filePath, key, content) {
   const startMarker = START_MARKER(key);
   const endMarker = END_MARKER(key);
@@ -495,42 +520,56 @@ function writeBetweenMarkers(filePath, key, content) {
 for (const catKey of CATEGORIES) {
   const table = buildCategoryTable(catKey, products, { hrefField: 'href' });
   const legend = table ? legendFor(catKey) : '';
-  const content = table ? [table, legend].filter(Boolean).join('\n\n') : NO_PRODUCTS_MESSAGE[catKey];
-  writeBetweenMarkers(INTRO_FILE, catKey.toUpperCase(), content);
+  writeBetweenMarkers(INTRO_FILE, catKey.toUpperCase(), sectionContent(INTRO_HEADING[catKey], table, legend));
 }
 
 console.log(`[generate-tools-table] Wrote ${CATEGORIES.length} category tables to docs/intro.mdx`);
 
-// --- each product's own index.mdx: Libraries / Simulation / Other tables,
-//     single-row versions scoped to just that product ---
+// --- every category gets the exact SAME treatment on the product's own
+//     index.mdx: an inline single-row table scoped to just that product.
+//     AND, once the product actually has any tools in that category AND
+//     it's one of LANDING_PAGE_CATEGORIES, the same table again on that
+//     category's own dedicated `<Category>/index.mdx` landing page
+//     (hand-authored, this script only fills in its table, never creates
+//     the page itself, so a category's first tool needs that file
+//     created once by hand) — the product page's own table is a quick,
+//     at-a-glance summary, and the dedicated page is what a click on that
+//     category in the sidebar actually lands on. ROS never gets this
+//     second step: its own `<Category>/index.mdx` IS the leaf tool page
+//     (see the header comment), not a landing page for this script to
+//     fill in. ---
 
-for (const product of products) {
-  for (const catKey of PRODUCT_PAGE_CATEGORIES) {
-    const table = buildCategoryTable(catKey, [product], { hrefField: 'localHref' });
-    const legend = table ? legendFor(catKey) : '';
-    const content = table ? [table, legend].filter(Boolean).join('\n\n') : NO_PRODUCTS_MESSAGE[catKey];
-    writeBetweenMarkers(product.indexPath, `PRODUCT-${catKey.toUpperCase()}`, content);
-  }
-  console.log(`[generate-tools-table] Wrote category tables to ${path.relative(ROOT, product.indexPath)}`);
+function writeProductCategoryTable(product, catKey, markerKey) {
+  const hasTools = Object.keys(product.tools[catKey]).length > 0;
+  const table = buildCategoryTable(catKey, [product], { hrefField: 'localHref' });
+  const legend = table ? legendFor(catKey) : '';
+  writeBetweenMarkers(product.indexPath, markerKey, sectionContent(PRODUCT_HEADING[catKey], table, legend));
+  return hasTools;
+}
 
-  // --- each product's ROS/index.mdx: ROS2 / ROS1 tables, single-row
-  //     versions scoped to just that product ---
-
-  const hasRosTools = PRODUCT_ROS_CATEGORIES.some((k) => Object.keys(product.tools[k]).length > 0);
-  if (!hasRosTools) continue;
-
-  if (!fs.existsSync(product.rosIndexPath)) {
+function writeCategoryLandingTable(product, catKey, markerKey, landingPath, missingFileHint) {
+  if (!fs.existsSync(landingPath)) {
     throw new Error(
-      `[generate-tools-table] ${path.relative(ROOT, product.indexPath)} has ROS tool pages but ` +
-      `${path.relative(ROOT, product.rosIndexPath)} does not exist. Create it with ` +
-      `AUTO-GENERATED-PRODUCT-ROS2-TABLE and AUTO-GENERATED-PRODUCT-ROS1-TABLE marker pairs.`
+      `[generate-tools-table] ${path.relative(ROOT, product.indexPath)} has ${catKey} tool pages but ` +
+      `${path.relative(ROOT, landingPath)} does not exist. ${missingFileHint}`
     );
   }
-  for (const catKey of PRODUCT_ROS_CATEGORIES) {
-    const table = buildCategoryTable(catKey, [product], { hrefField: 'rosLocalHref' });
-    const legend = table ? legendFor(catKey) : '';
-    const content = table ? [table, legend].filter(Boolean).join('\n\n') : NO_PRODUCTS_MESSAGE[catKey];
-    writeBetweenMarkers(product.rosIndexPath, `PRODUCT-${catKey}`, content);
+  const table = buildCategoryTable(catKey, [product], { hrefField: 'categoryLocalHref' });
+  const legend = table ? legendFor(catKey) : '';
+  writeBetweenMarkers(landingPath, markerKey, sectionContent(null, table, legend));
+}
+
+for (const product of products) {
+  for (const catKey of CATEGORIES) {
+    const markerKey = `PRODUCT-${catKey.toUpperCase()}`;
+    const hasTools = writeProductCategoryTable(product, catKey, markerKey);
+    if (!hasTools || !LANDING_PAGE_CATEGORIES.includes(catKey)) continue;
+
+    const categoryIndexPath = path.join(path.dirname(product.indexPath), catKey, 'index.mdx');
+    writeCategoryLandingTable(
+      product, catKey, markerKey, categoryIndexPath,
+      `Create it with an AUTO-GENERATED-${markerKey}-TABLE marker pair.`
+    );
   }
-  console.log(`[generate-tools-table] Wrote ROS tables to ${path.relative(ROOT, product.rosIndexPath)}`);
+  console.log(`[generate-tools-table] Wrote category tables for ${path.relative(ROOT, path.dirname(product.indexPath))}`);
 }

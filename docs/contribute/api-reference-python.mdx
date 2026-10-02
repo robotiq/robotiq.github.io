@@ -47,10 +47,11 @@ This writes `external/2f85_python/docs/api.md`. Copy it with a
 normal job, inside `2f85_python`'s `submoduleJobs(...)` call:
 
 ```js
-{ from: 'docs/api.md', to: 'drivers/Adaptive grippers/Libraries/Python/api.md' },
+{ from: 'docs/api.md', to: 'Adaptive grippers/Libraries/Python/api.md', destRoot: 'software-tools' },
 ```
 
-Add `'drivers/Adaptive grippers/Libraries/Python/api'` to the sidebar items.
+Add `'Adaptive grippers/Libraries/Python/api'` to the tool's entry in
+`sidebars.software-tools.js`'s active-items map.
 
 See [C++ — Doxygen + doxygen2docusaurus](./api-reference-cpp) for the C++
 equivalent — it's a different toolchain with no `\snippet`-style

@@ -2,7 +2,7 @@
 // in a link to that same video — into a real embedded, playable iframe.
 //
 // Source docs (hand-authored or synced from a submodule, e.g.
-// docs/drivers/Adaptive grippers/Libraries/C++/docs/01-environment-setup.md)
+// software-tools/Adaptive grippers/Libraries/C++/docs/01-environment-setup.md)
 // deliberately keep the plain thumbnail-link form, not a raw <iframe>,
 // because those files are also read as plain CommonMark outside this site
 // (e.g. previewed raw on GitHub), which strips <iframe> tags entirely for

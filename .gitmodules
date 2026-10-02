@@ -7,3 +7,6 @@
 [submodule "external/isaacsim_assets"]
 	path = external/isaacsim_assets
 	url = https://github.com/robotiq/isaacsim_assets
+[submodule "external/robotiq_ros"]
+	path = external/robotiq_ros
+	url = https://github.com/robotiq/ros

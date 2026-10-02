@@ -1,68 +1,30 @@
 // @ts-check
 
-// Single source of truth for the full "Software Tools" navigation tree,
-// used to build BOTH the main sidebar (sidebars.js) AND each versioned
-// tool's own sidebar (sidebars.<tool>.js).
-//
-// Why this exists: each versioned tool (Tactile Sensor C++/Python, Isaac
-// Sim, Adaptive grippers C++) lives in its own Docusaurus
-// plugin-content-docs instance for independent version cuts (see
-// docusaurus.config.js, docs/contribute/versioning.mdx). A plugin
-// instance can only build sidebar items out of doc ids it owns — every
-// other page has to be a plain link. Previously each per-tool sidebar file
-// listed ONLY that tool's own page(s), so clicking a versioned tool from
-// the main sidebar replaced the entire left nav with that tool's tiny
-// sidebar: the rest of the site (other products, ROS versions, etc.)
-// disappeared, making the page feel like a disconnected, separate site
-// (explicit user feedback — the whole-site navigation must stay visible
-// everywhere). Fixed by describing the tree once, here, and rendering it
-// two ways:
-//   - buildMainSidebar(): real doc ids for everything the main instance
-//     owns, plain links only for the versioned-tool leaves — this is what
-//     sidebars.js already did.
-//   - buildInstanceSidebar(activeTool, activeItem): plain links for EVERY
-//     node except the one matching `activeTool`, which is replaced by
-//     `activeItem` (that instance's own real, doc-id-based sidebar
-//     item/category) — used by each sidebars.<tool>.js. This keeps the
-//     full tree visible, in the same order, on every page; only the
-//     currently-open tool's branch expands into real content.
-//
-// Cross-instance links are built as plain, `encodeURI()`-escaped absolute
-// paths (e.g. '/docs/drivers/Adaptive%20grippers/...'), NOT Docusaurus's
-// `pathname://` scheme. `pathname://` looks like the obvious tool for "this
-// is an internal path, not a doc id" (it IS Docusaurus's own escape hatch
-// for a sidebar/navbar `link` item's href otherwise failing URI
-// validation on root-relative paths and on the literal spaces in this
-// site's folder names) — but its actual runtime behavior
-// (@docusaurus/core's Link component) is to treat ANY `pathname://` href
-// as *not internal*: it renders a plain `<a target="_blank">` instead of
-// a client-side route change. That was invisible in the original,
-// pre-this-file sidebars.js (its `pathname://` items lived inside
-// collapsed categories that were never expanded during testing) but
-// becomes very visible once the same mechanism is used for dozens of
-// links throughout an always-partly-expanded tree — user report: "if I
-// click on a software tool it opens a new page". `encodeURI()` on a plain
-// path passes the SAME Joi `URISchema` validation (its first alternative
-// is `Joi.string().uri({allowRelative: true})`, which accepts a
-// percent-encoded relative path — it's the raw, un-encoded space
-// characters that failed validation, not root-relativeness itself) while
-// keeping the href free of any scheme, so Docusaurus's own
-// `isInternalUrl()` correctly treats it as internal: normal client-side
-// SPA navigation, no new tab.
-//
-// Cross-instance link items can't carry Docusaurus's usual
-// frontmatter-derived label for free (a `type: 'link'` item needs an
-// explicit `label`), so `leaf()` labels are read from each doc's own
-// frontmatter here instead of being duplicated/hardcoded — they can never
-// drift out of sync with the doc itself.
-
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { VERSIONED_TOOLS } from './versioned-tools.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, '..');
-const DOCS_ROOT = path.join(ROOT, 'docs');
+const SOFTWARE_TOOLS_ROOT = path.join(__dirname, '..', 'software-tools');
+
+// Single source of truth for the full "Software Tools" navigation tree —
+// every product/tool/version this site has, in nav order. Used to build
+// the shared 'software-tools' Docusaurus instance's own sidebar
+// (sidebars.software-tools.js). Every product lives in that one instance
+// now (see docs/contribute/versioning.mdx: two plugin instances can't
+// split ownership of one URL prefix, and every product's pages live under
+// `/docs/drivers/*`), so this tree needs no more "which instance owns
+// this node" branching — every leaf is real content in the same instance.
+//
+// A `versioned(label, tool)` node is the one exception: its real content
+// shape can differ per Docusaurus *version* (a submodule tag can predate a
+// guide folder; Previous states aside, Stable and Latest can
+// genuinely differ) — see docs/contribute/versioning.mdx's
+// `guidesCategory`/`doxygenApiCategory` for why. Callers supply that
+// content explicitly via `activeItems` (a `{toolId: item}` map); every
+// other node is a plain `docId` string, and Docusaurus resolves its real
+// label/content from that doc's own frontmatter automatically.
 
 function leaf(docId) {
   return { kind: 'leaf', docId };
@@ -76,76 +38,113 @@ function category(label, items, docId) {
   return { kind: 'category', label, items, docId };
 }
 
-// tool key (matches docusaurus.config.js plugin `id`) -> absolute site path.
-export const VERSIONED_TOOL_PATHS = {
-  'tactile-cpp': '/docs/drivers/Tactile Sensor/Libraries/C++',
-  'tactile-python': '/docs/drivers/Tactile Sensor/Libraries/Python',
-  'isaac-sim': '/docs/drivers/Adaptive grippers/Simulation/Isaac Sim',
-  'adaptive-grippers-cpp': '/docs/drivers/Adaptive grippers/Libraries/C++',
-};
-
+// 'intro' (docs/intro.mdx) deliberately isn't a SITE_TREE node — unlike
+// everything else here, it stays on the *default* instance (so its URL,
+// /docs/intro, doesn't change), not the shared software-tools instance —
+// see the plain link sidebars.software-tools.js prepends for it instead.
 export const SITE_TREE = [
-  leaf('intro'),
   category('Adaptive grippers', [
     category('Libraries', [
       versioned('C++', 'adaptive-grippers-cpp'),
-      leaf('drivers/Adaptive grippers/Libraries/Python/index'),
-    ]),
-    category('ROS', [
-      leaf('drivers/Adaptive grippers/ROS/ROS2-Lyrical/index'),
-      leaf('drivers/Adaptive grippers/ROS/ROS2-Jazzy/index'),
-      leaf('drivers/Adaptive grippers/ROS/ROS2-Humble/index'),
-      leaf('drivers/Adaptive grippers/ROS/ROS1-Melodic/index'),
-      leaf('drivers/Adaptive grippers/ROS/ROS1-Kinetic/index'),
-      leaf('drivers/Adaptive grippers/ROS/ROS1-Indigo/index'),
-    ], 'drivers/Adaptive grippers/ROS/index'),
+      leaf('Adaptive grippers/Libraries/Python/index'),
+    ], 'Adaptive grippers/Libraries/index'),
+    versioned('ROS', 'adaptive-grippers-ros'),
     category('Simulation', [
       versioned('Isaac Sim', 'isaac-sim'),
-      leaf('drivers/Adaptive grippers/Simulation/PyBullet/index'),
-      leaf('drivers/Adaptive grippers/Simulation/MuJoCo/index'),
-    ]),
+      leaf('Adaptive grippers/Simulation/PyBullet/index'),
+      leaf('Adaptive grippers/Simulation/MuJoCo/index'),
+    ], 'Adaptive grippers/Simulation/index'),
     category('Other', [
-      leaf('drivers/Adaptive grippers/Other/GraspGen/index'),
-    ]),
-  ], 'drivers/Adaptive grippers/index'),
+      leaf('Adaptive grippers/Other/GraspGen/index'),
+    ], 'Adaptive grippers/Other/index'),
+  ], 'Adaptive grippers/index'),
   category('Tactile Sensor', [
     category('Libraries', [
       versioned('C++', 'tactile-cpp'),
       versioned('Python', 'tactile-python'),
-    ]),
-    category('ROS', [
-      leaf('drivers/Tactile Sensor/ROS/ROS2-Lyrical/index'),
-      leaf('drivers/Tactile Sensor/ROS/ROS2-Jazzy/index'),
-      leaf('drivers/Tactile Sensor/ROS/ROS2-Humble/index'),
-      leaf('drivers/Tactile Sensor/ROS/ROS1-Noetic/index'),
-    ], 'drivers/Tactile Sensor/ROS/index'),
+    ], 'Tactile Sensor/Libraries/index'),
+    versioned('ROS', 'tactile-ros'),
     category('Simulation', [
-      leaf('drivers/Tactile Sensor/Simulation/Isaac Sim/index'),
-    ]),
-  ], 'drivers/Tactile Sensor/index'),
+      leaf('Tactile Sensor/Simulation/Isaac Sim/index'),
+    ], 'Tactile Sensor/Simulation/index'),
+  ], 'Tactile Sensor/index'),
   category('Force Torque Sensor', [
     category('Libraries', [
-      leaf('drivers/Force Torque Sensor/Libraries/C/index'),
-      leaf('drivers/Force Torque Sensor/Libraries/Python/index'),
-    ]),
-    category('ROS', [
-      leaf('drivers/Force Torque Sensor/ROS/ROS2-Humble/index'),
-    ], 'drivers/Force Torque Sensor/ROS/index'),
-  ], 'drivers/Force Torque Sensor/index'),
+      leaf('Force Torque Sensor/Libraries/C/index'),
+      leaf('Force Torque Sensor/Libraries/Python/index'),
+    ], 'Force Torque Sensor/Libraries/index'),
+    leaf('Force Torque Sensor/ROS/index'),
+  ], 'Force Torque Sensor/index'),
   category('EPick', [
-    category('ROS', [
-      leaf('drivers/EPick/ROS/ROS2-Humble/index'),
-    ], 'drivers/EPick/ROS/index'),
-  ], 'drivers/EPick/index'),
+    leaf('EPick/ROS/index'),
+  ], 'EPick/index'),
 ];
 
+function render(node, activeItems) {
+  if (node.kind === 'versioned') return activeItems[node.tool];
+  if (node.kind === 'category') {
+    const rendered = { type: 'category', label: node.label, items: node.items.map((n) => render(n, activeItems)) };
+    if (node.docId) rendered.link = { type: 'doc', id: node.docId };
+    return rendered;
+  }
+  return node.docId;
+}
+
+/**
+ * Builds the software-tools instance's full sidebar: the whole site
+ * tree, with every `versioned` node replaced by its own real content
+ * (`activeItems`, a `{toolId: item}` map) and everything else a plain
+ * `docId` string — Docusaurus resolves the real label/link from that
+ * doc's own frontmatter.
+ */
+export function buildSidebar(activeItems) {
+  return SITE_TREE.map((n) => render(n, activeItems));
+}
+
+/**
+ * @param {any[]} nodes
+ * @param {Record<string, string>} acc
+ */
+function collectToolLabels(nodes, acc) {
+  for (const node of nodes) {
+    if (node.kind === 'versioned') acc[node.tool] = node.label;
+    else if (node.kind === 'category') collectToolLabels(node.items, acc);
+  }
+  return acc;
+}
+
+/**
+ * {toolId: label} for every `versioned` node in SITE_TREE — this tool's
+ * OWN label as it should read everywhere (the nav itself, and
+ * sidebars.software-tools.js's activeItems, which used to need a second
+ * hand-typed copy of the exact same string). SITE_TREE is the one place
+ * that actually decides a tool's label, since it's also the one place
+ * that decides where in the nav it sits — the two aren't separable.
+ * @returns {Record<string, string>}
+ */
+export function toolLabels() {
+  return collectToolLabels(SITE_TREE, {});
+}
+
+// docs/intro.mdx stays on the default instance (see the comment on
+// SITE_TREE above) but still needs the full Software Tools tree visible
+// on its own left nav, same reasoning as everywhere else on this site — a
+// doc can only ever *display* a sidebar that belongs to its own plugin
+// instance (there's no cross-instance `displayed_sidebar`), so that
+// sidebar has to be built as plain links into the software-tools
+// instance, the same way sidebars.software-tools.js itself falls back to
+// plain links for anything it *doesn't* own. Confirmed the hard way:
+// without this, landing on /docs/intro (e.g. by clicking "Overview" from
+// the tools sidebar) swapped in the default instance's own tiny sidebar
+// instead, and the whole tree disappeared with no way back to it from the
+// sidebar itself.
 function pathFromDocId(docId) {
-  return `/docs/${docId.replace(/\/index$/, '')}`;
+  return `/docs/drivers/${docId.replace(/\/index$/, '')}`;
 }
 
 function findDocFile(docId) {
   for (const ext of ['.mdx', '.md']) {
-    const candidate = path.join(DOCS_ROOT, `${docId}${ext}`);
+    const candidate = path.join(SOFTWARE_TOOLS_ROOT, `${docId}${ext}`);
     if (fs.existsSync(candidate)) return candidate;
   }
   return null;
@@ -161,114 +160,56 @@ function readDocLabel(docId) {
   return labelMatch ? labelMatch[1].trim().replace(/\r$/, '').replace(/^["']|["']$/g, '') : docId;
 }
 
-function renderMain(node) {
+function renderOverview(node) {
   if (node.kind === 'versioned') {
-    return { type: 'link', label: node.label, href: encodeURI(VERSIONED_TOOL_PATHS[node.tool]) };
+    const docId = `${VERSIONED_TOOLS[node.tool].toolPath}/index`;
+    return { type: 'link', label: node.label, href: encodeURI(pathFromDocId(docId)) };
   }
   if (node.kind === 'category') {
-    const rendered = { type: 'category', label: node.label, items: node.items.map(renderMain) };
-    if (node.docId) rendered.link = { type: 'doc', id: node.docId };
+    // Same reasoning as render()'s own category branch: none of these doc
+    // ids belong to the *default* instance this sidebar is attached to, so
+    // there's nothing valid for the category header's own `link` to point
+    // at — Docusaurus's sidebar category `link` only accepts {type: 'doc'}
+    // (same instance) or {type: 'generated-index'}, no raw href, and its
+    // own schema validation rejects a bare `href` property on a category
+    // item outright (confirmed: Joi.assert throws "not allowed" at build
+    // time for one). `customProps` is the one arbitrary, unrestricted
+    // escape hatch every sidebar item schema allows — stashing the URL
+    // there and reading it back in a swizzled
+    // src/theme/DocSidebarItem/Category (patching it onto `item.href`
+    // before handing off to the stock component) gets the exact same
+    // "header is a real link AND still expands on click" behavior a
+    // same-instance category gets for free — see that swizzle's own
+    // comment for why this graft actually works (the stock component
+    // already has this behavior fully built in, gated on `item.href`
+    // simply being truthy, regardless of how it got set).
+    const rendered = { type: 'category', label: node.label, items: node.items.map(renderOverview) };
+    if (node.docId) {
+      rendered.customProps = { href: encodeURI(pathFromDocId(node.docId)) };
+    }
     return rendered;
-  }
-  return node.docId;
-}
-
-/** Builds the main site instance's full driverSidebar-equivalent tree. */
-export function buildMainSidebar() {
-  return SITE_TREE.map(renderMain);
-}
-
-function renderInstance(node, activeTool, activeItem) {
-  if (node.kind === 'versioned') {
-    if (node.tool === activeTool) return activeItem;
-    return { type: 'link', label: node.label, href: encodeURI(VERSIONED_TOOL_PATHS[node.tool]) };
-  }
-  if (node.kind === 'category') {
-    // No `link` here: none of these doc ids belong to this plugin
-    // instance, so there's nothing for the category header itself to
-    // point at — it's still expandable/collapsible, just not clickable
-    // (same as Docusaurus's own default for a category without a link).
-    return { type: 'category', label: node.label, items: node.items.map((n) => renderInstance(n, activeTool, activeItem)) };
   }
   return { type: 'link', label: readDocLabel(node.docId), href: encodeURI(pathFromDocId(node.docId)) };
 }
 
 /**
- * Builds one versioned tool's own sidebar: the full site tree, with every
- * node a plain link except `activeTool`, which is replaced by `activeItem`
- * (a real sidebar item/category built from this instance's own doc ids).
+ * Builds docs/intro.mdx's own sidebar: the whole Software Tools tree,
+ * entirely as plain links into the software-tools instance (which owns
+ * all of it — see SITE_TREE's own header comment) — used by sidebars.js's
+ * `overviewSidebar`, prefixed with the real `'intro'` doc id.
  */
-export function buildInstanceSidebar(activeTool, activeItem) {
-  return SITE_TREE.map((n) => renderInstance(n, activeTool, activeItem));
+export function buildOverviewSidebar() {
+  return SITE_TREE.map(renderOverview);
 }
 
-// Docusaurus freezes a cut version's sidebar into
-// `<id>_versioned_sidebars/version-<name>-sidebars.json` at `docs:version:`
-// time — it never re-reads sidebars.<tool>.js for anything but the
-// *current* version. That snapshot is `buildInstanceSidebar`'s WHOLE
-// output (see docs/contribute/versioning.mdx), so it goes stale the same
-// way any other cached copy of SITE_TREE would: a renamed label, a moved
-// page, a new product added later, none of that reaches an already-cut
-// version until someone notices and hand-edits (or re-cuts) it.
-//
-// `extractActiveItem` + `regenerateInstanceSidebar` below are how
-// scripts/regenerate-versioned-sidebars.mjs keeps every cut version's
-// snapshot in sync on every `npm run generate`, without needing to know
-// per-tool, per-version which real content shape `activeItem` should be
-// (a versioned tool's non-current versions can have a DIFFERENT shape
-// than its current one — e.g. adaptive-grippers-cpp's Stable is a single
-// page today, sparse content from before its source repo grew a docs/
-// folder, while its Development (main) has nested guides/API). Rather than guess that
-// shape, this walks SITE_TREE in lockstep with the version's OWN existing
-// snapshot and pulls out whatever's already sitting at `activeTool`'s
-// position — correct by construction, since that position held the real,
-// frozen content the moment the version was actually cut, and nothing
-// about a tool's own frozen content changes after the fact (only the
-// surrounding site tree does). This assumes the existing snapshot is
-// STRUCTURALLY parallel to the current SITE_TREE (same shape at every
-// other position) — true immediately after any regeneration, including
-// this one, so it self-heals on the very next run; it could only miss if
-// SITE_TREE's own shape changed AND a version was never regenerated since
-// (a one-time gap, not a standing risk, given this runs on every build).
-export function extractActiveItem(activeTool, existingItems) {
-  for (let i = 0; i < SITE_TREE.length; i += 1) {
-    const node = SITE_TREE[i];
-    const existing = existingItems[i];
-    if (!existing) continue;
-    if (node.kind === 'versioned' && node.tool === activeTool) return existing;
-    if (node.kind === 'category' && Array.isArray(existing.items)) {
-      const found = extractActiveItemFrom(node.items, existing.items, activeTool);
-      if (found !== undefined) return found;
-    }
-  }
-  return undefined;
-}
-
-function extractActiveItemFrom(nodes, existingItems, activeTool) {
-  for (let i = 0; i < nodes.length; i += 1) {
-    const node = nodes[i];
-    const existing = existingItems[i];
-    if (!existing) continue;
-    if (node.kind === 'versioned' && node.tool === activeTool) return existing;
-    if (node.kind === 'category' && Array.isArray(existing.items)) {
-      const found = extractActiveItemFrom(node.items, existing.items, activeTool);
-      if (found !== undefined) return found;
-    }
-  }
-  return undefined;
-}
-
-/**
- * Regenerates one cut version's frozen sidebar snapshot: extracts
- * `activeTool`'s real content out of its own existing snapshot
- * (`existingItems`, that version's current sidebar array), then rebuilds
- * the surrounding tree fresh from the live SITE_TREE. Returns the new
- * items array, or `undefined` if `activeTool`'s content couldn't be found
- * in `existingItems` (a genuinely new/reshaped tree — falls back to
- * leaving that snapshot alone rather than guessing).
- */
-export function regenerateInstanceSidebar(activeTool, existingItems) {
-  const activeItem = extractActiveItem(activeTool, existingItems);
-  if (activeItem === undefined) return undefined;
-  return buildInstanceSidebar(activeTool, activeItem);
-}
+// There used to be a whole "keep an already-cut version's frozen sidebar
+// snapshot in sync with a SITE_TREE that changed after the fact" mechanism
+// here (extractActiveItems/regenerateInstanceSidebar, consumed by
+// scripts/regenerate-versioned-sidebars.mjs) — removed along with that
+// script once Stable itself stopped being a committed, potentially-stale
+// snapshot (see .gitignore and docs/contribute/versioning.mdx): every
+// build now re-cuts Stable fresh from source
+// (scripts/ensure-stable-version.js), and `docs:version:` itself always
+// derives its sidebar from THIS file's current SITE_TREE at that moment —
+// there is no longer any stale, previously-frozen snapshot that could
+// ever need patching.

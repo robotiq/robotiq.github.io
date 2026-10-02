@@ -13,40 +13,58 @@
 # *are* committed and checked for drift in ci.yml's "Verify generated
 # content is committed" step.
 #
-# Every page scripts/sync-external-docs.js produces under docs/drivers/ — a
-# synced README partial, a synced docs/ guide, or the whole doxygen2docusaurus
-# API tree — is plain CommonMark (.md); every hand-authored wrapper/landing
-# page (including a folder's own index.mdx sitting next to synced siblings,
-# e.g. docs/drivers/<Product>/<Tool>/docs/index.mdx) is MDX (.mdx) — see the
+# Every page scripts/sync-external-docs.js produces under software-tools/
+# — a synced README partial, a synced docs/ guide, or the whole
+# doxygen2docusaurus API tree — is plain CommonMark (.md); every
+# hand-authored wrapper/landing page (including a folder's own index.mdx
+# sitting next to synced siblings, e.g.
+# software-tools/<Product>/<Tool>/docs/index.mdx) is MDX (.mdx) — see the
 # `markdown.format: 'detect'` comment in docusaurus.config.js, which relies on
 # that same split. One generic pattern by extension, not a per-product path
-# list: covers every current product (Adaptive grippers, Force Torque Sensor,
-# Tactile Sensor) and any future
-# one with no edit needed here when a new tool repo is onboarded — see
-# "Checklist: onboarding a new C++ tool repo" in
-# docs/contribute/api-reference-cpp.mdx.
-docs/drivers/**/*.md
+# list: covers every current product (Adaptive grippers, EPick, Force
+# Torque Sensor, Tactile Sensor) and any future one with no edit needed
+# here when a new tool repo is onboarded — see "Checklist: onboarding a
+# new C++ tool repo" in docs/contribute/api-reference-cpp.mdx.
+software-tools/**/*.md
 # Exception: Force Torque Sensor's C driver has no submodule/sync job in
-# external-jobs.js yet (unlike every other _readme.md under drivers/) — this
-# one is a plain static file its wrapper index.mdx imports directly, so it
-# must stay tracked despite the extension. Confirmed the only one: `find
-# docs/drivers -iname '*.md' -not -iname '*.mdx'` cross-checked against every
-# job's actual output before adding the blanket rule above.
-!docs/drivers/Force Torque Sensor/Libraries/C/_readme.md
+# external-jobs.js yet (unlike every other _readme.md under
+# software-tools/) — this one is a plain static file its wrapper
+# index.mdx imports directly, so it must stay tracked despite the
+# extension. Confirmed the only one: `find software-tools -iname '*.md'
+# -not -iname '*.mdx'` cross-checked against every job's actual output
+# before adding the blanket rule above.
+!software-tools/Force Torque Sensor/Libraries/C/_readme.md
 
-# Same rule, same reasoning, for a per-tool-versioned tool's live content —
-# see docs/contribute/versioning.mdx. This is the *live*, always-regenerated
-# 'Latest' content; it is NOT the same thing as a cut version's own frozen
-# snapshot (<tool>_versioned_docs/, <tool>_versioned_sidebars/,
-# <tool>_versions.json), which IS committed — a version cut is a deliberate,
-# permanent record, not build output.
-versioned-tools/**/*.md
+# Stable's own Docusaurus version — used to be committed as a permanent,
+# deliberate snapshot; isn't anymore. Every build now re-derives it fresh
+# from source (scripts/ensure-stable-version.js, run via the `generate`
+# prebuild hook — see docs/contribute/versioning.mdx), the exact same way
+# software-tools/**/*.md above is: not because nothing decides its
+# content, but because that decision — which tag each tool's Stable
+# should track — lives in the one small file that *does* stay committed,
+# software-tools-stable.json. Regenerating this from that file on every
+# build, rather than freezing and committing the result once, is what
+# stops Stable's content from being a full second copy of Latest's own
+# content sitting in the repo.
+software-tools_versioned_docs/
+software-tools_versioned_sidebars/
+software-tools_versions.json
+# scripts/ensure-stable-version.js's own local cache — lets a repeated
+# `npm start` during a normal dev session skip re-materializing Stable
+# when software-tools-stable.json hasn't changed since the last run in
+# this same working directory. Purely local bookkeeping, not something
+# any other checkout needs to see.
+/.stable-materialized.json
 
 # doxygen2docusaurus scratch output (scripts/sync-external-docs.js stages
 # here, then copies the filtered result into docs/ — see external-jobs.js)
 /.doxygen2docusaurus-staging
 /doxygen2docusaurus.json
 /scripts/generated/
+
+# scripts/auto-cut-versions.js's own scratch output — read by
+# .github/workflows/cut-versions.yml, never committed itself.
+/cut-version-summary.md
 
 # Editor / machine-specific
 .vscode/

@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
-    "generate": "node scripts/sync-external-docs.js && node scripts/check-doc-snippets.js && node scripts/generate-tools-table.js && node scripts/regenerate-versioned-sidebars.mjs",
-    "preview": "node scripts/preview-external-docs.js && node scripts/check-doc-snippets.js && node scripts/generate-tools-table.js && node scripts/regenerate-versioned-sidebars.mjs",
+    "generate": "node scripts/sync-external-docs.js && node scripts/check-doc-snippets.js && node scripts/generate-tools-table.js && node scripts/ensure-stable-version.js",
+    "preview": "node scripts/preview-external-docs.js && node scripts/check-doc-snippets.js && node scripts/generate-tools-table.js && node scripts/ensure-stable-version.js",
     "prestart": "npm run generate",
     "start": "cross-env NODE_OPTIONS=--max-old-space-size=8192 docusaurus start",
     "prebuild": "npm run generate",
@@ -21,6 +21,7 @@
   "dependencies": {
     "@docusaurus/core": "^3.10.2",
     "@docusaurus/faster": "^3.10.2",
+    "@docusaurus/plugin-client-redirects": "^3.10.2",
     "@docusaurus/preset-classic": "^3.10.2",
     "@docusaurus/theme-mermaid": "^3.10.2",
     "@mdx-js/react": "^3.0.0",
