@@ -1,6 +1,6 @@
 // A submodule pin is just a commit SHA — nothing about it records which
 // branch that commit came from. "Previewing local edits to a submodule"
-// (docs/contribute/index.mdx) deliberately points external/<submodule> at
+// (docs/website/index.mdx) deliberately points external/<submodule> at
 // a WIP branch/fork while prototyping; the risk that workflow accepts is
 // forgetting to point it back at a real, reviewed branch before
 // committing — the pin then merges into main referencing a commit that
@@ -85,7 +85,7 @@ for (const [submodule, { repoUrl, declaredBranch }] of submodules) {
       `[check-submodule-pins] ${submodule} is pinned to ${pinned.slice(0, 7)}, which is not reachable from ` +
       `${repoUrl}#${defaultBranch}.\n` +
       `This usually means external/${submodule} is still pointed at a WIP/preview branch (see "Previewing ` +
-      `local edits to a submodule" in docs/contribute/index.mdx) — point it back at ${defaultBranch} and ` +
+      `local edits to a submodule" in docs/website/index.mdx) — point it back at ${defaultBranch} and ` +
       `commit the updated pin:\n` +
       `  cd external/${submodule} && git fetch origin ${defaultBranch} && git checkout origin/${defaultBranch} && cd ../..`
     );

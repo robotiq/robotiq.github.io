@@ -20,7 +20,7 @@ function submoduleJobs(submodule, { repoUrl, branch }, jobs) {
 // exist here (a `to: '<toolPath>/docs'` job, a `doxygen2docusaurus` job)
 // — see versioned-tools.js and sidebars.software-tools.js's own
 // activeItemFor. See "Checklist: adding versioning to a new tool" in
-// docs/contribute/versioning.mdx for the one remaining manual step this
+// docs/website/versioning.mdx for the one remaining manual step this
 // doesn't cover (the tool's own position/label in
 // scripts/site-nav-tree.mjs's SITE_TREE — inherently not derivable, since
 // nothing else on this site says where in the nav a tool belongs or what
@@ -33,7 +33,7 @@ const JOBS = [
   ...submoduleJobs('2f85_cpp', { repoUrl: 'https://github.com/robotiq/grippers', branch: 'main' }, [
     // Every job below is versioned, participating in the shared
     // 'software-tools' Docusaurus instance's Stable/Development (main)
-    // cuts (see docs/contribute/versioning.mdx) — destRoot per the
+    // cuts (see docs/website/versioning.mdx) — destRoot per the
     // comment on it in sync-external-docs.js's job loop, so `to` here is
     // relative to software-tools/ instead of docs/.
     ...versionedTool('adaptive-grippers-cpp', 'Adaptive grippers/Libraries/C++', [
@@ -51,7 +51,7 @@ const JOBS = [
     // `<!-- snippet: file tag -->`, claiming it's an exact copy of a
     // `//! [tag]`-bracketed region in a real, compiled example file — see
     // "Verifying markdown code examples against real source" in
-    // contribute/api-reference-cpp.mdx. This repo already vendors the
+    // docs/website/api-reference-cpp.mdx. This repo already vendors the
     // verifier at sdk_cpp/tools/check_doc_snippets.py (paths below are
     // relative to the submodule root); scripts/check-doc-snippets.js runs it
     // as part of `npm run generate`, so a stale example fails the build here
@@ -153,7 +153,7 @@ const JOBS = [
   ...submoduleJobs('tactile_sensors', { repoUrl: 'https://github.com/robotiq/tactile_sensors', branch: 'main' }, [
     // TSF 85 CPP and Python driver READMEs — both versioned, participating
     // in the shared 'software-tools' instance's Stable/Development (main)
-    // cuts (see docs/contribute/versioning.mdx), so both live outside
+    // cuts (see docs/website/versioning.mdx), so both live outside
     // docs/ in their own destRoot: nesting the versioned instance's files
     // inside the main docs/ tree (even excluded from it) breaks MDX
     // compilation — see the comment on destRoot in
@@ -173,7 +173,7 @@ const JOBS = [
     // packages it ships: grippers/ (Adaptive grippers) and robotiq_tsf/
     // (Tactile Sensor) — synced to both products' ROS page. Both
     // versioned, participating in the shared 'software-tools' instance's
-    // Stable/Development (main) cuts (see docs/contribute/versioning.mdx).
+    // Stable/Development (main) cuts (see docs/website/versioning.mdx).
     ...versionedTool('adaptive-grippers-ros', 'Adaptive grippers/ROS', [
       { from: 'README.md', to: 'Adaptive grippers/ROS/_readme.md', destRoot: 'software-tools' },
     ]),
@@ -186,7 +186,7 @@ const JOBS = [
     // Robotiq's own 2F gripper Isaac Sim assets/guide — no README, just this
     // one guide file (no separate docs/ split yet: nothing else to put there).
     // Under the shared software-tools instance (see
-    // docs/contribute/versioning.mdx) like every other Robotiq-
+    // docs/website/versioning.mdx) like every other Robotiq-
     // maintained, submodule-synced tool — destRoot per the comment on it in
     // sync-external-docs.js. isaacsim_assets has no tags yet, so
     // scripts/cut-version.js's Stable cut just carries its live main

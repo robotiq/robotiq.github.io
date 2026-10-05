@@ -4,7 +4,7 @@
 // them has one — updates that same file to record it. Driven by
 // .github/workflows/cut-versions.yml so nobody has to remember to do this
 // by hand after a release — see "Cutting Stable" in
-// docs/contribute/versioning.mdx.
+// docs/website/versioning.mdx.
 //
 // Deliberately does NOT itself run the checkout/sync/version pipeline
 // (scripts/cut-version.js's materializeStable()) — Stable's frozen

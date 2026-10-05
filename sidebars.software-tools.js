@@ -1,7 +1,7 @@
 // @ts-check
 
 // Sidebar for the shared 'software-tools' plugin instance (see
-// docusaurus.config.js and docs/contribute/versioning.mdx) — the whole
+// docusaurus.config.js and docs/website/versioning.mdx) — the whole
 // site's Software Tools tree lives here now (scripts/site-nav-tree.mjs's
 // SITE_TREE); this file supplies real content only for the handful of
 // `versioned` nodes (submodule-backed tools whose content shape can

@@ -22,7 +22,7 @@ import stableTags from '../../../software-tools-stable.json';
 //
 // Every submodule-backed tool can be at a different tag even though
 // Development (main)/Stable is a single sitewide choice (see
-// docs/contribute/versioning.mdx) — the shared 'software-tools' instance
+// docs/website/versioning.mdx) — the shared 'software-tools' instance
 // has no one overall version number to print, so each page names its own
 // tool's own tag instead, read off `software-tools-stable.json`. Neither
 // banner renders at all on a page with no registered submodule behind it

@@ -136,7 +136,7 @@ theme: {
 
   // One shared instance for every Robotiq-maintained, submodule-synced
   // tool's Stable/Latest content — see
-  // docs/contribute/versioning.mdx. EVERY product/tool page lives here,
+  // docs/website/versioning.mdx. EVERY product/tool page lives here,
   // versioned or not (Force Torque Sensor, EPick, every product's own ROS
   // pages, ...), not just the submodule-backed ones — see the
   // `routeBasePath` comment below for why that's required, not just
@@ -193,7 +193,7 @@ theme: {
         // moment. `current` moves to `next` instead, banner-tagged
         // 'unreleased' and excluded from search/sitemap (`noIndex`) so it's
         // never what search sends someone to. See "Which version the root
-        // URL serves" in docs/contribute/versioning.mdx. No per-tool tag in
+        // URL serves" in docs/website/versioning.mdx. No per-tool tag in
         // either label — every submodule can be at a different tag, so
         // there's no single sitewide version number to print here; each
         // page's own banner (src/theme/DocVersionBanner) names its own
@@ -232,7 +232,7 @@ theme: {
         redirects: [
           // Collapsed from one page per ROS distro/generation into a
           // single ROS page per product (see "ROS" in
-          // docs/contribute/how-it-works.mdx) — every removed distro page
+          // docs/website/how-it-works.mdx) — every removed distro page
           // redirects to it.
           {
             to: '/docs/drivers/Adaptive grippers/ROS/',
@@ -255,7 +255,7 @@ theme: {
             ],
           },
           // Collapsing every versioned tool into one shared Stable/Latest
-          // switcher (see docs/contribute/versioning.mdx) replaced each
+          // switcher (see docs/website/versioning.mdx) replaced each
           // tool's own multi-version history with just these two — there's
           // no equivalent "previous versions" page any more, so this sends
           // a visitor to the tool's own root instead.
@@ -316,7 +316,7 @@ theme: {
           // swizzled wrapper: inside the instance it's the stock component
           // unchanged (switching versions keeps you on the equivalent
           // page); outside it (the home page, docs/intro.mdx,
-          // docs/contribute/*, ...) the stock component's own fallback was
+          // docs/website/*, ...) the stock component's own fallback was
           // to navigate to software-tools' own main doc, which is a real
           // navigation away from wherever the visitor actually was — the
           // wrapper instead just remembers the choice and stays put. See
@@ -337,15 +337,15 @@ theme: {
         style: 'dark',
         links: [
           {
-            title: 'Docs',
+            title: 'Website',
             items: [
               {
-                label: 'Drivers',
-                to: '/docs/intro',
+                label: 'Contribute (Robotiq internal)',
+                to: '/docs/website',
               },
               {
-                label: 'Contribute (Robotiq internal)',
-                to: '/docs/contribute',
+                label: 'License',
+                to: '/docs/license',
               },
             ],
           },

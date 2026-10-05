@@ -1,0 +1,63 @@
+---
+title: License
+sidebar_label: License
+---
+
+# License
+
+## This site
+
+The content and source code of this documentation site are licensed
+under the BSD 3-Clause License — see the
+[`LICENSE`](https://github.com/robotiq/robotiq.github.io/blob/main/LICENSE)
+file at the root of the repository for the full text.
+
+## Third-party packages
+
+This site is built with a number of open-source npm packages, each under
+its own license. None of its production dependencies, direct or
+transitive, carry a copyleft license (GPL, AGPL, LGPL, SSPL, or BUSL-1.1)
+— this is checked automatically on every pull request. See
+[Third-party notices](/docs/third-party-notices) for the generated list
+of direct dependencies.
+
+## Documentation content
+
+Documentation pages under `software-tools/` are synced from the source
+repositories of the tools they document (e.g. `tactile_sensors`,
+`2f85_cpp`, `robotiq_ros`); each tool's own repository is the authoritative
+source for its license.
+
+Some pages reference third-party product or project logos to identify
+the technologies a given tool integrates with. These are used for
+identification purposes only and remain the property of their respective
+owners:
+
+| Logo | File | Source |
+|---|---|---|
+| C++ | `C++-Logo.wine.png` | logo.wine (third-party aggregator — not fetched directly from the ISO C++ Foundation) |
+| GitHub | `GitHub_Invertocat_blue.png` | GitHub's own logo/brand kit |
+| GraspGen | `graspgen.jpg` | NVIDIA |
+| MuJoCo | `mujoco.jpg` | Google DeepMind |
+| NVIDIA Isaac Sim | `nvidia-isaac.webp` | NVIDIA |
+| PyBullet | `pybullet.png` | PyBullet / Bullet Physics |
+| Python | `python-logo-master-v3-TM-flattened.png` | Python.org's own brand kit |
+| ROS | `ros2.webp` | Open Robotics / ROS |
+
+## Firmware and other non-website content
+
+Some linked source repositories contain files under licenses other than
+this site's own — for example, `tactile_sensors`' `firmware/bootloader_host.py`
+is licensed GPL-3.0-or-later. This documentation site does not bundle or
+redistribute that file; it only links to it as source-code documentation.
+Anyone redistributing that file, or a product that bundles it, should
+consult `tactile_sensors`' own repository and license directly — that
+obligation is out of scope for this site.
+
+## Keeping this page current
+
+The [third-party notices](/docs/third-party-notices) list regenerates on
+every build, so it never drifts from `package.json`. The rest of
+this page (the logo inventory and the firmware note above) is reviewed
+manually whenever a submodule or a dependency changes in a way that
+affects it, and at least once a year regardless.

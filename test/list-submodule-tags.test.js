@@ -1,6 +1,6 @@
 // Unit tests for scripts/list-submodule-tags.js's pure parsing/sorting
 // logic — no network access, no real git invocation. See
-// docs/contribute/versioning.mdx for how this fits into the versioning
+// docs/website/versioning.mdx for how this fits into the versioning
 // pipeline (picking each tool's own newest tag for Stable).
 const test = require('node:test');
 const assert = require('node:assert/strict');

@@ -23,7 +23,7 @@ const REQUIRED_PAGES = [
   'index.html',
   '404.html',
   'docs/intro/index.html',
-  'docs/contribute/index.html',
+  'docs/website/index.html',
   'docs/drivers/Tactile Sensor/index.html',
 ];
 

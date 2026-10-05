@@ -2,7 +2,7 @@
 # Template — copy this into a tool repo (e.g. sdk_cpp/tools/check_doc_snippets.py
 # in grippers) and adjust --examples-dir's default if that repo's example
 # layout differs. See "Verifying markdown code examples against real source"
-# in docs/contribute.mdx for the full adoption steps and how this repo wires
+# in docs/website/api-reference-cpp.mdx for the full adoption steps and how this repo wires
 # it into its own build via scripts/check-doc-snippets.js. This file is not
 # executed from here — scripts/check-doc-snippets.js always runs the copy
 # vendored in the submodule at its pinned commit, not this one.
