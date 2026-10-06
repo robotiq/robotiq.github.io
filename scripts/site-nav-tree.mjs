@@ -12,7 +12,7 @@ const SOFTWARE_TOOLS_ROOT = path.join(__dirname, '..', 'software-tools');
 // every product/tool/version this site has, in nav order. Used to build
 // the shared 'software-tools' Docusaurus instance's own sidebar
 // (sidebars.software-tools.js). Every product lives in that one instance
-// now (see docs/contribute/versioning.mdx: two plugin instances can't
+// now (see docs/website/versioning.mdx: two plugin instances can't
 // split ownership of one URL prefix, and every product's pages live under
 // `/docs/drivers/*`), so this tree needs no more "which instance owns
 // this node" branching — every leaf is real content in the same instance.
@@ -20,7 +20,7 @@ const SOFTWARE_TOOLS_ROOT = path.join(__dirname, '..', 'software-tools');
 // A `versioned(label, tool)` node is the one exception: its real content
 // shape can differ per Docusaurus *version* (a submodule tag can predate a
 // guide folder; Previous states aside, Stable and Latest can
-// genuinely differ) — see docs/contribute/versioning.mdx's
+// genuinely differ) — see docs/website/versioning.mdx's
 // `guidesCategory`/`doxygenApiCategory` for why. Callers supply that
 // content explicitly via `activeItems` (a `{toolId: item}` map); every
 // other node is a plain `docId` string, and Docusaurus resolves its real
@@ -207,7 +207,7 @@ export function buildOverviewSidebar() {
 // here (extractActiveItems/regenerateInstanceSidebar, consumed by
 // scripts/regenerate-versioned-sidebars.mjs) — removed along with that
 // script once Stable itself stopped being a committed, potentially-stale
-// snapshot (see .gitignore and docs/contribute/versioning.mdx): every
+// snapshot (see .gitignore and docs/website/versioning.mdx): every
 // build now re-cuts Stable fresh from source
 // (scripts/ensure-stable-version.js), and `docs:version:` itself always
 // derives its sidebar from THIS file's current SITE_TREE at that moment —

@@ -19,7 +19,7 @@ const COPY_EXTS = new Set(['.md', '.mdx', '.png', '.jpg', '.jpeg', '.gif', '.svg
 // `index`/`README` are exempt — those are this site's own hand-authored
 // landing pages for the folder, never synced from source (see "Splitting a
 // tool page into overview, API reference, and guides" in
-// docs/contribute/how-it-works.mdx).
+// docs/website/how-it-works.mdx).
 // Returns the absolute paths it actually removed, so a caller can log them
 // (e.g. relative to its own ROOT) without this module needing to know
 // anything about the caller's own path conventions.

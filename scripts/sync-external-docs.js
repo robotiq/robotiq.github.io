@@ -16,7 +16,7 @@ const ROOT = path.resolve(__dirname, '..');
 // inside external/ never silently affect the build. Set SKIP_SUBMODULE_RESET=1
 // to opt out temporarily — e.g. to preview uncommitted edits (or a locally
 // generated API reference) from a tool repo you're actively working on. See
-// "Previewing local edits to a submodule" in docs/contribute/index.mdx.
+// "Previewing local edits to a submodule" in docs/website/index.mdx.
 if (process.env.SKIP_SUBMODULE_RESET === '1') {
   console.warn('[sync-external-docs] SKIP_SUBMODULE_RESET=1 — using external/ as-is; local edits will NOT be reset. Do not use this for a real build.');
 } else {
@@ -34,7 +34,7 @@ const JOBS = require('./external-jobs');
 // A job with a `doxygen2docusaurus` field (instead of `from`) is a
 // Doxygen-generated API reference — runs once the submodule has a Doxyfile
 // (GENERATE_XML=YES) and Doxygen-style comments. See "C++ — Doxygen +
-// doxygen2docusaurus" in docs/contribute/api-reference-cpp.mdx. Requires
+// doxygen2docusaurus" in docs/website/api-reference-cpp.mdx. Requires
 // Doxygen on PATH; doxygen2docusaurus itself is a
 // normal npm devDependency (@xpack/doxygen2docusaurus).
 //
@@ -59,7 +59,7 @@ const JOBS = require('./external-jobs');
 // this site's real mount point, so nothing needs post-hoc rewriting: the
 // file lands at exactly the path its own baked-in links already assume. A
 // job with `destRoot` (a separate versioned plugin instance — see
-// docs/contribute/versioning.mdx) is different: doxygen2docusaurus's own
+// docs/website/versioning.mdx) is different: doxygen2docusaurus's own
 // slug/id construction has no idea that instance's `routeBasePath` even
 // exists, so runDoxygen2Docusaurus additionally sets `docsBaseUrl` to that
 // instance's full routeBasePath (plus its current version's own path
@@ -1196,7 +1196,7 @@ function runDoxygen2Docusaurus(job, written, folderDestPaths) {
   // `path` in docusaurus.config.js's `versions` config isn't the instance
   // root ('') — e.g. 'next', once the root path was handed to Stable
   // instead (see "Which version the root URL serves" in
-  // docs/contribute/versioning.mdx) — every absolute `<a href="...">`
+  // docs/website/versioning.mdx) — every absolute `<a href="...">`
   // backlink doxygen2docusaurus bakes into the generated HTML needs that
   // same segment, or it 404s: Docusaurus's router adds a version's own
   // path segment on top of the plugin's routeBasePath, but
@@ -1238,7 +1238,7 @@ function runDoxygen2Docusaurus(job, written, folderDestPaths) {
     // Redirected into the staging dir so a normal generate run never
     // overwrites this site's own hand-adapted src/css/custom.css — see
     // "Matching Doxygen's own reference look" in
-    // docs/contribute/api-reference-cpp.mdx.
+    // docs/website/api-reference-cpp.mdx.
     customCssFilePath: `${stagingDirRel}/custom-doxygen2docusaurus.css`,
     // Classic Doxygen HTML never repeats a member's own source line inline
     // under its documentation — the source is one click away via "Definition
@@ -1256,6 +1256,19 @@ function runDoxygen2Docusaurus(job, written, folderDestPaths) {
     execSync(`node "${DOXYGEN2DOCUSAURUS_BIN}"`, { cwd: ROOT, stdio: 'inherit' });
   } finally {
     fs.rmSync(DOXYGEN2DOCUSAURUS_CONFIG_PATH, { force: true });
+  }
+
+  // @xpack/doxygen2docusaurus's own generator.js unconditionally copies
+  // these 2 SVG Repo icons into static/img/doxygen2docusaurus/ on every
+  // run — there's no options-file toggle to turn that off. They're only
+  // used by the files/folders tree pages (via the doxyIconFile/
+  // doxyIconFolder classes and its template custom.css), which every job
+  // in external-jobs.js excludes (`files`, `folders`, `indices/files`),
+  // so neither the icons nor that CSS are needed here. If a job ever
+  // stops excluding those pages, restore both. Deleting them here keeps
+  // them from reappearing as untracked/modified files after every sync.
+  for (const icon of ['document-svgrepo-com.svg', 'folder-svgrepo-com.svg']) {
+    fs.rmSync(path.join(ROOT, 'static', 'img', 'doxygen2docusaurus', icon), { force: true });
   }
 
   const rawSidebar = JSON.parse(fs.readFileSync(path.join(ROOT, sidebarCategoryFilePath), 'utf8'));
@@ -1777,7 +1790,7 @@ for (const job of JOBS) {
   const submoduleRoot = path.join(ROOT, 'external', job.submodule);
   const srcPath = path.join(submoduleRoot, job.from);
   // Defaults to 'docs' for every existing job. Every driver/tool job (see
-  // docs/contribute/versioning.mdx) sets destRoot: 'software-tools'
+  // docs/website/versioning.mdx) sets destRoot: 'software-tools'
   // instead, since that whole shared plugin instance's content has to
   // live outside the main Docusaurus docs instance's own tree. Physically
   // nesting that instance's files inside docs/ (even with the default

@@ -1,5 +1,5 @@
 // One-command version of "Previewing local edits to a submodule" in
-// contribute.mdx: fetches each submodule's declared repoUrl/branch from
+// docs/website/index.mdx: fetches each submodule's declared repoUrl/branch from
 // external-jobs.js, checks it out, then runs the sync with the reset
 // disabled — so `npm run preview` picks up commits just pushed to a WIP
 // fork/branch without the manual fetch+checkout dance.
@@ -7,7 +7,7 @@
 // This only helps once those commits are pushed somewhere. For edits still
 // sitting uncommitted in your own local clone of the tool repo, point
 // external/<submodule> at that clone by hand instead — see
-// "Previewing local edits to a submodule" in docs/contribute/index.mdx.
+// "Previewing local edits to a submodule" in docs/website/index.mdx.
 const path = require('path');
 const { execSync } = require('child_process');
 

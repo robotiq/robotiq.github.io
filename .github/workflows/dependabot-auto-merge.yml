@@ -2,7 +2,7 @@ name: Dependabot auto-merge
 
 # Approves and merges Dependabot's own PRs (currently just the gitsubmodule
 # pin bumps from .github/dependabot.yml) without a human — see "Refreshing
-# submodule pins automatically" in docs/contribute/how-it-works.mdx.
+# submodule pins automatically" in docs/website/how-it-works.mdx.
 #
 # Why this doesn't need a dedicated bot account: the prToMain ruleset's
 # required-review rule blocks a PR's *author* from approving its own PR —

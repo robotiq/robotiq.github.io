@@ -24,7 +24,7 @@
 # list: covers every current product (Adaptive grippers, EPick, Force
 # Torque Sensor, Tactile Sensor) and any future one with no edit needed
 # here when a new tool repo is onboarded — see "Checklist: onboarding a
-# new C++ tool repo" in docs/contribute/api-reference-cpp.mdx.
+# new C++ tool repo" in docs/website/api-reference-cpp.mdx.
 software-tools/**/*.md
 # Exception: Force Torque Sensor's C driver has no submodule/sync job in
 # external-jobs.js yet (unlike every other _readme.md under
@@ -38,7 +38,7 @@ software-tools/**/*.md
 # Stable's own Docusaurus version — used to be committed as a permanent,
 # deliberate snapshot; isn't anymore. Every build now re-derives it fresh
 # from source (scripts/ensure-stable-version.js, run via the `generate`
-# prebuild hook — see docs/contribute/versioning.mdx), the exact same way
+# prebuild hook — see docs/website/versioning.mdx), the exact same way
 # software-tools/**/*.md above is: not because nothing decides its
 # content, but because that decision — which tag each tool's Stable
 # should track — lives in the one small file that *does* stay committed,

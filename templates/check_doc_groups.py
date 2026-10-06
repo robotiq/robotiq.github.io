@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Template — copy this into a tool repo (e.g. sdk_cpp/tools/check_doc_groups.py
 # in grippers) and run it from wherever its own Doxyfile lives. See
-# "Controlling what's included" in docs/contribute/api-reference-cpp.mdx for
+# "Controlling what's included" in docs/website/api-reference-cpp.mdx for
 # why a documented-but-ungrouped symbol is a real, easy-to-miss gap and how
 # this fits into the wider pipeline. This file is not executed from here —
 # only copied from, same as templates/check_doc_snippets.py.

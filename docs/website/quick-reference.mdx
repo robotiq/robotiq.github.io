@@ -1,7 +1,7 @@
 ---
 title: Quick Reference
 sidebar_label: Quick reference
-displayed_sidebar: contributeSidebar
+displayed_sidebar: websiteSidebar
 ---
 
 # Quick reference
@@ -37,6 +37,6 @@ displayed_sidebar: contributeSidebar
 | External links (`http(s)://...`) open in a new tab | automatic site-wide, including hand-written JSX `<a href="...">` — `src/remark/externalLinksNewTab.mjs`; no `target="_blank"` needed by hand |
 | A YouTube video embed | write a thumbnail image wrapped in a link to the same video (`[![Title](https://img.youtube.com/vi/<id>/...)](https://youtu.be/<id>)`) — GitHub-safe, and auto-upgraded to a real player by `src/remark/youtubeEmbed.mjs`; no raw `<iframe>` by hand |
 | A page's primary call-to-action button style | `.cta-button` in `src/css/custom.css` (e.g. "Get the software tool" on the C++ library page) — distinct from `.subpage-link`'s solid box, meant for the one main action on a page |
-| Sidebar config | `sidebars.js` (default instance — docs/intro.mdx and docs/contribute/*) — `sidebars.software-tools.js` (the whole Software Tools tree at once), see [Documentation versioning](./versioning) |
+| Sidebar config | `sidebars.js` (default instance — docs/intro.mdx and docs/website/*) — `sidebars.software-tools.js` (the whole Software Tools tree at once), see [Documentation versioning](./versioning) |
 | Doc ID format | Instance-relative, not site-relative — e.g. `Force Torque Sensor/Libraries/C/index` inside the software-tools instance (relative to `software-tools/`); just `intro` on the default instance |
 | CI check that a submodule pin (and `external-jobs.js`'s declared branch) is actually on the repo's real default branch, not a forgotten WIP branch | `scripts/check-submodule-pins.js`, run from `.github/workflows/ci.yml`; see "Previewing local edits to a submodule" |

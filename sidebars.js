@@ -3,13 +3,13 @@
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 // Every product/tool now lives in the shared 'software-tools' plugin
-// instance (see docusaurus.config.js, docs/contribute/versioning.mdx) —
+// instance (see docusaurus.config.js, docs/website/versioning.mdx) —
 // two plugin instances can't split ownership of one URL prefix, so the
 // whole "Software Tools" tree (scripts/site-nav-tree.mjs's SITE_TREE) had
 // to move there together, not stay split across this default instance and
 // that one. This file now only covers docs/intro.mdx (which deliberately
-// stayed here so its URL, /docs/intro, doesn't change) and the contributor
-// docs.
+// stayed here so its URL, /docs/intro, doesn't change) and the Website
+// section's own docs.
 
 import { buildOverviewSidebar } from './scripts/site-nav-tree.mjs';
 
@@ -52,25 +52,41 @@ const sidebars = {
     ...buildOverviewSidebar(),
   ],
 
-  // Contributor docs — deliberately not shown in the site's main navbar
-  // (Docusaurus still uses this sidebar whenever someone lands on a
-  // contribute/* page, e.g. via the footer's "Contribute" link), split by
-  // topic so no single page grows unbounded — see docs/contribute/.
-  contributeSidebar: [
-    'contribute/index',
-    'contribute/how-it-works',
-    'contribute/adding-a-tool',
-    'contribute/versioning',
-    'contribute/tools-tables',
+  // "Website" — everything about the site itself rather than any one
+  // product/tool: contributor docs (deliberately not shown in the site's
+  // main navbar; Docusaurus still uses this sidebar whenever someone lands
+  // on a website/* page, e.g. via the footer's "Contribute" link), split
+  // by topic so no single page grows unbounded (see docs/website/), plus
+  // the site's own license and third-party notices — grouped with
+  // contributor docs, not under Overview's per-tool tree, since the footer
+  // lists them together under this same "Website" label.
+  websiteSidebar: [
     {
       type: 'category',
-      label: 'Auto-generated API reference',
+      label: 'Website',
       items: [
-        'contribute/api-reference-python',
-        'contribute/api-reference-cpp',
+        'website/index',
+        'website/how-it-works',
+        'website/adding-a-tool',
+        'website/versioning',
+        'website/tools-tables',
+        {
+          type: 'category',
+          label: 'Auto-generated API reference',
+          items: [
+            'website/api-reference-python',
+            'website/api-reference-cpp',
+          ],
+        },
+        'website/quick-reference',
+        {
+          type: 'category',
+          label: 'License',
+          link: {type: 'doc', id: 'license'},
+          items: ['third-party-notices'],
+        },
       ],
     },
-    'contribute/quick-reference',
   ],
 };
 

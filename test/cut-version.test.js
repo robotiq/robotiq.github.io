@@ -1,7 +1,7 @@
 // Unit tests for scripts/cut-version.js's pure/file-scoped helpers.
 // The full checkout/sync/docs:version orchestration isn't unit tested
 // here — it's exercised end to end by actually re-cutting the shared
-// Stable version for real (see docs/contribute/versioning.mdx).
+// Stable version for real (see docs/website/versioning.mdx).
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');

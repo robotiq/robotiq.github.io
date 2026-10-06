@@ -31,7 +31,7 @@
 // table picks it up automatically on the next `npm start` / `npm run
 // build`. Every product lives here — not just submodule-synced tools —
 // because the shared 'software-tools' Docusaurus instance (see
-// docs/contribute/versioning.mdx) owns the entire `/docs/drivers/*` URL
+// docs/website/versioning.mdx) owns the entire `/docs/drivers/*` URL
 // space; a plugin instance can only build its own routes from its own
 // content root, and two instances can't split ownership of one URL prefix
 // (client-side route matching picks whichever instance's own top-level
@@ -177,7 +177,7 @@ function collectToolPages(dir, hardwareDir) {
 // A tool leaf page can itself have sub-sections — currently just the
 // "overview / API reference / guides" split documented under "Splitting a
 // tool page into overview, API reference, and guides" in
-// docs/contribute/how-it-works.mdx (e.g. Libraries/C++/docs/, Libraries/C++/API/).
+// docs/website/how-it-works.mdx (e.g. Libraries/C++/docs/, Libraries/C++/API/).
 // Generic, not tied to those two names: any immediate subdirectory of a
 // tool's own folder that has its own index page (.mdx, or .md for
 // doxygen2docusaurus's generated API/index.md) but carries no Category

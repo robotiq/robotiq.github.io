@@ -8,7 +8,7 @@
 // Deliberately narrow: only a code span whose value is the single word
 // "Robotiq" is replaced — everything else (prose, headings, `robotiq-cli`,
 // `Robotiq's`, code blocks, URLs) is left untouched. See
-// docs/contribute/how-it-works.mdx for why this is opt-in rather than a
+// docs/website/how-it-works.mdx for why this is opt-in rather than a
 // blanket find-and-replace over rendered text.
 import {visit} from 'unist-util-visit';
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Lists a submodule repo's tags, newest first — used to pick the newest
 // tag to pin a tool's own share of the Stable version to (see
-// docs/contribute/versioning.mdx and scripts/cut-version.js).
+// docs/website/versioning.mdx and scripts/cut-version.js).
 //
 // Queries the remote directly (`git ls-remote --tags`), not a local
 // checkout — see check-submodule-pins.js's own header comment for why a

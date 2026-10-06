@@ -993,26 +993,6 @@ span.doxyTreeIcon {
   margin-right: 2px;
 }
 
-.doxyIconFile::before {
-  content: '';
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  vertical-align: middle;
-  padding-right: 0.4em;
-  background: url("/img/doxygen2docusaurus/document-svgrepo-com.svg") no-repeat;
-}
-
-.doxyIconFolder::before {
-  content: '';
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  vertical-align: middle;
-  padding-right: 0.4em;
-  background: url("/img/doxygen2docusaurus/folder-svgrepo-com.svg") no-repeat;
-}
-
 tr.doxyTreeItem:hover {
   background-color: var(--ifm-menu-color-background-hover);
 }
