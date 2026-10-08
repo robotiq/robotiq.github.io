@@ -2,6 +2,6 @@
   "tactile-cpp": "v2.1.0",
   "tactile-python": "v2.1.0",
   "adaptive-grippers-cpp": "v1.1.0",
-  "adaptive-grippers-ros": "v1.1.0",
-  "tactile-ros": "v1.1.0"
+  "adaptive-grippers-ros": "v1.2.0",
+  "tactile-ros": "v1.2.0"
 }
