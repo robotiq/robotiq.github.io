@@ -168,7 +168,7 @@ const JOBS = [
     ]),
   ]),
 
-  ...submoduleJobs('robotiq_ros', { repoUrl: 'https://github.com/robotiq/ros', branch: 'main' }, [
+  ...submoduleJobs('robotiq_ros', { repoUrl: 'https://github.com/robotiq/robotiq-ros', branch: 'main' }, [
     // One monorepo, one root README (no per-package README) covering both
     // packages it ships: grippers/ (Adaptive grippers) and robotiq_tsf/
     // (Tactile Sensor) — synced to both products' ROS page. Both

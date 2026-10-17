@@ -20,7 +20,7 @@
 // ROS is the one category capped at a single tool per product — there is
 // no per-distro or per-generation split any more, just one `Category-ROS`
 // page (software-tools/<product>/ROS/index.mdx), carrying real content
-// itself (synced from https://github.com/robotiq/ros for Robotiq-
+// itself (synced from https://github.com/robotiq/robotiq-ros for Robotiq-
 // maintained products, hand-authored for third-party ones) rather than
 // being a container with its own auto-generated landing table. So unlike
 // Libraries/Simulation/Other, ROS never gets a dedicated landing page
