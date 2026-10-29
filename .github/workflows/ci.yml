@@ -27,8 +27,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .nvmrc
+          check-latest: true
           cache: npm
+
+      # Fails on a Node.js whose bundled Brotli is vulnerable to
+      # CVE-2026-111497 (see FIXED in scripts/check-node-version.js).
+      - name: Check Node.js version
+        run: node scripts/check-node-version.js
 
       - name: Install dependencies
         run: npm ci

@@ -5,7 +5,7 @@
   "license": "BSD-3-Clause",
   "scripts": {
     "docusaurus": "docusaurus",
-    "generate": "node scripts/fetch-profile-readme.js",
+    "generate": "node scripts/check-node-version.js && node scripts/fetch-profile-readme.js",
     "prestart": "npm run generate",
     "start": "docusaurus start",
     "prebuild": "npm run generate",
@@ -39,6 +39,6 @@
     ]
   },
   "engines": {
-    "node": ">=20.0"
+    "node": "^22.23.4 || ^24.22.1 || ^26.12.1"
   }
 }
